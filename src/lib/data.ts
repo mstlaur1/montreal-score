@@ -1,8 +1,8 @@
 import { cache } from "react";
-import { fetchPermitsByYear, fetchYearlyTrends, fetchContractsByYear } from "./montreal-api";
+import { queryPermitsByYear, queryYearlyTrends, queryContractsByYear, getLastEtlRun } from "./db";
 import { normalizeBoroughName, getBoroughSlug } from "./boroughs";
 import { calculateBoroughScores, rankBoroughs, scoreToGrade, PERMIT_TARGET_DAYS } from "./scoring";
-import type { BoroughPermitStats, BoroughScore, BoroughComparison, CitySummary, RawContract, ContractStats } from "./types";
+import type { BoroughPermitStats, BoroughScore, BoroughComparison, CitySummary, ContractStats } from "./types";
 
 /** Compute median of a sorted number array */
 function median(sorted: number[]): number {
@@ -36,10 +36,8 @@ function processingDays(dateDebut: string | null, dateEmission: string | null): 
  * Wrapped with React cache() to deduplicate across components in the same request.
  */
 export const getBoroughPermitStats = cache(async (year: number): Promise<BoroughPermitStats[]> => {
-  const [currentPermits, prevPermits] = await Promise.all([
-    fetchPermitsByYear(year),
-    fetchPermitsByYear(year - 1),
-  ]);
+  const currentPermits = queryPermitsByYear(year);
+  const prevPermits = queryPermitsByYear(year - 1);
 
   function computeStats(permits: typeof currentPermits) {
     const byBorough = new Map<string, { total: number; days: number[] }>();
@@ -137,7 +135,7 @@ export async function getCitySummary(year: number): Promise<CitySummary> {
       best_borough: "N/A",
       worst_borough: "N/A",
       trend_vs_last_year: 0,
-      last_updated: new Date().toISOString(),
+      last_updated: getLastEtlRun("permits") ?? new Date().toISOString(),
     };
   }
 
@@ -171,7 +169,7 @@ export async function getCitySummary(year: number): Promise<CitySummary> {
     best_borough: best.borough,
     worst_borough: worst.borough,
     trend_vs_last_year: avgTrend,
-    last_updated: new Date().toISOString(),
+    last_updated: getLastEtlRun("permits") ?? new Date().toISOString(),
   };
 }
 
@@ -179,7 +177,7 @@ export async function getCitySummary(year: number): Promise<CitySummary> {
  * Get yearly trend data using per-year aggregation queries.
  */
 export async function getYearlyTrendData() {
-  return fetchYearlyTrends(2015);
+  return queryYearlyTrends(2015);
 }
 
 // --- Contracts ---
@@ -188,7 +186,7 @@ export async function getYearlyTrendData() {
  * Get contract stats aggregated from live CKAN data.
  */
 export const getContractStats = cache(async (year: number): Promise<ContractStats> => {
-  const raw = await fetchContractsByYear(year);
+  const raw = queryContractsByYear(year);
 
   const amounts = raw
     .map((c) => parseFloat(c.MONTANT))

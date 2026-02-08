@@ -5,7 +5,6 @@ import { PERMIT_TARGET_DAYS, PREVIOUS_TARGET_DAYS } from "@/lib/scoring";
 import { PermitBarChart } from "@/components/PermitBarChart";
 import { StatCard } from "@/components/StatCard";
 
-export const dynamic = "force-dynamic";
 export const revalidate = 3600;
 
 type Props = {

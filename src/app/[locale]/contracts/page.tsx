@@ -4,7 +4,7 @@ import { getContractStats } from "@/lib/data";
 import { StatCard } from "@/components/StatCard";
 import { ContractHistogram } from "@/components/ContractHistogram";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -167,7 +167,28 @@ export default async function ContractsPage({ params }: Props) {
           })}
         </div>
         <p className="text-xs text-muted mt-4">
-          {t("thresholdMethodology")}
+          {t.rich("thresholdMethodology", {
+            lcv: (chunks) => (
+              <a
+                href="https://www.legisquebec.gouv.qc.ca/fr/document/lc/c-19#se:573_1"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-foreground"
+              >
+                {chunks}
+              </a>
+            ),
+            mamh: (chunks) => (
+              <a
+                href="https://www.quebec.ca/gouvernement/gestion-municipale/gestion-contrats-municipaux/sollicitation-adjudication/modes-sollicitation"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-foreground"
+              >
+                {chunks}
+              </a>
+            ),
+          })}
         </p>
       </section>
 

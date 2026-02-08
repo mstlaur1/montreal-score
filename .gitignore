@@ -47,6 +47,9 @@ data/raw/
 data/*.csv
 data/*.geojson
 data/*.shp
+data/montreal.db
+data/montreal.db-wal
+data/montreal.db-shm
 
 # IDE
 .idea/

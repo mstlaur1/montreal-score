@@ -128,7 +128,7 @@
     "thresholdLabel": "Juste sous {threshold}",
     "thresholdExpected": "Attendu (bande symétrique au-dessus): {expected}",
     "thresholdElevated": "{ratio}x plus élevé que prévu",
-    "thresholdMethodology": "La comparaison utilise une bande de valeur symétrique au-dessus du seuil comme référence. Le seuil appliqué correspond à celui en vigueur à la date d'approbation du contrat (133 800$ pour 2024-2025, 139 000$ pour 2026-2027). Un ratio significativement supérieur à 1 peut indiquer du fractionnement de contrats. Source: Muni-Express, MAMH.",
+    "thresholdMethodology": "La comparaison utilise une bande de valeur symétrique au-dessus du seuil comme référence. Le seuil appliqué correspond à celui en vigueur à la date d'approbation du contrat (133 800$ pour 2024-2025, 139 000$ pour 2026-2027). Un ratio significativement supérieur à 1 peut indiquer du fractionnement de contrats. Sources: <lcv>art. 573.1, Loi sur les cités et villes</lcv> (seuil de 25 000$); <mamh>Muni-Express, MAMH</mamh> (seuil d'appel d'offres public).",
     "methodology": "Méthodologie",
     "methodologyText": "Les données proviennent du jeu de données « Contrats de la Ville de Montréal » du portail de données ouvertes. Tous les contrats de 2 000$ et plus y sont publiés. Les montants sont en dollars canadiens."
   },

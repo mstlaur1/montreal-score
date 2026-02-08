@@ -5,7 +5,6 @@ import { BoroughCard } from "@/components/BoroughCard";
 import { StatCard } from "@/components/StatCard";
 import { Link } from "@/i18n/navigation";
 
-export const dynamic = "force-dynamic";
 export const revalidate = 3600;
 
 type Props = {
