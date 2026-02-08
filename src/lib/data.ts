@@ -1,8 +1,8 @@
 import { cache } from "react";
-import { fetchPermitsByYear, fetchYearlyTrends } from "./montreal-api";
+import { fetchPermitsByYear, fetchYearlyTrends, fetchContractsByYear } from "./montreal-api";
 import { normalizeBoroughName, getBoroughSlug } from "./boroughs";
 import { calculateBoroughScores, rankBoroughs, scoreToGrade, PERMIT_TARGET_DAYS } from "./scoring";
-import type { BoroughPermitStats, BoroughScore, BoroughComparison, CitySummary } from "./types";
+import type { BoroughPermitStats, BoroughScore, BoroughComparison, CitySummary, RawContract, ContractStats } from "./types";
 
 /** Compute median of a sorted number array */
 function median(sorted: number[]): number {
@@ -181,3 +181,143 @@ export async function getCitySummary(year: number): Promise<CitySummary> {
 export async function getYearlyTrendData() {
   return fetchYearlyTrends(2015);
 }
+
+// --- Contracts ---
+
+/**
+ * Get contract stats aggregated from live CKAN data.
+ */
+export const getContractStats = cache(async (year: number): Promise<ContractStats> => {
+  const raw = await fetchContractsByYear(year);
+
+  const amounts = raw
+    .map((c) => parseFloat(c.MONTANT))
+    .filter((n) => !isNaN(n));
+  const sortedAmounts = [...amounts].sort((a, b) => a - b);
+  const totalValue = amounts.reduce((sum, v) => sum + v, 0);
+
+  // Top suppliers by total value
+  const supplierMap = new Map<string, { count: number; totalValue: number }>();
+  for (const c of raw) {
+    const name = c["NOM DU FOURNISSEUR"];
+    const amt = parseFloat(c.MONTANT) || 0;
+    const existing = supplierMap.get(name) || { count: 0, totalValue: 0 };
+    existing.count++;
+    existing.totalValue += amt;
+    supplierMap.set(name, existing);
+  }
+  const topSuppliers = [...supplierMap.entries()]
+    .map(([name, data]) => ({ name, ...data }))
+    .sort((a, b) => b.totalValue - a.totalValue)
+    .slice(0, 10);
+
+  // Top departments by total value
+  const deptMap = new Map<string, { count: number; totalValue: number }>();
+  for (const c of raw) {
+    const name = c.SERVICE;
+    const amt = parseFloat(c.MONTANT) || 0;
+    const existing = deptMap.get(name) || { count: 0, totalValue: 0 };
+    existing.count++;
+    existing.totalValue += amt;
+    deptMap.set(name, existing);
+  }
+  const topDepartments = [...deptMap.entries()]
+    .map(([name, data]) => ({ name, ...data }))
+    .sort((a, b) => b.totalValue - a.totalValue)
+    .slice(0, 10);
+
+  // Concentration: % of total spend by top 10 suppliers
+  const top10Value = topSuppliers.reduce((sum, s) => sum + s.totalValue, 0);
+  const top10ConcentrationPct = totalValue > 0 ? (top10Value / totalValue) * 100 : 0;
+
+  // Distribution buckets (log-scale ranges for histogram)
+  const buckets = [
+    { label: "2K–5K", min: 2000, max: 5000 },
+    { label: "5K–10K", min: 5000, max: 10000 },
+    { label: "10K–25K", min: 10000, max: 25000 },
+    { label: "25K–50K", min: 25000, max: 50000 },
+    { label: "50K–100K", min: 50000, max: 100000 },
+    { label: "100K–139K", min: 100000, max: 139000 },
+    { label: "139K–250K", min: 139000, max: 250000 },
+    { label: "250K–500K", min: 250000, max: 500000 },
+    { label: "500K–1M", min: 500000, max: 1000000 },
+    { label: "1M+", min: 1000000, max: Infinity },
+  ];
+  const distribution = buckets.map((b) => {
+    const matching = amounts.filter((a) => a >= b.min && a < b.max);
+    return {
+      ...b,
+      max: b.max === Infinity ? 999999999 : b.max,
+      count: matching.length,
+      totalValue: matching.reduce((sum, v) => sum + v, 0),
+    };
+  });
+
+  // Threshold clustering: Quebec procurement thresholds
+  // < $25K: no formal process required
+  // $25K–threshold: invitation tender or direct agreement
+  // >= threshold: mandatory public call for tenders
+  // Threshold changed Jan 1, 2026: $133,800 -> $139,000
+  const TENDER_THRESHOLD_OLD = 133800; // 2024-2025
+  const TENDER_THRESHOLD_NEW = 139000; // 2026-2027
+  const THRESHOLD_CUTOVER = "2026-01-01";
+
+  // Split contracts into eras by approval date
+  const preContracts = raw.filter((c) => c["DATE D'APPROBATION"] < THRESHOLD_CUTOVER);
+  const postContracts = raw.filter((c) => c["DATE D'APPROBATION"] >= THRESHOLD_CUTOVER);
+  const preAmounts = preContracts.map((c) => parseFloat(c.MONTANT)).filter((n) => !isNaN(n));
+  const postAmounts = postContracts.map((c) => parseFloat(c.MONTANT)).filter((n) => !isNaN(n));
+
+  function clusterAroundThreshold(
+    amts: number[],
+    threshold: number,
+    bandSize: number,
+  ) {
+    const bandMin = threshold - bandSize;
+    const bandMax = threshold;
+    const inBand = amts.filter((a) => a >= bandMin && a < bandMax).length;
+    const aboveBand = amts.filter((a) => a >= bandMax && a < bandMax + bandSize).length;
+    return { count: inBand, expected: aboveBand };
+  }
+
+  const thresholdClusters = [
+    // $25K — applies to all contracts regardless of era
+    {
+      threshold: 25000,
+      label: "$25K",
+      period: "",
+      ...clusterAroundThreshold(amounts, 25000, 5000),
+    },
+    // Old tender threshold — only pre-2026 contracts
+    ...(preAmounts.length > 0
+      ? [{
+          threshold: TENDER_THRESHOLD_OLD,
+          label: "$133.8K",
+          period: "2024–2025",
+          ...clusterAroundThreshold(preAmounts, TENDER_THRESHOLD_OLD, 13800),
+        }]
+      : []),
+    // New tender threshold — only 2026+ contracts
+    ...(postAmounts.length > 0
+      ? [{
+          threshold: TENDER_THRESHOLD_NEW,
+          label: "$139K",
+          period: "2026–2027",
+          ...clusterAroundThreshold(postAmounts, TENDER_THRESHOLD_NEW, 14000),
+        }]
+      : []),
+  ];
+
+  return {
+    totalContracts: raw.length,
+    totalValue,
+    avgValue: amounts.length > 0 ? totalValue / amounts.length : 0,
+    medianValue: median(sortedAmounts),
+    topSuppliers,
+    topDepartments,
+    top10ConcentrationPct,
+    distribution,
+    thresholdClusters,
+    year,
+  };
+});

@@ -88,6 +88,36 @@ export interface BoroughComparison {
   grade: Grade;
 }
 
+/** Raw contract record from Montreal open data */
+export interface RawContract {
+  _id: number;
+  "NOM DU FOURNISSEUR": string;
+  NUMERO: string;
+  "DATE D'APPROBATION": string;
+  APPROBATEUR: string | null;
+  DESCRIPTION: string;
+  SERVICE: string;
+  ACTIVITE: string;
+  MONTANT: string; // stored as text in CKAN
+}
+
+/** Aggregated contract statistics for display */
+export interface ContractStats {
+  totalContracts: number;
+  totalValue: number;
+  avgValue: number;
+  medianValue: number;
+  topSuppliers: { name: string; count: number; totalValue: number }[];
+  topDepartments: { name: string; count: number; totalValue: number }[];
+  /** % of total spend captured by top 10 suppliers */
+  top10ConcentrationPct: number;
+  /** Distribution buckets for histogram */
+  distribution: { label: string; min: number; max: number; count: number; totalValue: number }[];
+  /** Contracts in "just below threshold" zones */
+  thresholdClusters: { threshold: number; label: string; period: string; count: number; expected: number }[];
+  year: number;
+}
+
 /** City-wide summary stats */
 export interface CitySummary {
   total_permits_ytd: number;

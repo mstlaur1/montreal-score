@@ -5,6 +5,7 @@
   },
   "Nav": {
     "permits": "Permits",
+    "contracts": "Contracts",
     "boroughs": "Boroughs",
     "311": "311",
     "about": "About"
@@ -95,6 +96,41 @@
     "openSourceBody": "Source code is available on <link>GitHub</link>. Contributions welcome.",
     "contactTitle": "Contact",
     "contactBody": "MontréalScore is a project by <link>Brulé AI</link>."
+  },
+  "ContractsPage": {
+    "metadata": {
+      "title": "Municipal Contracts — MontréalScore",
+      "description": "Tracking municipal contracts for the City of Montreal — suppliers, departments, and amounts."
+    },
+    "title": "Municipal Contracts",
+    "subtitle": "All contracts over $2,000 approved by the City of Montreal. Data from the open data portal.",
+    "totalContracts": "Contracts",
+    "totalValue": "Total value",
+    "avgValue": "Avg per contract",
+    "medianValue": "Median per contract",
+    "topSuppliers": "Top suppliers",
+    "topDepartments": "Top departments",
+    "supplier": "Supplier",
+    "department": "Department",
+    "contracts": "Contracts",
+    "totalAmount": "Total amount",
+    "pctOfTotal": "% of total",
+    "concentrationTitle": "Spending concentration",
+    "concentrationSubtitle": "What share of municipal spending goes to the largest suppliers?",
+    "concentrationDetail": "of spending goes to the top {count} suppliers",
+    "distributionTitle": "Contract value distribution",
+    "distributionSubtitle": "Number of contracts by value range. Highlighted bars border Quebec procurement thresholds.",
+    "distributionYAxis": "Contracts",
+    "distributionFootnote": "Highlighted bars = ranges adjacent to $25K (no formal process) and $139K (mandatory public tender, 2026-2027 threshold) thresholds.",
+    "threshold25k": "$25K",
+    "thresholdTitle": "Procurement threshold analysis",
+    "thresholdSubtitle": "In Quebec, contracts under $25K require no formal process. Above the public tender threshold ($133.8K in 2024-2025, $139K since 2026), a public call for tenders is mandatory. The analysis below applies the threshold in effect at each contract's approval date.",
+    "thresholdLabel": "Just below {threshold}",
+    "thresholdExpected": "Expected (symmetric band above): {expected}",
+    "thresholdElevated": "{ratio}x higher than expected",
+    "thresholdMethodology": "Comparison uses a symmetric value band above the threshold as baseline. The threshold applied matches the one in effect at each contract's approval date ($133.8K for 2024-2025, $139K for 2026-2027). A ratio significantly above 1 may indicate contract splitting. Source: Muni-Express, MAMH.",
+    "methodology": "Methodology",
+    "methodologyText": "Data comes from the \"Contrats de la Ville de Montréal\" dataset on the open data portal. All contracts of $2,000 and above are published. Amounts are in Canadian dollars."
   },
   "LocaleSwitcher": {
     "label": "FR"

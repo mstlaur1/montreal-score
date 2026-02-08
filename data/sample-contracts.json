@@ -1,0 +1,112 @@
+[
+  {
+    "_id": 76744,
+    "NOM DU FOURNISSEUR": "AMBULANCE ST-JEAN",
+    "NUMERO": "1762863",
+    "DATE D'APPROBATION": "2026-02-06",
+    "APPROBATEUR": null,
+    "DESCRIPTION": "Devis numéro : QUO-14320-C9J5Z6",
+    "SERVICE": "Commission des services électriques",
+    "ACTIVITE": "Autres - Amén., urb. et développement",
+    "MONTANT": "3368.22"
+  },
+  {
+    "_id": 90228,
+    "NOM DU FOURNISSEUR": "NEOGEN CORP",
+    "NUMERO": "1762736",
+    "DATE D'APPROBATION": "2026-02-06",
+    "APPROBATEUR": null,
+    "DESCRIPTION": "SENV/ Achat de matériel pour analyses de laboratoire de microbiologie Crémazie - Hors entente",
+    "SERVICE": "Environnement",
+    "ACTIVITE": "Inspection des aliments",
+    "MONTANT": "4617.28"
+  },
+  {
+    "_id": 45681,
+    "NOM DU FOURNISSEUR": "SHQ SOLUTIONS INC.",
+    "NUMERO": "1762763",
+    "DATE D'APPROBATION": "2026-02-06",
+    "APPROBATEUR": null,
+    "DESCRIPTION": "Harnais - SGPI Biodôme - Louis",
+    "SERVICE": "Gestion et planification des immeubles",
+    "ACTIVITE": "Musées et centres d'exposition",
+    "MONTANT": "2851.25"
+  },
+  {
+    "_id": 67870,
+    "NOM DU FOURNISSEUR": "HEBDRAULIQUE INC.",
+    "NUMERO": "RPP1181447",
+    "DATE D'APPROBATION": "2026-02-06",
+    "APPROBATEUR": null,
+    "DESCRIPTION": "C2008289     (LOTS DE RACCORDS HYDRAULIQUE, ATLIER RPP)",
+    "SERVICE": "Materiel roulant et ateliers",
+    "ACTIVITE": "Sout. mat. et tech. - Gestion des véhicules et ateliers MRA - À répartir",
+    "MONTANT": "3008.16"
+  },
+  {
+    "_id": 1082,
+    "NOM DU FOURNISSEUR": "COOP BONNE COMPAGNIE",
+    "NUMERO": "1762756",
+    "DATE D'APPROBATION": "2026-02-06",
+    "APPROBATEUR": null,
+    "DESCRIPTION": "DEV / Services pour l'édimesterie du site designmontreal.com ainsi que pour divers services de design graphique et d'illustration visant à alimenter le contenu du site internet",
+    "SERVICE": "Développement économique",
+    "ACTIVITE": "Industries et commerces - Prom. et dév.écon.",
+    "MONTANT": "20997.5"
+  },
+  {
+    "_id": 90227,
+    "NOM DU FOURNISSEUR": "MAXIME COLLINS INC.",
+    "NUMERO": "1762727",
+    "DATE D'APPROBATION": "2026-02-06",
+    "APPROBATEUR": null,
+    "DESCRIPTION": "SENV / Révision et Traduction du bilan RSQA 2025 - pour RSQA",
+    "SERVICE": "Environnement",
+    "ACTIVITE": "Protection de l'environnement",
+    "MONTANT": "2661.27"
+  },
+  {
+    "_id": 20537,
+    "NOM DU FOURNISSEUR": "AMBULANCE ST-JEAN",
+    "NUMERO": "1754247",
+    "DATE D'APPROBATION": "2026-02-06",
+    "APPROBATEUR": null,
+    "DESCRIPTION": "2025-298_2025-2026 Haltes chaleur itinérance_Service de navette d'urgence du 12 au 30 décembre pour les haltes chaleur_Paiement de facture_CCMU_Décembre 2025",
+    "SERVICE": "Sécurité incendie de Montréal",
+    "ACTIVITE": "Sécurité civile",
+    "MONTANT": "9264.62"
+  },
+  {
+    "_id": 34017,
+    "NOM DU FOURNISSEUR": "EXPERTISE NEUROSCIENCES INC.",
+    "NUMERO": "1762677",
+    "DATE D'APPROBATION": "2026-02-06",
+    "APPROBATEUR": null,
+    "DESCRIPTION": "RH  SRHC / Paiement de la facture - Expertise en médicale en psychiatrie le 27 janvier 2026",
+    "SERVICE": "Ressources humaines et communications",
+    "ACTIVITE": "Gestion du personnel",
+    "MONTANT": "7506.61"
+  },
+  {
+    "_id": 20550,
+    "NOM DU FOURNISSEUR": "9213-4675 QUEBEC INC.",
+    "NUMERO": "1762814",
+    "DATE D'APPROBATION": "2026-02-06",
+    "APPROBATEUR": null,
+    "DESCRIPTION": "SGPI // Service de déneigement - A/O23-19915 - lot 13 - Entente 1621569 - 1er janvier au 30 avril 2026 - Safwen Zaim 2.",
+    "SERVICE": "Gestion et planification des immeubles",
+    "ACTIVITE": "Sout. mat. et tech. - Gestion des immeubles GPI - À répartir",
+    "MONTANT": "4896.62"
+  },
+  {
+    "_id": 95874,
+    "NOM DU FOURNISSEUR": "EBI ENVIROTECH INC.",
+    "NUMERO": "1762700",
+    "DATE D'APPROBATION": "2026-02-06",
+    "APPROBATEUR": null,
+    "DESCRIPTION": "BCO 2026 -  Demandes de vidange de fonds de bassin, séparateurs d'huile, drains et goulottes, incluant le transport et la disposition, selon entente contractuelle 1594156",
+    "SERVICE": "Gestion et planification des immeubles",
+    "ACTIVITE": "Sout. mat. et tech. - Gestion des immeubles GPI - À répartir",
+    "MONTANT": "10498.75"
+  }
+]
