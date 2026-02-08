@@ -170,7 +170,7 @@ export default async function ContractsPage({ params }: Props) {
           {t.rich("thresholdMethodology", {
             lcv: (chunks) => (
               <a
-                href="https://www.legisquebec.gouv.qc.ca/fr/document/lc/c-19#se:573_1"
+                href="https://www.legisquebec.gouv.qc.ca/fr/document/lc/C-19/20241206#se:573_3_1_2"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="underline hover:text-foreground"
@@ -180,7 +180,7 @@ export default async function ContractsPage({ params }: Props) {
             ),
             mamh: (chunks) => (
               <a
-                href="https://www.quebec.ca/gouvernement/gestion-municipale/gestion-contrats-municipaux/sollicitation-adjudication/modes-sollicitation"
+                href="https://www.quebec.ca/gouvernement/gestion-municipale/gestion-contrats-municipaux/sollicitation-adjudication/conformite-liberalisation-marches-publics"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="underline hover:text-foreground"
