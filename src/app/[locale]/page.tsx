@@ -1,13 +1,22 @@
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getBoroughScores, getBoroughPermitStats, getCitySummary } from "@/lib/data";
 import { PERMIT_TARGET_DAYS } from "@/lib/scoring";
-import { GradeBadge } from "@/components/GradeBadge";
 import { BoroughCard } from "@/components/BoroughCard";
 import { StatCard } from "@/components/StatCard";
+import { Link } from "@/i18n/navigation";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 3600;
 
-export default async function Home() {
+type Props = {
+  params: Promise<{ locale: string }>;
+};
+
+export default async function Home({ params }: Props) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations("HomePage");
+
   const currentYear = new Date().getFullYear();
   let scores, stats, summary;
 
@@ -18,7 +27,6 @@ export default async function Home() {
       getCitySummary(currentYear),
     ]);
   } catch {
-    // If current year has no data yet, fall back to previous year
     const fallbackYear = currentYear - 1;
     [scores, stats, summary] = await Promise.all([
       getBoroughScores(fallbackYear),
@@ -37,37 +45,36 @@ export default async function Home() {
           Montréal<span className="text-accent">Score</span>
         </h1>
         <p className="text-lg text-muted mt-3 max-w-2xl mx-auto">
-          Votre gouvernement municipal est-il performant? Notes de performance
-          pour chaque arrondissement, basées sur les données ouvertes de la Ville.
+          {t("heroSubtitle")}
         </p>
       </section>
 
       {/* City-wide Stats */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
         <StatCard
-          label="Délai médian"
+          label={t("medianDelay")}
           value={Math.round(summary.median_processing_days)}
-          unit="jours"
-          detail={`Cible: ${PERMIT_TARGET_DAYS} jours`}
+          unit={t("days")}
+          detail={t("targetDetail", { target: PERMIT_TARGET_DAYS })}
           trend={summary.trend_vs_last_year < -5 ? "down" : summary.trend_vs_last_year > 5 ? "up" : "flat"}
           trendLabel={
             summary.trend_vs_last_year < 0
-              ? `${Math.abs(Math.round(summary.trend_vs_last_year))}j de moins que l'an dernier`
-              : `${Math.round(summary.trend_vs_last_year)}j de plus que l'an dernier`
+              ? t("daysLessThanLastYear", { count: Math.abs(Math.round(summary.trend_vs_last_year)) })
+              : t("daysMoreThanLastYear", { count: Math.round(summary.trend_vs_last_year) })
           }
         />
         <StatCard
-          label="Dans les délais"
+          label={t("onTime")}
           value={Math.round(summary.pct_within_target)}
           unit="%"
-          detail={`Permis traités en ≤${PERMIT_TARGET_DAYS} jours`}
+          detail={t("permitsWithinTarget", { target: PERMIT_TARGET_DAYS })}
         />
         <StatCard
-          label="Meilleur arrondissement"
+          label={t("bestBorough")}
           value={summary.best_borough}
         />
         <StatCard
-          label="Pire arrondissement"
+          label={t("worstBorough")}
           value={summary.worst_borough}
         />
       </section>
@@ -75,10 +82,10 @@ export default async function Home() {
       {/* Borough Rankings */}
       <section>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Classement des arrondissements</h2>
-          <a href="/permits" className="text-sm text-accent hover:underline">
-            Voir les détails des permis &rarr;
-          </a>
+          <h2 className="text-2xl font-bold">{t("boroughRankings")}</h2>
+          <Link href="/permits" className="text-sm text-accent hover:underline">
+            {t("viewPermitDetails")} &rarr;
+          </Link>
         </div>
         <div className="flex flex-col gap-2">
           {scores.map((score, i) => {
@@ -99,12 +106,10 @@ export default async function Home() {
       {/* CTA */}
       <section className="text-center py-12 mt-8 border-t border-card-border">
         <h2 className="text-xl font-bold mb-2">
-          La mairesse a promis 90 jours. On vérifie.
+          {t("ctaTitle")}
         </h2>
         <p className="text-muted max-w-lg mx-auto">
-          Toutes les données proviennent du portail de données ouvertes de la
-          Ville de Montréal. Mises à jour chaque semaine. Aucune opinion —
-          seulement les chiffres.
+          {t("ctaBody")}
         </p>
       </section>
     </div>

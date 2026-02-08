@@ -1,0 +1,102 @@
+{
+  "Metadata": {
+    "siteTitle": "MontréalScore — Municipal Performance Tracker",
+    "siteDescription": "Borough-by-borough performance grades for Montreal, powered by the city's own open data. Permits, 311 requests, snow removal, and more."
+  },
+  "Nav": {
+    "permits": "Permits",
+    "boroughs": "Boroughs",
+    "311": "311",
+    "about": "About"
+  },
+  "Footer": {
+    "dataFrom": "Data from",
+    "openSourceBy": "Open-source project by"
+  },
+  "HomePage": {
+    "heroSubtitle": "Is your municipal government performing? Performance grades for each borough, based on the City's open data.",
+    "medianDelay": "Median delay",
+    "days": "days",
+    "targetDetail": "Target: {target} days",
+    "daysLessThanLastYear": "{count}d less than last year",
+    "daysMoreThanLastYear": "{count}d more than last year",
+    "onTime": "On time",
+    "permitsWithinTarget": "Permits processed in ≤{target} days",
+    "bestBorough": "Best borough",
+    "worstBorough": "Worst borough",
+    "boroughRankings": "Borough rankings",
+    "viewPermitDetails": "View permit details",
+    "ctaTitle": "The mayor promised 90 days. We're checking.",
+    "ctaBody": "All data comes from the City of Montreal's open data portal. Updated weekly. No opinions — just the numbers."
+  },
+  "PermitsPage": {
+    "metadata": {
+      "title": "Construction Permits — MontréalScore",
+      "description": "Tracking construction permit processing times by borough in Montreal."
+    },
+    "title": "Construction Permits",
+    "subtitle": "Processing times by borough vs the {target}-day target (Mayor Martinez Ferrada's promise). The previous target was {previousTarget} days.",
+    "permitsThisYear": "Permits this year",
+    "medianDelay": "Median delay",
+    "days": "days",
+    "withinTarget": "Within {target}d target",
+    "percent": "%",
+    "trend": "Trend",
+    "vsLastYear": "vs last year",
+    "improvement": "Improving",
+    "deterioration": "Worsening",
+    "medianByBorough": "Median delay by borough",
+    "chartFootnote": "Green dashed line = {target}-day target. Colors reflect the borough's grade.",
+    "historicalTrend": "Historical trend",
+    "year": "Year",
+    "permitsFiled": "Permits filed",
+    "methodology": "Methodology",
+    "methodologyText": "Processing times are calculated from the date_debut (application date) and date_emission (issuance date) fields in the City of Montreal's open dataset. The median is used instead of the average to reduce the impact of outliers. Data is updated weekly by the City."
+  },
+  "PermitBarChart": {
+    "yAxisLabel": "Days",
+    "tooltipDays": "{value} days",
+    "tooltipLabel": "Median delay",
+    "targetLabel": "Target: {target}d"
+  },
+  "BoroughCard": {
+    "medianDays": "{count} median days",
+    "withinTarget": "{pct}% on time"
+  },
+  "AboutPage": {
+    "metadata": {
+      "title": "About — MontréalScore",
+      "description": "How MontréalScore works and where the data comes from."
+    },
+    "title": "About MontréalScore",
+    "intro": "MontréalScore is a free, open-source tool that tracks the performance of Montreal's municipal government, borough by borough, using the City's open data.",
+    "whyTitle": "Why?",
+    "whyBody": "Mayor Soraya Martinez Ferrada promised a maximum 90-day turnaround for construction permits. The previous administration had set a 120-day target. Currently, the median processing time exceeds 200 days in some boroughs. No public dashboard exists to verify whether these targets are being met.",
+    "whyBody2": "MontréalScore fills that gap. No opinions. No bias. Just the numbers.",
+    "dataSourcesTitle": "Data sources",
+    "dataSourcesIntro": "All data comes from <link>Montreal's open data portal</link>. Datasets used include:",
+    "dataPermits": "Construction permits",
+    "dataPermitsDetail": "updated weekly, data since 1990",
+    "data311": "311 service requests",
+    "data311Detail": "updated daily, data since 2014",
+    "dataSnow": "Snow removal",
+    "dataSnowDetail": "seasonal data",
+    "dataRoads": "Road construction",
+    "dataRoadsDetail": "updated regularly",
+    "dataContracts": "Municipal contracts",
+    "dataContractsDetail": "all contracts over $2,000",
+    "methodologyTitle": "Scoring methodology",
+    "methodologyIntro": "Each borough receives a grade from A to F based on a composite score of 0 to 100. For permits, the score considers:",
+    "methodologyMedian": "Median processing time vs the 90-day target (40%)",
+    "methodologyPct": "Percentage of permits processed on time (40%)",
+    "methodologyTrend": "Year-over-year trend (20%)",
+    "methodologyNote": "Grades are both relative (borough vs borough) and absolute (borough vs its own targets).",
+    "openSourceTitle": "Open source",
+    "openSourceBody": "Source code is available on <link>GitHub</link>. Contributions welcome.",
+    "contactTitle": "Contact",
+    "contactBody": "MontréalScore is a project by <link>Brulé AI</link>."
+  },
+  "LocaleSwitcher": {
+    "label": "FR"
+  }
+}

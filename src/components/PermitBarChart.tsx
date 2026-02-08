@@ -12,7 +12,7 @@ import {
   Cell,
 } from "recharts";
 import type { Grade } from "@/lib/types";
-import { gradeColor, scoreToGrade } from "@/lib/scoring";
+import { gradeColor } from "@/lib/scoring";
 
 interface PermitBarChartProps {
   data: {
@@ -21,10 +21,15 @@ interface PermitBarChartProps {
     grade: Grade;
   }[];
   targetDays?: number;
+  labels: {
+    yAxis: string;
+    tooltipLabel: string;
+    tooltipUnit: string;
+    targetLabel: string;
+  };
 }
 
-export function PermitBarChart({ data, targetDays = 90 }: PermitBarChartProps) {
-  // Shorten borough names for chart readability
+export function PermitBarChart({ data, targetDays = 90, labels }: PermitBarChartProps) {
   const chartData = data.map((d) => ({
     ...d,
     shortName: d.borough
@@ -52,11 +57,11 @@ export function PermitBarChart({ data, targetDays = 90 }: PermitBarChartProps) {
           tick={{ fontSize: 11 }}
         />
         <YAxis
-          label={{ value: "Jours", angle: -90, position: "insideLeft" }}
+          label={{ value: labels.yAxis, angle: -90, position: "insideLeft" }}
           tick={{ fontSize: 12 }}
         />
         <Tooltip
-          formatter={(value: number) => [`${Math.round(value)} jours`, "Délai médian"]}
+          formatter={(value: number) => [`${Math.round(value)} ${labels.tooltipUnit}`, labels.tooltipLabel]}
           contentStyle={{
             background: "var(--card-bg)",
             border: "1px solid var(--card-border)",
@@ -67,7 +72,7 @@ export function PermitBarChart({ data, targetDays = 90 }: PermitBarChartProps) {
           y={targetDays}
           stroke="var(--grade-a)"
           strokeDasharray="5 5"
-          label={{ value: `Cible: ${targetDays}j`, position: "right", fontSize: 12 }}
+          label={{ value: labels.targetLabel, position: "right", fontSize: 12 }}
         />
         <Bar dataKey="medianDays" radius={[4, 4, 0, 0]}>
           {chartData.map((entry, index) => (

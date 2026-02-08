@@ -1,4 +1,5 @@
 import type { BoroughScore } from "@/lib/types";
+import { getTranslations } from "next-intl/server";
 import { GradeBadge } from "./GradeBadge";
 
 interface BoroughCardProps {
@@ -8,10 +9,11 @@ interface BoroughCardProps {
   pctWithinTarget?: number;
 }
 
-export function BoroughCard({ score, rank, medianDays, pctWithinTarget }: BoroughCardProps) {
+export async function BoroughCard({ score, rank, medianDays, pctWithinTarget }: BoroughCardProps) {
+  const t = await getTranslations("BoroughCard");
+
   return (
-    <a
-      href={`/boroughs/${score.slug}`}
+    <div
       className="block border border-card-border rounded-xl p-4 bg-card-bg hover:border-accent transition-colors"
     >
       <div className="flex items-center gap-4">
@@ -22,11 +24,11 @@ export function BoroughCard({ score, rank, medianDays, pctWithinTarget }: Boroug
           <div className="flex gap-4 text-xs text-muted mt-1">
             {medianDays !== undefined && (
               <span>
-                {Math.round(medianDays)} jours médians
+                {t("medianDays", { count: Math.round(medianDays) })}
               </span>
             )}
             {pctWithinTarget !== undefined && (
-              <span>{Math.round(pctWithinTarget)}% dans les délais</span>
+              <span>{t("withinTarget", { pct: Math.round(pctWithinTarget) })}</span>
             )}
           </div>
         </div>
@@ -35,6 +37,6 @@ export function BoroughCard({ score, rank, medianDays, pctWithinTarget }: Boroug
           <span className="text-xs text-muted">/100</span>
         </div>
       </div>
-    </a>
+    </div>
   );
 }

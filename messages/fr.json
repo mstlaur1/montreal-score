@@ -1,0 +1,102 @@
+{
+  "Metadata": {
+    "siteTitle": "MontréalScore — Suivi de la performance municipale",
+    "siteDescription": "Notes de performance par arrondissement pour Montréal, basées sur les données ouvertes de la Ville. Permis, requêtes 311, déneigement et plus."
+  },
+  "Nav": {
+    "permits": "Permis",
+    "boroughs": "Arrondissements",
+    "311": "311",
+    "about": "À propos"
+  },
+  "Footer": {
+    "dataFrom": "Données provenant de",
+    "openSourceBy": "Projet open-source par"
+  },
+  "HomePage": {
+    "heroSubtitle": "Votre gouvernement municipal est-il performant? Notes de performance pour chaque arrondissement, basées sur les données ouvertes de la Ville.",
+    "medianDelay": "Délai médian",
+    "days": "jours",
+    "targetDetail": "Cible: {target} jours",
+    "daysLessThanLastYear": "{count}j de moins que l'an dernier",
+    "daysMoreThanLastYear": "{count}j de plus que l'an dernier",
+    "onTime": "Dans les délais",
+    "permitsWithinTarget": "Permis traités en ≤{target} jours",
+    "bestBorough": "Meilleur arrondissement",
+    "worstBorough": "Pire arrondissement",
+    "boroughRankings": "Classement des arrondissements",
+    "viewPermitDetails": "Voir les détails des permis",
+    "ctaTitle": "La mairesse a promis 90 jours. On vérifie.",
+    "ctaBody": "Toutes les données proviennent du portail de données ouvertes de la Ville de Montréal. Mises à jour chaque semaine. Aucune opinion — seulement les chiffres."
+  },
+  "PermitsPage": {
+    "metadata": {
+      "title": "Permis de construction — MontréalScore",
+      "description": "Suivi des délais de traitement des permis de construction par arrondissement à Montréal."
+    },
+    "title": "Permis de construction",
+    "subtitle": "Délais de traitement par arrondissement vs la cible de {target} jours (promesse de la mairesse Martinez Ferrada). L'ancienne cible était de {previousTarget} jours.",
+    "permitsThisYear": "Permis cette année",
+    "medianDelay": "Délai médian",
+    "days": "jours",
+    "withinTarget": "Dans la cible de {target}j",
+    "percent": "%",
+    "trend": "Tendance",
+    "vsLastYear": "vs l'an dernier",
+    "improvement": "Amélioration",
+    "deterioration": "Détérioration",
+    "medianByBorough": "Délai médian par arrondissement",
+    "chartFootnote": "Ligne verte pointillée = cible de {target} jours. Couleurs selon la note de l'arrondissement.",
+    "historicalTrend": "Tendance historique",
+    "year": "Année",
+    "permitsFiled": "Permis déposés",
+    "methodology": "Méthodologie",
+    "methodologyText": "Les délais sont calculés à partir des champs date_debut (date de demande) et date_emission (date d'émission) du jeu de données ouvert de la Ville de Montréal. Le délai médian est utilisé plutôt que la moyenne pour réduire l'impact des cas extrêmes. Les données sont mises à jour chaque semaine par la Ville."
+  },
+  "PermitBarChart": {
+    "yAxisLabel": "Jours",
+    "tooltipDays": "{value} jours",
+    "tooltipLabel": "Délai médian",
+    "targetLabel": "Cible: {target}j"
+  },
+  "BoroughCard": {
+    "medianDays": "{count} jours médians",
+    "withinTarget": "{pct}% dans les délais"
+  },
+  "AboutPage": {
+    "metadata": {
+      "title": "À propos — MontréalScore",
+      "description": "Comment fonctionne MontréalScore et d'où viennent les données."
+    },
+    "title": "À propos de MontréalScore",
+    "intro": "MontréalScore est un outil gratuit et open-source qui suit la performance du gouvernement municipal de Montréal, arrondissement par arrondissement, en utilisant les données ouvertes de la Ville.",
+    "whyTitle": "Pourquoi?",
+    "whyBody": "La mairesse Soraya Martinez Ferrada a promis un délai maximum de 90 jours pour les permis de construction. L'administration précédente avait fixé une cible de 120 jours. Actuellement, le délai médian est de plus de 200 jours dans certains arrondissements. Aucun tableau de bord public ne permet de vérifier si ces cibles sont atteintes.",
+    "whyBody2": "MontréalScore comble cette lacune. Pas d'opinions. Pas de parti pris. Seulement les chiffres.",
+    "dataSourcesTitle": "Sources de données",
+    "dataSourcesIntro": "Toutes les données proviennent du <link>portail de données ouvertes de Montréal</link>. Les ensembles de données utilisés incluent:",
+    "dataPermits": "Permis de construction",
+    "dataPermitsDetail": "mis à jour chaque semaine, données depuis 1990",
+    "data311": "Requêtes 311",
+    "data311Detail": "mis à jour quotidiennement, données depuis 2014",
+    "dataSnow": "Déneigement",
+    "dataSnowDetail": "données saisonnières",
+    "dataRoads": "Travaux routiers",
+    "dataRoadsDetail": "mis à jour régulièrement",
+    "dataContracts": "Contrats municipaux",
+    "dataContractsDetail": "tous les contrats de plus de 2 000$",
+    "methodologyTitle": "Méthodologie de notation",
+    "methodologyIntro": "Chaque arrondissement reçoit une note de A à F basée sur un score composite de 0 à 100. Pour les permis, le score considère:",
+    "methodologyMedian": "Le délai médian de traitement vs la cible de 90 jours (40%)",
+    "methodologyPct": "Le pourcentage de permis traités dans les délais (40%)",
+    "methodologyTrend": "La tendance par rapport à l'année précédente (20%)",
+    "methodologyNote": "Les notes sont relatives (arrondissement vs arrondissement) et absolues (arrondissement vs ses propres cibles).",
+    "openSourceTitle": "Open source",
+    "openSourceBody": "Le code source est disponible sur <link>GitHub</link>. Les contributions sont les bienvenues.",
+    "contactTitle": "Contact",
+    "contactBody": "MontréalScore est un projet de <link>Brulé AI</link>."
+  },
+  "LocaleSwitcher": {
+    "label": "EN"
+  }
+}
