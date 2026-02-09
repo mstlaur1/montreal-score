@@ -16,20 +16,30 @@
     "openSourceBy": "Open-source project by"
   },
   "HomePage": {
-    "heroSubtitle": "Is your municipal government performing? Performance grades for each borough, based on the City's open data.",
+    "heroSubtitle": "Is your municipal government delivering? Tracking promises, permits, and contracts with the City's own open data.",
+    "promisesTitle": "Campaign Promises",
+    "promisesTracked": "{count} promises tracked",
+    "promisesCompleted": "{count} completed",
+    "promisesInProgress": "{count} in progress",
+    "promisesBroken": "{count} broken",
+    "promisesPartial": "{count} partial",
+    "viewPromises": "View promise tracker",
+    "permitsTitle": "Construction Permits",
     "medianDelay": "Median delay",
     "days": "days",
     "targetDetail": "Target: {target} days",
-    "daysLessThanLastYear": "{count}d less than last year",
-    "daysMoreThanLastYear": "{count}d more than last year",
     "onTime": "On time",
-    "permitsWithinTarget": "Permits processed in ≤{target} days",
+    "permitsWithinTarget": "permits processed in ≤{target} days",
     "bestBorough": "Best borough",
     "worstBorough": "Worst borough",
-    "boroughRankings": "Borough rankings",
-    "viewPermitDetails": "View permit details",
-    "ctaTitle": "The mayor promised 90 days. We're checking.",
-    "ctaBody": "All data comes from the City of Montreal's open data portal. Updated weekly. No opinions — just the numbers."
+    "viewPermits": "View permit details",
+    "contractsTitle": "Municipal Contracts",
+    "totalContracts": "{count} contracts",
+    "totalValue": "Total value",
+    "topSupplier": "Top supplier",
+    "viewContracts": "View contract analysis",
+    "ctaTitle": "No opinions. No party affiliation. Just the data.",
+    "ctaBody": "All data comes from the City of Montreal's open data portal and public reporting. Updated regularly. MontréalScore connects promises to outcomes — so you can hold your government accountable."
   },
   "PermitsPage": {
     "metadata": {
@@ -114,7 +124,7 @@
       "description": "Tracking municipal contracts for the City of Montreal — suppliers, departments, and amounts."
     },
     "title": "Municipal Contracts",
-    "subtitle": "All contracts over $2,000 approved by the City of Montreal. Data from the open data portal.",
+    "subtitle": "Procurement contracts approved by city council, executive committee, borough councils, and civil servants. Intergovernmental transfers are excluded.",
     "from": "From",
     "to": "To",
     "totalContracts": "Contracts",
@@ -144,7 +154,7 @@
     "belowThreshold": "{count} of {total} contracts below threshold ({pct}%)",
     "thresholdMethodology": "Comparison uses a symmetric value band above the threshold as baseline. The threshold applied matches the one in effect at each contract's approval date. A ratio significantly above 1 may indicate contract splitting. Sources: <lcv>art. 573.3.1.2, Loi sur les cités et villes</lcv> ($25K threshold); <mamh>MAMH — Conformité des contrats municipaux</mamh> (public tender thresholds, adjusted biennially via Muni-Express).",
     "methodology": "Methodology",
-    "methodologyText": "Data comes from the \"Contrats de la Ville de Montréal\" dataset on the open data portal. All contracts of $2,000 and above are published. Amounts are in Canadian dollars."
+    "methodologyText": "Data comes from four City of Montreal open datasets: contracts approved by city council, the agglomeration council, the executive committee, and borough councils, plus contracts awarded under delegated authority by civil servants. Intergovernmental transfers (ARTM, STM, CMM, etc.) and union/pension contributions are excluded to focus on actual procurement. Amounts are in Canadian dollars."
   },
   "PromisesPage": {
     "metadata": {

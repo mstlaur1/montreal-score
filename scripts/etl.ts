@@ -15,7 +15,65 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_PATH = path.join(__dirname, "..", "data", "montreal.db");
 const API_BASE = "https://donnees.montreal.ca/api/3/action";
 const PERMITS_RESOURCE_ID = "5232a72d-235a-48eb-ae20-bb9d501300ad";
-const CONTRACTS_RESOURCE_ID = "e4b758ab-3edb-4b6a-8764-2a443b6b9404";
+
+// Four contract datasets — each approved by a different body
+const CONTRACT_SOURCES = [
+  {
+    id: "e4b758ab-3edb-4b6a-8764-2a443b6b9404",
+    source: "fonctionnaires",
+    label: "Fonctionnaires",
+    dateCol: "DATE D'APPROBATION",
+    supplierCol: "NOM DU FOURNISSEUR",
+    serviceCol: "SERVICE",
+    amountCol: "MONTANT",
+    descCol: "ACTIVITE",       // used as description
+    idOffset: 0,               // offset to avoid _id collisions
+  },
+  {
+    id: "1e5ab066-f560-4b4f-8f12-991de39df134",
+    source: "conseil_municipal",
+    label: "Conseil municipal",
+    dateCol: "DATE SIGNATURE",
+    supplierCol: "FOURNISSEUR",
+    serviceCol: "SERVICE",
+    amountCol: "MONTANT",
+    descCol: "OBJET",
+    idOffset: 1_000_000,
+  },
+  {
+    id: "7cf955d0-a3e6-4e94-8c24-9b0a4f7c0408",
+    source: "conseil_agglomeration",
+    label: "Conseil d'agglomération",
+    dateCol: "DATE SIGNATURE",
+    supplierCol: "FOURNISSEUR",
+    serviceCol: "SERVICE",
+    amountCol: "MONTANT",
+    descCol: "OBJET",
+    idOffset: 2_000_000,
+  },
+  {
+    id: "4b2d8744-a257-4102-8897-95a30a20de34",
+    source: "comite_executif",
+    label: "Comité exécutif",
+    dateCol: "DATE SIGNATURE",
+    supplierCol: "FOURNISSEUR",
+    serviceCol: "SERVICE",
+    amountCol: "MONTANT",
+    descCol: "OBJET",
+    idOffset: 3_000_000,
+  },
+  {
+    id: "941c7e36-a831-4228-b737-21174c6a1864",
+    source: "conseils_arrondissement",
+    label: "Conseils d'arrondissement",
+    dateCol: "DATE SIGNATURE",
+    supplierCol: "FOURNISSEUR",
+    serviceCol: "SERVICE",
+    amountCol: "MONTANT",
+    descCol: "OBJET",
+    idOffset: 4_000_000,
+  },
+] as const;
 
 const isFullMode = process.argv.includes("--full");
 
@@ -77,7 +135,9 @@ function initSchema(db: Database.Database) {
       approval_date  TEXT,
       service        TEXT,
       activite       TEXT,
-      montant        REAL
+      montant        REAL,
+      source         TEXT,
+      description    TEXT
     );
 
     CREATE TABLE IF NOT EXISTS etl_runs (
@@ -93,6 +153,7 @@ function initSchema(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_permits_borough ON permits(arrondissement);
     CREATE INDEX IF NOT EXISTS idx_contracts_date ON contracts(approval_date);
     CREATE INDEX IF NOT EXISTS idx_contracts_supplier ON contracts(supplier);
+    CREATE INDEX IF NOT EXISTS idx_contracts_source ON contracts(source);
 
     CREATE TABLE IF NOT EXISTS promises (
       id              TEXT PRIMARY KEY,
@@ -166,13 +227,13 @@ async function loadPermits(db: Database.Database, years: number[]) {
 }
 
 // ---------------------------------------------------------------------------
-// Contracts ETL
+// Contracts ETL — loads all 4 contract datasets
 // ---------------------------------------------------------------------------
 
 async function loadContracts(db: Database.Database, years: number[]) {
   const insert = db.prepare(`
-    INSERT OR REPLACE INTO contracts (_id, supplier, numero, approval_date, service, activite, montant)
-    VALUES (@_id, @supplier, @numero, @approval_date, @service, @activite, @montant)
+    INSERT OR REPLACE INTO contracts (_id, supplier, numero, approval_date, service, activite, montant, source, description)
+    VALUES (@_id, @supplier, @numero, @approval_date, @service, @activite, @montant, @source, @description)
   `);
   const insertMany = db.transaction((rows: Record<string, unknown>[]) => {
     for (const r of rows) insert.run(r);
@@ -180,31 +241,38 @@ async function loadContracts(db: Database.Database, years: number[]) {
 
   let totalRows = 0;
 
-  for (const year of years) {
-    const sql = `
-      SELECT "_id", "NOM DU FOURNISSEUR", "NUMERO", "DATE D'APPROBATION", "SERVICE", "ACTIVITE", "MONTANT"
-      FROM "${CONTRACTS_RESOURCE_ID}"
-      WHERE "DATE D'APPROBATION" >= '${year}-01-01'
-        AND "DATE D'APPROBATION" < '${year + 1}-01-01'
-    `;
-    console.log(`📄 Contracts ${year}...`);
-    const records = await ckanSqlQuery(sql);
-    // Map CKAN French column names to clean SQLite column names
-    const mapped = records.map((r) => ({
-      _id: r["_id"],
-      supplier: r["NOM DU FOURNISSEUR"],
-      numero: r["NUMERO"],
-      approval_date: r["DATE D'APPROBATION"],
-      service: r["SERVICE"],
-      activite: r["ACTIVITE"],
-      montant: r["MONTANT"] ? parseFloat(r["MONTANT"] as string) : null,
-    }));
-    if (mapped.length > 0) {
-      insertMany(mapped);
+  for (const src of CONTRACT_SOURCES) {
+    console.log(`\n📄 Loading: ${src.label}`);
+
+    for (const year of years) {
+      const sql = `
+        SELECT "_id", "${src.supplierCol}", "${src.dateCol}", "${src.serviceCol}", "${src.amountCol}"${
+          src.descCol ? `, "${src.descCol}"` : ""
+        }
+        FROM "${src.id}"
+        WHERE "${src.dateCol}" >= '${year}-01-01'
+          AND "${src.dateCol}" < '${year + 1}-01-01'
+      `;
+      console.log(`   ${year}...`);
+      const records = await ckanSqlQuery(sql);
+      const mapped = records.map((r) => ({
+        _id: (r["_id"] as number) + src.idOffset,
+        supplier: r[src.supplierCol] as string,
+        numero: null,
+        approval_date: r[src.dateCol] as string,
+        service: r[src.serviceCol] as string,
+        activite: null,
+        montant: r[src.amountCol] ? parseFloat(r[src.amountCol] as string) : null,
+        source: src.source,
+        description: src.descCol ? (r[src.descCol] as string) : null,
+      }));
+      if (mapped.length > 0) {
+        insertMany(mapped);
+      }
+      console.log(`   ${records.length} rows`);
+      totalRows += records.length;
+      await sleep(1000);
     }
-    console.log(`   ${records.length} rows`);
-    totalRows += records.length;
-    await sleep(1000);
   }
 
   return totalRows;

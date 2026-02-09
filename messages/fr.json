@@ -16,20 +16,30 @@
     "openSourceBy": "Projet open-source par"
   },
   "HomePage": {
-    "heroSubtitle": "Votre gouvernement municipal est-il performant? Notes de performance pour chaque arrondissement, basées sur les données ouvertes de la Ville.",
+    "heroSubtitle": "Votre gouvernement municipal livre-t-il? Suivi des promesses, permis et contrats avec les données ouvertes de la Ville.",
+    "promisesTitle": "Promesses électorales",
+    "promisesTracked": "{count} promesses suivies",
+    "promisesCompleted": "{count} complétées",
+    "promisesInProgress": "{count} en cours",
+    "promisesBroken": "{count} rompues",
+    "promisesPartial": "{count} partielles",
+    "viewPromises": "Voir le suivi des promesses",
+    "permitsTitle": "Permis de construction",
     "medianDelay": "Délai médian",
     "days": "jours",
     "targetDetail": "Cible: {target} jours",
-    "daysLessThanLastYear": "{count}j de moins que l'an dernier",
-    "daysMoreThanLastYear": "{count}j de plus que l'an dernier",
     "onTime": "Dans les délais",
-    "permitsWithinTarget": "Permis traités en ≤{target} jours",
+    "permitsWithinTarget": "permis traités en ≤{target} jours",
     "bestBorough": "Meilleur arrondissement",
     "worstBorough": "Pire arrondissement",
-    "boroughRankings": "Classement des arrondissements",
-    "viewPermitDetails": "Voir les détails des permis",
-    "ctaTitle": "La mairesse a promis 90 jours. On vérifie.",
-    "ctaBody": "Toutes les données proviennent du portail de données ouvertes de la Ville de Montréal. Mises à jour chaque semaine. Aucune opinion — seulement les chiffres."
+    "viewPermits": "Voir les détails des permis",
+    "contractsTitle": "Contrats municipaux",
+    "totalContracts": "{count} contrats",
+    "totalValue": "Valeur totale",
+    "topSupplier": "Principal fournisseur",
+    "viewContracts": "Voir l'analyse des contrats",
+    "ctaTitle": "Aucune opinion. Aucune affiliation partisane. Seulement les données.",
+    "ctaBody": "Toutes les données proviennent du portail de données ouvertes de la Ville de Montréal et des reportages publics. Mises à jour régulièrement. MontréalScore fait le lien entre les promesses et les résultats — pour que vous puissiez demander des comptes à votre gouvernement."
   },
   "PermitsPage": {
     "metadata": {
@@ -114,7 +124,7 @@
       "description": "Suivi des contrats municipaux de la Ville de Montréal — fournisseurs, services et montants."
     },
     "title": "Contrats municipaux",
-    "subtitle": "Tous les contrats de plus de 2 000$ approuvés par la Ville de Montréal. Données provenant du portail de données ouvertes.",
+    "subtitle": "Contrats d'approvisionnement approuvés par le conseil municipal, le comité exécutif, les conseils d'arrondissement et les fonctionnaires. Les transferts intergouvernementaux sont exclus.",
     "from": "De",
     "to": "À",
     "totalContracts": "Contrats",
@@ -144,7 +154,7 @@
     "belowThreshold": "{count} de {total} contrats sous le seuil ({pct}%)",
     "thresholdMethodology": "La comparaison utilise une bande de valeur symétrique au-dessus du seuil comme référence. Le seuil appliqué correspond à celui en vigueur à la date d'approbation du contrat. Un ratio significativement supérieur à 1 peut indiquer du fractionnement de contrats. Sources: <lcv>art. 573.3.1.2, Loi sur les cités et villes</lcv> (seuil de 25 000$); <mamh>MAMH — Conformité des contrats municipaux</mamh> (seuils d'appel d'offres public, ajustés aux deux ans via Muni-Express).",
     "methodology": "Méthodologie",
-    "methodologyText": "Les données proviennent du jeu de données « Contrats de la Ville de Montréal » du portail de données ouvertes. Tous les contrats de 2 000$ et plus y sont publiés. Les montants sont en dollars canadiens."
+    "methodologyText": "Les données proviennent de quatre jeux de données ouverts de la Ville de Montréal : contrats approuvés par le conseil municipal, le conseil d'agglomération, le comité exécutif et les conseils d'arrondissement, plus les contrats octroyés par les fonctionnaires sous autorité déléguée. Les transferts intergouvernementaux (ARTM, STM, CMM, etc.) et les contributions syndicales/retraite sont exclus pour se concentrer sur l'approvisionnement réel. Les montants sont en dollars canadiens."
   },
   "PromisesPage": {
     "metadata": {

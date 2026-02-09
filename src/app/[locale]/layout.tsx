@@ -58,21 +58,23 @@ export default async function LocaleLayout({ children, params }: Props) {
                 Montréal<span className="text-accent">Score</span>
               </Link>
               <div className="flex items-center gap-6 text-sm">
+                <Link href="/promises" className="hover:text-accent transition-colors">
+                  {t("promises")}
+                </Link>
                 <Link href="/permits" className="hover:text-accent transition-colors">
                   {t("permits")}
                 </Link>
                 <Link href="/contracts" className="hover:text-accent transition-colors">
                   {t("contracts")}
                 </Link>
+                {/* Boroughs and 311 pages — disabled for now
                 <Link href="/boroughs" className="hover:text-accent transition-colors">
                   {t("boroughs")}
                 </Link>
                 <Link href="/311" className="hover:text-accent transition-colors">
                   {t("311")}
                 </Link>
-                <Link href="/promises" className="hover:text-accent transition-colors">
-                  {t("promises")}
-                </Link>
+                */}
                 <Link href="/about" className="hover:text-accent transition-colors">
                   {t("about")}
                 </Link>

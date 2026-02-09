@@ -59,11 +59,35 @@ export function queryYearlyTrends(
 }
 
 /**
+ * Intergovernmental / institutional suppliers that are budget transfers,
+ * not procurement contracts. Excluded from analysis by default.
+ */
+const INTERGOVERNMENTAL_SUPPLIERS = [
+  "AUTORITE REGIONALE DE TRANSPORT METROPOLITAIN",
+  "SOCIETE DE TRANSPORT DE MONTREAL (STM)",
+  "TRUST ROYAL DU CANADA",
+  "SOCIETE DU PARC JEAN-DRAPEAU",
+  "COMMUNAUTE METROPOLITAINE DE MONTREAL",
+  "COMMISSION DE LA CAISSE COMMUNE",
+  "RESEAU DE TRANSPORT METROPOLITAIN",
+  "CONSEIL DES ARTS DE MONTREAL",
+  "(ABRPPVM) ASSOCIATION BIENFAISANCE ET RETRAITE DES POLICIERS",
+  "CAISSE COMMUNE RETRAITE VILLE DE MONTREAL",
+  "SYNDICAT DES FONCTIONNAIRES MUNICIPAUX DE MONTREAL",
+  "SYNDICAT DES COLS BLEUS REGROUPES DE MONTREAL S.C.F.P. 301 / F.T.Q.",
+  "ECOLE NATIONALE DE POLICE DU QUEBEC",
+  "ASSOCIATION DES POMPIERS DE MONTREAL",
+  "SOCIETE DE L'ASSURANCE AUTOMOBILE DU QUEBEC (S.A.A.Q.)",
+];
+
+/**
  * Query contracts within a date range.
  * from/to are "YYYY-MM-DD" strings (to is exclusive).
+ * Excludes intergovernmental transfers by default.
  */
 export function queryContractsByRange(from: string, to: string): RawContract[] {
   const db = getDb();
+  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
   return db
     .prepare(
       `SELECT
@@ -72,12 +96,14 @@ export function queryContractsByRange(from: string, to: string): RawContract[] {
          approval_date  AS "DATE D'APPROBATION",
          service        AS "SERVICE",
          activite       AS "ACTIVITE",
-         CAST(montant AS TEXT) AS "MONTANT"
+         CAST(montant AS TEXT) AS "MONTANT",
+         source         AS "SOURCE"
        FROM contracts
        WHERE approval_date >= ? AND approval_date < ?
+         AND supplier NOT IN (${placeholders})
        ORDER BY approval_date DESC`
     )
-    .all(from, to) as RawContract[];
+    .all(from, to, ...INTERGOVERNMENTAL_SUPPLIERS) as RawContract[];
 }
 
 /**

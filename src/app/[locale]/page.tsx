@@ -1,8 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getBoroughScores, getBoroughPermitStats, getCitySummary } from "@/lib/data";
+import { getCitySummary, getPromiseSummary, getContractStats } from "@/lib/data";
+import { getContractDateBounds } from "@/lib/db";
 import { PERMIT_TARGET_DAYS } from "@/lib/scoring";
-import { BoroughCard } from "@/components/BoroughCard";
-import { StatCard } from "@/components/StatCard";
 import { Link } from "@/i18n/navigation";
 
 export const revalidate = 3600;
@@ -11,33 +10,56 @@ type Props = {
   params: Promise<{ locale: string }>;
 };
 
+function formatCurrency(value: number, locale: string): string {
+  const localeTag = locale === "fr" ? "fr-CA" : "en-CA";
+  return new Intl.NumberFormat(localeTag, {
+    style: "currency",
+    currency: "CAD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
 export default async function Home({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("HomePage");
 
   const currentYear = new Date().getFullYear();
-  let scores, stats, summary;
 
+  // Permits
+  let permitSummary;
   try {
-    [scores, stats, summary] = await Promise.all([
-      getBoroughScores(currentYear),
-      getBoroughPermitStats(currentYear),
-      getCitySummary(currentYear),
-    ]);
+    permitSummary = await getCitySummary(currentYear);
   } catch {
-    const fallbackYear = currentYear - 1;
-    [scores, stats, summary] = await Promise.all([
-      getBoroughScores(fallbackYear),
-      getBoroughPermitStats(fallbackYear),
-      getCitySummary(fallbackYear),
-    ]);
+    permitSummary = await getCitySummary(currentYear - 1);
   }
 
-  const statsLookup = new Map(stats.map((s) => [s.slug, s]));
+  // Promises
+  const promiseSummary = await getPromiseSummary();
+
+  // Contracts — last 12 months
+  const bounds = getContractDateBounds();
+  const now = new Date();
+  const toMonth = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+  const fromDate = new Date(now.getFullYear() - 1, now.getMonth(), 1);
+  const fromMonth = fromDate.getFullYear() + "-" + String(fromDate.getMonth() + 1).padStart(2, "0");
+  const contractFrom = fromMonth > bounds.min ? fromMonth + "-01" : bounds.min + "-01";
+  const toNext = now.getMonth() === 11
+    ? (now.getFullYear() + 1) + "-01-01"
+    : now.getFullYear() + "-" + String(now.getMonth() + 2).padStart(2, "0") + "-01";
+  const contractTo = toMonth <= bounds.max ? toNext : bounds.max + "-01";
+  const contractStats = await getContractStats(contractFrom, contractTo);
+
+  // Promise progress bar widths
+  const pTotal = promiseSummary.total || 1;
+  const pCompletedPct = (promiseSummary.completed / pTotal) * 100;
+  const pInProgressPct = (promiseSummary.in_progress / pTotal) * 100;
+  const pPartialPct = (promiseSummary.partially_met / pTotal) * 100;
+  const pBrokenPct = (promiseSummary.broken / pTotal) * 100;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Hero */}
       <section className="text-center py-12">
         <h1 className="text-4xl font-bold tracking-tight">
@@ -48,59 +70,135 @@ export default async function Home({ params }: Props) {
         </p>
       </section>
 
-      {/* City-wide Stats */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-        <StatCard
-          label={t("medianDelay")}
-          value={Math.round(summary.median_processing_days)}
-          unit={t("days")}
-          detail={t("targetDetail", { target: PERMIT_TARGET_DAYS })}
-          trend={summary.trend_vs_last_year < -5 ? "down" : summary.trend_vs_last_year > 5 ? "up" : "flat"}
-          trendLabel={
-            summary.trend_vs_last_year < 0
-              ? t("daysLessThanLastYear", { count: Math.abs(Math.round(summary.trend_vs_last_year)) })
-              : t("daysMoreThanLastYear", { count: Math.round(summary.trend_vs_last_year) })
-          }
-        />
-        <StatCard
-          label={t("onTime")}
-          value={Math.round(summary.pct_within_target)}
-          unit="%"
-          detail={t("permitsWithinTarget", { target: PERMIT_TARGET_DAYS })}
-        />
-        <StatCard
-          label={t("bestBorough")}
-          value={summary.best_borough}
-        />
-        <StatCard
-          label={t("worstBorough")}
-          value={summary.worst_borough}
-        />
-      </section>
+      <div className="space-y-8">
+        {/* Promises */}
+        <section className="border border-card-border rounded-xl p-6 bg-card-bg">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">{t("promisesTitle")}</h2>
+            <Link href="/promises" className="text-sm text-accent hover:underline">
+              {t("viewPromises")} &rarr;
+            </Link>
+          </div>
+          <p className="text-sm text-muted mb-3">
+            {t("promisesTracked", { count: promiseSummary.total })}
+          </p>
+          {/* Progress bar */}
+          <div className="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex">
+            {pCompletedPct > 0 && (
+              <div className="bg-green-700 h-full" style={{ width: `${pCompletedPct}%` }} />
+            )}
+            {pPartialPct > 0 && (
+              <div className="bg-emerald-400 h-full" style={{ width: `${pPartialPct}%` }} />
+            )}
+            {pInProgressPct > 0 && (
+              <div className="bg-yellow-400 h-full" style={{ width: `${pInProgressPct}%` }} />
+            )}
+            {pBrokenPct > 0 && (
+              <div className="bg-red-500 h-full" style={{ width: `${pBrokenPct}%` }} />
+            )}
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-xs text-muted">
+            {promiseSummary.completed > 0 && (
+              <span className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-green-700 inline-block" />
+                {t("promisesCompleted", { count: promiseSummary.completed })}
+              </span>
+            )}
+            {promiseSummary.partially_met > 0 && (
+              <span className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" />
+                {t("promisesPartial", { count: promiseSummary.partially_met })}
+              </span>
+            )}
+            {promiseSummary.in_progress > 0 && (
+              <span className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 inline-block" />
+                {t("promisesInProgress", { count: promiseSummary.in_progress })}
+              </span>
+            )}
+            {promiseSummary.broken > 0 && (
+              <span className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" />
+                {t("promisesBroken", { count: promiseSummary.broken })}
+              </span>
+            )}
+          </div>
+        </section>
 
-      {/* Borough Rankings */}
-      <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">{t("boroughRankings")}</h2>
-          <Link href="/permits" className="text-sm text-accent hover:underline">
-            {t("viewPermitDetails")} &rarr;
-          </Link>
-        </div>
-        <div className="flex flex-col gap-2">
-          {scores.map((score, i) => {
-            const st = statsLookup.get(score.slug);
-            return (
-              <BoroughCard
-                key={score.slug}
-                score={score}
-                rank={i + 1}
-                medianDays={st?.median_processing_days}
-                pctWithinTarget={st?.pct_within_90_days}
-              />
-            );
-          })}
-        </div>
-      </section>
+        {/* Permits */}
+        <section className="border border-card-border rounded-xl p-6 bg-card-bg">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">{t("permitsTitle")}</h2>
+            <Link href="/permits" className="text-sm text-accent hover:underline">
+              {t("viewPermits")} &rarr;
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <p className="text-sm text-muted">{t("medianDelay")}</p>
+              <p className="text-2xl font-bold">
+                {Math.round(permitSummary.median_processing_days)}
+                <span className="text-sm font-normal text-muted ml-1">{t("days")}</span>
+              </p>
+              <p className="text-xs text-muted">{t("targetDetail", { target: PERMIT_TARGET_DAYS })}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted">{t("onTime")}</p>
+              <p className="text-2xl font-bold">
+                {Math.round(permitSummary.pct_within_target)}
+                <span className="text-sm font-normal text-muted ml-1">%</span>
+              </p>
+              <p className="text-xs text-muted">{t("permitsWithinTarget", { target: PERMIT_TARGET_DAYS })}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted">{t("bestBorough")}</p>
+              <p className="text-lg font-semibold">{permitSummary.best_borough}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted">{t("worstBorough")}</p>
+              <p className="text-lg font-semibold">{permitSummary.worst_borough}</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Contracts */}
+        <section className="border border-card-border rounded-xl p-6 bg-card-bg">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">{t("contractsTitle")}</h2>
+            <Link href="/contracts" className="text-sm text-accent hover:underline">
+              {t("viewContracts")} &rarr;
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-muted">{t("totalContracts", { count: contractStats.totalContracts.toLocaleString() })}</p>
+              <p className="text-2xl font-bold">{formatCurrency(contractStats.totalValue, locale)}</p>
+              <p className="text-xs text-muted">{t("totalValue")}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted">{t("topSupplier")}</p>
+              <p className="text-lg font-semibold truncate">
+                {contractStats.topSuppliers[0]?.name ?? "—"}
+              </p>
+              <p className="text-xs text-muted">
+                {contractStats.topSuppliers[0]
+                  ? formatCurrency(contractStats.topSuppliers[0].totalValue, locale)
+                  : ""}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted">Top 10</p>
+              <p className="text-2xl font-bold">
+                {Math.round(contractStats.top10ConcentrationPct)}
+                <span className="text-sm font-normal text-muted ml-1">%</span>
+              </p>
+              <p className="text-xs text-muted">
+                {locale === "fr" ? "des dépenses" : "of spending"}
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
 
       {/* CTA */}
       <section className="text-center py-12 mt-8 border-t border-card-border">

@@ -99,6 +99,7 @@ export interface RawContract {
   SERVICE: string;
   ACTIVITE: string;
   MONTANT: string; // stored as text in CKAN
+  SOURCE: string | null; // fonctionnaires | conseil_municipal | conseil_agglomeration | comite_executif | conseils_arrondissement
 }
 
 /** Aggregated contract statistics for display */
