@@ -1,13 +1,16 @@
 import { cache } from "react";
 import {
   queryPermitsByYear, queryYearlyTrends, queryContractsByRange, getLastEtlRun,
+  querySoleSourceByYear, querySoleSourceTopRecipients, queryYearlyContractsBySource,
   queryPromises, queryFirst100DaysPromises, queryBoroughPromises, queryLatestPromiseUpdates,
   queryPromiseStatusCounts, queryPromiseCategoryCounts, queryPromiseUpdateCounts,
 } from "./db";
 import { normalizeBoroughName, getBoroughSlug } from "./boroughs";
 import { calculateBoroughScores, rankBoroughs, scoreToGrade, PERMIT_TARGET_DAYS } from "./scoring";
+import { normalizeSupplierName } from "./supplier-normalization";
 import type {
   BoroughPermitStats, BoroughScore, BoroughComparison, CitySummary, ContractStats,
+  SoleSourceStats, YearlyContractTrend,
   CampaignPromise, PromiseUpdate, PromiseSummary, PromiseCategorySummary,
   PromiseStatus, PromiseSentiment, PromiseCategory,
 } from "./types";
@@ -203,10 +206,11 @@ export const getContractStats = cache(async (from: string, to: string): Promise<
   const sortedAmounts = [...amounts].sort((a, b) => a - b);
   const totalValue = amounts.reduce((sum, v) => sum + v, 0);
 
-  // Top suppliers by total value
+  // Top suppliers by total value (with name normalization)
   const supplierMap = new Map<string, { count: number; totalValue: number }>();
   for (const c of raw) {
-    const name = c["NOM DU FOURNISSEUR"];
+    const rawName = c["NOM DU FOURNISSEUR"];
+    const name = rawName ? normalizeSupplierName(rawName) : rawName;
     const amt = parseFloat(c.MONTANT) || 0;
     const existing = supplierMap.get(name) || { count: 0, totalValue: 0 };
     existing.count++;
@@ -350,6 +354,66 @@ export const getContractStats = cache(async (from: string, to: string): Promise<
     from,
     to,
   };
+});
+
+/**
+ * Get sole-source (gré à gré) contract statistics for a date range.
+ */
+export const getSoleSourceStats = cache(async (from: string, to: string): Promise<SoleSourceStats> => {
+  const byYear = querySoleSourceByYear(from, to);
+  const rawRecipients = querySoleSourceTopRecipients(from, to, 10);
+
+  // Normalize recipient names and re-aggregate
+  const recipientMap = new Map<string, { count: number; totalValue: number }>();
+  for (const r of rawRecipients) {
+    const name = normalizeSupplierName(r.supplier);
+    const existing = recipientMap.get(name) || { count: 0, totalValue: 0 };
+    existing.count += r.count;
+    existing.totalValue += r.totalValue;
+    recipientMap.set(name, existing);
+  }
+  const topRecipients = [...recipientMap.entries()]
+    .map(([name, data]) => ({ name, ...data }))
+    .sort((a, b) => b.totalValue - a.totalValue)
+    .slice(0, 10);
+
+  const totalCount = byYear.reduce((sum, y) => sum + y.count, 0);
+  const totalValue = byYear.reduce((sum, y) => sum + y.totalValue, 0);
+
+  return { byYear, topRecipients, totalCount, totalValue };
+});
+
+/**
+ * Get yearly contract spending by approval body (source).
+ */
+export const getYearlyContractTrends = cache(async (): Promise<YearlyContractTrend[]> => {
+  const raw = queryYearlyContractsBySource(2015);
+
+  // Pivot: group by year, columns by source
+  const yearMap = new Map<string, YearlyContractTrend>();
+  for (const r of raw) {
+    // Skip junk year values (e.g. "CA24", "AUTO", "4573")
+    if (!/^\d{4}$/.test(r.year) || parseInt(r.year) < 2011 || parseInt(r.year) > 2030) continue;
+    if (!yearMap.has(r.year)) {
+      yearMap.set(r.year, {
+        year: r.year,
+        fonctionnaires: 0,
+        conseil_municipal: 0,
+        conseil_agglomeration: 0,
+        comite_executif: 0,
+        conseils_arrondissement: 0,
+        total: 0,
+      });
+    }
+    const entry = yearMap.get(r.year)!;
+    const key = r.source as keyof Omit<YearlyContractTrend, "year" | "total">;
+    if (key in entry) {
+      entry[key] = r.totalValue;
+    }
+    entry.total += r.totalValue;
+  }
+
+  return [...yearMap.values()].sort((a, b) => a.year.localeCompare(b.year));
 });
 
 // ---------------------------------------------------------------------------

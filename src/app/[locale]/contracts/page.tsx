@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getContractStats } from "@/lib/data";
+import { getContractStats, getSoleSourceStats, getYearlyContractTrends } from "@/lib/data";
 import { getContractDateBounds } from "@/lib/db";
+import { getNormalizationExamples } from "@/lib/supplier-normalization";
 import { StatCard } from "@/components/StatCard";
 import { ContractHistogram } from "@/components/ContractHistogram";
 import { DateRangeSelector } from "@/components/DateRangeSelector";
@@ -87,7 +88,12 @@ export default async function ContractsPage({ params, searchParams }: Props) {
   const toExcl = nextMonth(to.year, to.month);
   const toDate = toDateStr(toExcl.year, toExcl.month);
 
-  const stats = await getContractStats(fromDate, toDate);
+  const [stats, soleSource, yearlyTrends] = await Promise.all([
+    getContractStats(fromDate, toDate),
+    getSoleSourceStats(fromDate, toDate),
+    getYearlyContractTrends(),
+  ]);
+  const normExamples = getNormalizationExamples();
 
   const localeTag = locale === "fr" ? "fr-CA" : "en-CA";
   const fmt = (v: number) => formatCurrency(v, locale);
@@ -177,6 +183,111 @@ export default async function ContractsPage({ params, searchParams }: Props) {
           </table>
         </div>
       </section>
+
+      {/* Sole-source contracts */}
+      <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
+        <h2 className="text-xl font-bold mb-2">{t("soleSourceTitle")}</h2>
+        <p className="text-muted text-sm mb-4">{t("soleSourceSubtitle")}</p>
+        {soleSource.totalCount > 0 ? (
+          <>
+            <p className="text-sm mb-4">
+              {t("soleSourceTotal", {
+                count: soleSource.totalCount.toLocaleString(localeTag),
+                value: fmt(soleSource.totalValue),
+              })}
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Year trend table */}
+              <div>
+                <h3 className="text-sm font-semibold mb-2">{t("soleSourceYearTrend")}</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-card-border text-left">
+                        <th className="py-1.5 pr-3">{t("soleSourceYear")}</th>
+                        <th className="py-1.5 pr-3 text-right">{t("soleSourceCount")}</th>
+                        <th className="py-1.5 text-right">{t("soleSourceValue")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {soleSource.byYear.map((y) => (
+                        <tr key={y.year} className="border-b border-card-border">
+                          <td className="py-1.5 pr-3">{y.year}</td>
+                          <td className="py-1.5 pr-3 text-right font-mono">{y.count}</td>
+                          <td className="py-1.5 text-right font-mono">{fmt(y.totalValue)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Top recipients */}
+              <div>
+                <h3 className="text-sm font-semibold mb-2">{t("soleSourceTopRecipients")}</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-card-border text-left">
+                        <th className="py-1.5 pr-3">{t("supplier")}</th>
+                        <th className="py-1.5 pr-3 text-right">{t("contracts")}</th>
+                        <th className="py-1.5 text-right">{t("totalAmount")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {soleSource.topRecipients.map((r) => (
+                        <tr key={r.name} className="border-b border-card-border">
+                          <td className="py-1.5 pr-3">{r.name}</td>
+                          <td className="py-1.5 pr-3 text-right font-mono">{r.count}</td>
+                          <td className="py-1.5 text-right font-mono">{fmt(r.totalValue)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-muted italic">{t("soleSourceNone")}</p>
+        )}
+      </section>
+
+      {/* Yearly spending by approval body */}
+      {yearlyTrends.length > 0 && (
+        <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
+          <h2 className="text-xl font-bold mb-2">{t("yearlyTrendTitle")}</h2>
+          <p className="text-muted text-sm mb-4">{t("yearlyTrendSubtitle")}</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-card-border text-left">
+                  <th className="py-2 pr-3">{t("yearlyTrendYear")}</th>
+                  <th className="py-2 pr-3 text-right">{t("yearlyTrendFonctionnaires")}</th>
+                  <th className="py-2 pr-3 text-right">{t("yearlyTrendConseilsArrondissement")}</th>
+                  <th className="py-2 pr-3 text-right">{t("yearlyTrendComiteExecutif")}</th>
+                  <th className="py-2 pr-3 text-right">{t("yearlyTrendConseilMunicipal")}</th>
+                  <th className="py-2 pr-3 text-right">{t("yearlyTrendConseilAgglomeration")}</th>
+                  <th className="py-2 text-right font-semibold">{t("yearlyTrendTotal")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {yearlyTrends.map((y) => (
+                  <tr key={y.year} className="border-b border-card-border">
+                    <td className="py-2 pr-3 font-medium">{y.year}</td>
+                    <td className="py-2 pr-3 text-right font-mono">{fmt(y.fonctionnaires)}</td>
+                    <td className="py-2 pr-3 text-right font-mono">{fmt(y.conseils_arrondissement)}</td>
+                    <td className="py-2 pr-3 text-right font-mono">{fmt(y.comite_executif)}</td>
+                    <td className="py-2 pr-3 text-right font-mono">{fmt(y.conseil_municipal)}</td>
+                    <td className="py-2 pr-3 text-right font-mono">{fmt(y.conseil_agglomeration)}</td>
+                    <td className="py-2 text-right font-mono font-semibold">{fmt(y.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       {/* Contract value distribution histogram */}
       <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
@@ -291,6 +402,66 @@ export default async function ContractsPage({ params, searchParams }: Props) {
                   <td className="py-2 pr-4 text-right font-mono">{d.count}</td>
                   <td className="py-2 text-right font-mono">
                     {fmt(d.totalValue)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* Notable findings */}
+      <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
+        <h2 className="text-xl font-bold mb-2">{t("notableFindingsTitle")}</h2>
+        <p className="text-muted text-sm mb-6">{t("notableFindingsSubtitle")}</p>
+        <div className="space-y-6">
+          <div className="border-l-4 border-amber-500 pl-4">
+            <h3 className="font-semibold mb-1">{t("findingProanimaTitle")}</h3>
+            <p className="text-sm text-muted">{t("findingProanimaBody")}</p>
+          </div>
+          <div className="border-l-4 border-amber-500 pl-4">
+            <h3 className="font-semibold mb-1">{t("findingSoleSourceGrowthTitle")}</h3>
+            <p className="text-sm text-muted">{t("findingSoleSourceGrowthBody")}</p>
+          </div>
+          <div className="border-l-4 border-amber-500 pl-4">
+            <h3 className="font-semibold mb-1">{t("findingDurokingTitle")}</h3>
+            <p className="text-sm text-muted">{t("findingDurokingBody")}</p>
+          </div>
+          <div className="border-l-4 border-amber-500 pl-4">
+            <h3 className="font-semibold mb-1">{t("findingSingleBidderTitle")}</h3>
+            <p className="text-sm text-muted">{t("findingSingleBidderBody")}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Supplier name normalization */}
+      <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
+        <h2 className="text-xl font-bold mb-2">{t("normalizationTitle")}</h2>
+        <p className="text-muted text-sm mb-2">{t("normalizationSubtitle")}</p>
+        <p className="text-muted text-sm mb-4">{t("normalizationExplanation")}</p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-card-border text-left">
+                <th className="py-2 pr-4">{t("normalizationCanonical")}</th>
+                <th className="py-2 pr-4 text-right">{t("normalizationVariants")}</th>
+                <th className="py-2">{t("normalizationExamples")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {normExamples.map((ex) => (
+                <tr key={ex.canonical} className="border-b border-card-border align-top">
+                  <td className="py-2 pr-4 font-medium">{ex.canonical}</td>
+                  <td className="py-2 pr-4 text-right font-mono">
+                    {t("normalizationCount", { count: ex.variantCount })}
+                  </td>
+                  <td className="py-2 text-xs text-muted">
+                    {ex.sampleVariants.map((v, i) => (
+                      <span key={i}>
+                        {i > 0 && <br />}
+                        {v}
+                      </span>
+                    ))}
                   </td>
                 </tr>
               ))}

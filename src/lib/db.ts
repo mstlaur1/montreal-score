@@ -220,3 +220,76 @@ export function queryPromiseUpdateCounts(): { promise_id: string; count: number 
     .prepare("SELECT promise_id, COUNT(*) AS count FROM promise_updates GROUP BY promise_id")
     .all() as { promise_id: string; count: number }[];
 }
+
+// --- Contract forensics ---
+
+/**
+ * Sole-source (gré à gré) contracts grouped by year.
+ * Matches "GRÉ À GRÉ" in the description field (council/committee datasets).
+ */
+export function querySoleSourceByYear(from: string, to: string): {
+  year: string; count: number; totalValue: number;
+}[] {
+  const db = getDb();
+  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  return db
+    .prepare(
+      `SELECT substr(approval_date, 1, 4) AS year,
+              COUNT(*) AS count,
+              SUM(montant) AS totalValue
+       FROM contracts
+       WHERE approval_date >= ? AND approval_date < ?
+         AND (UPPER(description) LIKE '%GRÉ À GRÉ%' OR UPPER(description) LIKE '%GRE A GRE%')
+         AND supplier NOT IN (${placeholders})
+       GROUP BY year ORDER BY year`
+    )
+    .all(from, to, ...INTERGOVERNMENTAL_SUPPLIERS) as {
+      year: string; count: number; totalValue: number;
+    }[];
+}
+
+/**
+ * Top sole-source contract recipients by total value.
+ */
+export function querySoleSourceTopRecipients(from: string, to: string, limit = 10): {
+  supplier: string; count: number; totalValue: number;
+}[] {
+  const db = getDb();
+  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  return db
+    .prepare(
+      `SELECT supplier, COUNT(*) AS count, SUM(montant) AS totalValue
+       FROM contracts
+       WHERE approval_date >= ? AND approval_date < ?
+         AND (UPPER(description) LIKE '%GRÉ À GRÉ%' OR UPPER(description) LIKE '%GRE A GRE%')
+         AND supplier NOT IN (${placeholders})
+         AND supplier IS NOT NULL
+       GROUP BY supplier ORDER BY totalValue DESC LIMIT ?`
+    )
+    .all(from, to, ...INTERGOVERNMENTAL_SUPPLIERS, limit) as {
+      supplier: string; count: number; totalValue: number;
+    }[];
+}
+
+/**
+ * Yearly contract totals grouped by approval source (body).
+ */
+export function queryYearlyContractsBySource(startYear = 2015): {
+  source: string; year: string; count: number; totalValue: number;
+}[] {
+  const db = getDb();
+  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  return db
+    .prepare(
+      `SELECT source, substr(approval_date, 1, 4) AS year,
+              COUNT(*) AS count, SUM(montant) AS totalValue
+       FROM contracts
+       WHERE approval_date >= ?
+         AND source IS NOT NULL
+         AND supplier NOT IN (${placeholders})
+       GROUP BY source, year ORDER BY source, year`
+    )
+    .all(`${startYear}-01-01`, ...INTERGOVERNMENTAL_SUPPLIERS) as {
+      source: string; year: string; count: number; totalValue: number;
+    }[];
+}

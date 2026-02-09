@@ -124,6 +124,25 @@ export interface ContractStats {
   to: string;
 }
 
+/** Sole-source (gré à gré) contract statistics */
+export interface SoleSourceStats {
+  byYear: { year: string; count: number; totalValue: number }[];
+  topRecipients: { name: string; count: number; totalValue: number }[];
+  totalCount: number;
+  totalValue: number;
+}
+
+/** Yearly contract spending grouped by approval body (source) */
+export interface YearlyContractTrend {
+  year: string;
+  fonctionnaires: number;
+  conseil_municipal: number;
+  conseil_agglomeration: number;
+  comite_executif: number;
+  conseils_arrondissement: number;
+  total: number;
+}
+
 /** City-wide summary stats */
 export interface CitySummary {
   total_permits_ytd: number;
