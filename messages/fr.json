@@ -16,7 +16,7 @@
     "openSourceBy": "Projet open-source par"
   },
   "HomePage": {
-    "heroSubtitle": "Votre gouvernement municipal livre-t-il? Suivi des promesses, permis et contrats avec les données ouvertes de la Ville.",
+    "heroSubtitle": "MontréalScore fait le lien entre les promesses électorales et les résultats concrets — suivi des délais de permis, des dépenses contractuelles et des engagements politiques à partir des données ouvertes de la Ville. Aucune opinion. Aucune affiliation partisane. Seulement les chiffres.",
     "promisesTitle": "Promesses électorales",
     "promisesTracked": "{count} promesses suivies",
     "promisesCompleted": "{count} complétées",
@@ -39,6 +39,9 @@
     "totalValue": "Valeur totale",
     "topSupplier": "Principal fournisseur",
     "viewContracts": "Voir l'analyse des contrats",
+    "volunteerTitle": "Aidez-nous à creuser",
+    "volunteerBody": "La page des contrats suit des milliards en dépenses municipales, mais vérifier les justifications de gré à gré, trouver les articles pertinents et recouper les données des fournisseurs prend du temps. Le suivi des promesses a aussi besoin d'aide — surveiller les décisions du conseil, signaler les avancées sur les engagements et trouver les mises à jour dans les médias locaux. Si vous êtes journaliste, chercheur, analyste de données ou citoyen engagé — votre aide serait précieuse.",
+    "volunteerCta": "Nous contacter",
     "ctaTitle": "Aucune opinion. Aucune affiliation partisane. Seulement les données.",
     "ctaBody": "Toutes les données proviennent du portail de données ouvertes de la Ville de Montréal et des reportages publics. Mises à jour régulièrement. MontréalScore fait le lien entre les promesses et les résultats — pour que vous puissiez demander des comptes à votre gouvernement."
   },
@@ -128,11 +131,9 @@
     "contributeTip": "Vous avez repéré des progrès (ou des promesses rompues) que nous n'avons pas encore suivis?",
     "contributeSource": "Vous avez un article de presse, un extrait de séance du conseil ou un document budgétaire à partager?",
     "contributeCorrection": "Vous avez trouvé une erreur dans nos données ou notre analyse?",
-    "contributeHow": "Envoyez vos suggestions et corrections à <email>contact@brule.ai</email>. Toutes les soumissions sont vérifiées avant publication.",
-    "openSourceTitle": "Open source",
-    "openSourceBody": "Le code source complet est disponible sur <link>GitHub</link>. Les contributions, rapports de bogues et demandes de fonctionnalités sont les bienvenus.",
+    "contributeHow": "Envoyez vos suggestions et corrections à <email>me@ashwater.ca</email>. Toutes les soumissions sont vérifiées avant publication.",
     "contactTitle": "Contact",
-    "contactBody": "MontréalScore est développé par <brule>Brulé AI</brule>, un studio indépendant basé à Montréal. Pour toute demande, suggestion ou demande média : <email>contact@brule.ai</email>."
+    "contactBody": "MontréalScore est développé par <brule>Brulé AI</brule>, un studio indépendant basé à Montréal. Pour toute demande, suggestion ou demande média : <email>me@ashwater.ca</email>."
   },
   "ContractsPage": {
     "metadata": {

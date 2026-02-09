@@ -198,8 +198,20 @@ export default async function Home({ params }: Props) {
         </section>
       </div>
 
+      {/* Volunteer CTA */}
+      <section className="border border-card-border rounded-xl p-6 bg-card-bg mt-8">
+        <h2 className="text-xl font-bold mb-2">{t("volunteerTitle")}</h2>
+        <p className="text-muted text-sm mb-4">{t("volunteerBody")}</p>
+        <Link
+          href="/about#contact"
+          className="inline-block px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:opacity-90 transition-opacity"
+        >
+          {t("volunteerCta")} &rarr;
+        </Link>
+      </section>
+
       {/* CTA */}
-      <section className="text-center py-12 mt-8 border-t border-card-border">
+      <section className="text-center py-12 border-t border-card-border">
         <h2 className="text-xl font-bold mb-2">
           {t("ctaTitle")}
         </h2>

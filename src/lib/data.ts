@@ -182,12 +182,13 @@ export async function getCitySummary(year: number): Promise<CitySummary> {
   );
   const pctWithinTarget = totalIssued > 0 ? (withinTarget / totalIssued) * 100 : 0;
 
-  const best = stats.reduce((a, b) =>
-    a.median_processing_days < b.median_processing_days && a.median_processing_days > 0 ? a : b
-  );
-  const worst = stats.reduce((a, b) =>
-    a.median_processing_days > b.median_processing_days ? a : b
-  );
+  const withHousing = stats.filter((s) => s.housing_issued > 0);
+  const best = withHousing.length > 0
+    ? withHousing.reduce((a, b) => a.housing_median_days < b.housing_median_days ? a : b)
+    : stats[0];
+  const worst = withHousing.length > 0
+    ? withHousing.reduce((a, b) => a.housing_median_days > b.housing_median_days ? a : b)
+    : stats[0];
 
   const avgTrend =
     stats.reduce((sum, s) => sum + s.trend_vs_last_year, 0) / stats.length;

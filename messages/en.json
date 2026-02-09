@@ -16,7 +16,7 @@
     "openSourceBy": "Open-source project by"
   },
   "HomePage": {
-    "heroSubtitle": "Is your municipal government delivering? Tracking promises, permits, and contracts with the City's own open data.",
+    "heroSubtitle": "MontréalScore connects campaign promises to real outcomes — tracking permit delays, contract spending, and political commitments using the City's own open data. No opinions. No party affiliation. Just the numbers.",
     "promisesTitle": "Campaign Promises",
     "promisesTracked": "{count} promises tracked",
     "promisesCompleted": "{count} completed",
@@ -39,6 +39,9 @@
     "totalValue": "Total value",
     "topSupplier": "Top supplier",
     "viewContracts": "View contract analysis",
+    "volunteerTitle": "Help us dig deeper",
+    "volunteerBody": "The contracts page tracks billions in municipal spending, but verifying sole-source justifications, finding related news coverage, and cross-referencing supplier data takes time. The promise tracker also needs help — monitoring council decisions, flagging progress on commitments, and sourcing updates from local media. If you're a journalist, researcher, data analyst, or engaged citizen — we'd love your help.",
+    "volunteerCta": "Get in touch",
     "ctaTitle": "No opinions. No party affiliation. Just the data.",
     "ctaBody": "All data comes from the City of Montreal's open data portal and public reporting. Updated regularly. MontréalScore connects promises to outcomes — so you can hold your government accountable."
   },
@@ -128,11 +131,9 @@
     "contributeTip": "Spotted progress (or broken promises) that we haven't tracked yet?",
     "contributeSource": "Have a news article, council meeting clip, or budget document to share?",
     "contributeCorrection": "Found an error in our data or analysis?",
-    "contributeHow": "Send tips and corrections to <email>contact@brule.ai</email>. All submissions are verified before publication.",
-    "openSourceTitle": "Open source",
-    "openSourceBody": "The full source code is available on <link>GitHub</link>. Contributions, bug reports, and feature requests are welcome.",
+    "contributeHow": "Send tips and corrections to <email>me@ashwater.ca</email>. All submissions are verified before publication.",
     "contactTitle": "Contact",
-    "contactBody": "MontréalScore is built by <brule>Brulé AI</brule>, an independent Montreal-based studio. For inquiries, tips, or media requests: <email>contact@brule.ai</email>."
+    "contactBody": "MontréalScore is built by <brule>Brulé AI</brule>, an independent Montreal-based studio. For inquiries, tips, or media requests: <email>me@ashwater.ca</email>."
   },
   "ContractsPage": {
     "metadata": {

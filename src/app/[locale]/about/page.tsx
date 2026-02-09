@@ -90,30 +90,14 @@ export default async function AboutPage({ params }: Props) {
         <p className="mt-2">
           {t.rich("contributeHow", {
             email: (chunks) => (
-              <a href="mailto:contact@brule.ai" className="text-accent underline">
+              <a href="mailto:me@ashwater.ca" className="text-accent underline">
                 {chunks}
               </a>
             ),
           })}
         </p>
 
-        <h2 className="text-xl font-bold mt-8 mb-3">{t("openSourceTitle")}</h2>
-        <p>
-          {t.rich("openSourceBody", {
-            link: (chunks) => (
-              <a
-                href="https://github.com/mstlaur1/montreal-score"
-                className="text-accent underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {chunks}
-              </a>
-            ),
-          })}
-        </p>
-
-        <h2 className="text-xl font-bold mt-8 mb-3">{t("contactTitle")}</h2>
+        <h2 id="contact" className="text-xl font-bold mt-8 mb-3">{t("contactTitle")}</h2>
         <p>
           {t.rich("contactBody", {
             brule: (chunks) => (
@@ -122,7 +106,7 @@ export default async function AboutPage({ params }: Props) {
               </a>
             ),
             email: (chunks) => (
-              <a href="mailto:contact@brule.ai" className="text-accent underline">
+              <a href="mailto:me@ashwater.ca" className="text-accent underline">
                 {chunks}
               </a>
             ),
