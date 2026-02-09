@@ -3,7 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getFirst100DaysPromises, getPromiseSummary } from "@/lib/data";
 import { StatusBadge } from "@/components/StatusBadge";
 import { StatCard } from "@/components/StatCard";
-import type { PromiseStatus } from "@/lib/types";
+import type { PromiseStatus, PromiseSentiment } from "@/lib/types";
 
 export const revalidate = 3600;
 
@@ -48,6 +48,15 @@ export default async function PromisesPage({ params }: Props) {
 
   const statusLabel = (s: PromiseStatus) => t(`status.${s}`);
 
+  const sentimentIcon = (s: PromiseSentiment | null) => {
+    switch (s) {
+      case "positive": return { icon: "+", cls: "text-green-600 dark:text-green-400" };
+      case "negative": return { icon: "-", cls: "text-red-600 dark:text-red-400" };
+      case "mixed": return { icon: "~", cls: "text-yellow-600 dark:text-yellow-400" };
+      default: return { icon: "?", cls: "text-muted" };
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-2">{t("title")}</h1>
@@ -74,25 +83,55 @@ export default async function PromisesPage({ params }: Props) {
         </p>
 
         {/* Promise list */}
-        <ul className="space-y-3">
-          {first100.map((p, i) => (
-            <li key={p.id} className="flex items-start gap-3">
-              <span className="text-sm font-mono text-muted mt-0.5 w-5 shrink-0">
-                {i + 1}.
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm">
-                  {locale === "fr" ? p.text_fr : p.text_en}
-                </p>
-                {p.target_value && (
-                  <span className="text-xs text-muted">
-                    {t("target")}: {p.target_value}
+        <ul className="space-y-4">
+          {first100.map((p, i) => {
+            const update = p.latestUpdate;
+            const sentiment = update ? sentimentIcon(update.sentiment) : null;
+            return (
+              <li key={p.id} className="border-b border-card-border pb-4 last:border-0 last:pb-0">
+                <div className="flex items-start gap-3">
+                  <span className="text-sm font-mono text-muted mt-0.5 w-5 shrink-0">
+                    {i + 1}.
                   </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm">
+                      {locale === "fr" ? p.text_fr : p.text_en}
+                    </p>
+                    {p.target_value && (
+                      <span className="text-xs text-muted">
+                        {t("target")}: {p.target_value}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {sentiment && (
+                      <span className={`text-sm font-bold ${sentiment.cls}`} title={update?.sentiment ?? ""}>
+                        {sentiment.icon}
+                      </span>
+                    )}
+                    <StatusBadge status={p.status} label={statusLabel(p.status)} />
+                  </div>
+                </div>
+                {update && (
+                  <div className="ml-8 mt-2">
+                    <p className="text-xs text-muted">
+                      {locale === "fr" ? update.summary_fr : update.summary_en}
+                    </p>
+                    {update.source_url && (
+                      <a
+                        href={update.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-accent hover:underline mt-1 inline-block"
+                      >
+                        {update.source_title ?? t("source")} &rarr;
+                      </a>
+                    )}
+                  </div>
                 )}
-              </div>
-              <StatusBadge status={p.status} label={statusLabel(p.status)} />
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       </section>
 

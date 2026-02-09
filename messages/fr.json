@@ -150,6 +150,7 @@
       "completed": "{done} sur {total} complétées"
     },
     "target": "Cible",
+    "source": "Source",
     "summaryTitle": "Aperçu",
     "stat": {
       "total": "Promesses totales",

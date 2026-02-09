@@ -150,6 +150,7 @@
       "completed": "{done} of {total} completed"
     },
     "target": "Target",
+    "source": "Source",
     "summaryTitle": "Overview",
     "stat": {
       "total": "Total promises",
