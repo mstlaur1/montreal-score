@@ -101,7 +101,7 @@ export function DateRangeSelector({
         </div>
       )}
       <div className="flex flex-wrap items-center gap-3 text-sm">
-        <label className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5">
           <span className="text-muted">{labels.from}</span>
           <select
             value={fromMonth}
@@ -125,9 +125,9 @@ export function DateRangeSelector({
               </option>
             ))}
           </select>
-        </label>
+        </div>
         <span className="text-muted">–</span>
-        <label className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5">
           <span className="text-muted">{labels.to}</span>
           <select
             value={toMonth}
@@ -151,7 +151,7 @@ export function DateRangeSelector({
               </option>
             ))}
           </select>
-        </label>
+        </div>
       </div>
     </div>
   );
