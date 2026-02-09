@@ -1,0 +1,78 @@
+import type { PromiseSeed } from "../promises-seed";
+
+const BOROUGH = "Pierrefonds-Roxboro";
+
+export const PIERREFONDS_ROXBORO_PROMISES: PromiseSeed[] = [
+  {
+    id: "local-pr-01",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Ouvrir le centre aquatique et déployer sa programmation.",
+    text_en: "Open the aquatic center and roll out its programming.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-pr-02",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Revitaliser le parc À-Ma-Baie et le boulevard Saint-Charles.",
+    text_en: "Revamp A-Ma-Baie Park and Saint-Charles Boulevard.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-pr-03",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Désenclaver l'Ouest de l'arrondissement par la création d'un boulevard urbain facilitant l'accès au REM.",
+    text_en: "Open up the western part of the borough by creating an urban boulevard, facilitating access to the REM.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-pr-04",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Investir dans l'agriculture urbaine et les jardins communautaires.",
+    text_en: "Invest in urban agriculture and community gardens.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-pr-05",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Utiliser le droit de préemption pour développer des logements hors marché.",
+    text_en: "Use the city's pre-emptive right to develop non-market housing.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-pr-06",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Mettre en place des mesures contre les pluies diluviennes pour contrer les impacts des zones inondables.",
+    text_en: "Implement measures against heavy rainfall to mitigate impacts in flood-prone areas.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-pr-07",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Sécuriser les abords des écoles et les rues locales.",
+    text_en: "Secure the areas around schools and local streets.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-pr-08",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Élaborer une politique locale pour les sports, les loisirs, la culture et le développement social avec le Conseil jeunesse.",
+    text_en: "Develop a local policy for sports, leisure, culture, and social development with the Youth Council.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+];

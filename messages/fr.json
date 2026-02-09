@@ -165,6 +165,19 @@
       "broken": "Rompue",
       "partially_met": "Partielle"
     },
+    "progressBar": {
+      "completed": "Complétées",
+      "inProgress": "En cours",
+      "broken": "Rompues",
+      "notStarted": "Non démarrées",
+      "allPromises": "Toutes les promesses",
+      "of": "sur"
+    },
+    "boroughCommitmentsTitle": "Engagements par arrondissement",
+    "boroughCommitmentsSubtitle": "Engagements locaux pris par les candidats d'Ensemble Montréal dans chaque arrondissement. Anjou et LaSalle ont été représentés par des partis locaux alliés et ne sont pas inclus.",
+    "boroughLevel": "Arrondissement",
+    "district": "District",
+    "commitments": "{count} engagements",
     "methodologyTitle": "Méthodologie",
     "methodologyText": "Les promesses sont extraites de la plateforme électorale d'Ensemble Montréal 2025. Les statuts sont mis à jour manuellement à partir de reportages, décisions du conseil et annonces officielles. Le décompte des 100 premiers jours débute à la date d'assermentation (10 novembre 2025)."
   },

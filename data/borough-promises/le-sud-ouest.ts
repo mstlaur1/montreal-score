@@ -1,0 +1,108 @@
+import type { PromiseSeed } from "../promises-seed";
+
+const BOROUGH = "Le Sud-Ouest";
+
+export const LE_SUD_OUEST_PROMISES: PromiseSeed[] = [
+  // ─── Borough-level ────────────────────────────────────────────────────
+  {
+    id: "local-lso-01",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Mieux organiser la circulation pour la rendre plus fluide et sécuritaire.",
+    text_en: "Improve traffic management to ensure smoother circulation and safer streets.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-lso-02",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Améliorer la propreté avec plus de brigades et l'ajout de poubelles.",
+    text_en: "Improve cleanliness by deploying more cleaning crews and adding more trash bins.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-lso-03",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Développer plus de logements sociaux et abordables dans le secteur de Bridge-Bonaventure.",
+    text_en: "Develop more social and affordable housing in the Bridge-Bonaventure sector.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-lso-04",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Améliorer l'éclairage des lieux publics et augmenter les patrouilles policières dans les zones à enjeux.",
+    text_en: "Improve lighting in public places and increase police patrols in key areas.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-lso-05",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Faire du Sud-Ouest une destination culinaire incontournable à Montréal.",
+    text_en: "Make the Sud-Ouest a must-visit culinary destination in Montreal.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  // ─── Saint-Henri-Est–Petite-Bourgogne–Pointe-Saint-Charles–Griffintown
+  {
+    id: "local-lso-06",
+    category: "local",
+    subcategory: "Saint-Henri-Est–Petite-Bourgogne–Pointe-Saint-Charles–Griffintown",
+    borough: BOROUGH,
+    text_fr: "Adresser les enjeux de la Maison Benoît Labre.",
+    text_en: "Address the issues of the Maison Benoît Labre.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-lso-07",
+    category: "local",
+    subcategory: "Saint-Henri-Est–Petite-Bourgogne–Pointe-Saint-Charles–Griffintown",
+    borough: BOROUGH,
+    text_fr: "Investir dans les infrastructures de modules de jeux dans les parcs pour les enfants.",
+    text_en: "Invest in playground equipment and infrastructure in parks for children.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-lso-08",
+    category: "local",
+    subcategory: "Saint-Henri-Est–Petite-Bourgogne–Pointe-Saint-Charles–Griffintown",
+    borough: BOROUGH,
+    text_fr: "Mobiliser les ressources afin de concrétiser l'ouverture d'une école dans Griffintown.",
+    text_en: "Mobilize the necessary resources to achieve the opening of a school in Griffintown.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  // ─── Saint-Paul-Émard–Saint-Henri-Ouest ───────────────────────────────
+  {
+    id: "local-lso-09",
+    category: "local",
+    subcategory: "Saint-Paul-Émard–Saint-Henri-Ouest",
+    borough: BOROUGH,
+    text_fr: "Revitaliser le boulevard Monk.",
+    text_en: "Revitalize Monk Boulevard.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-lso-10",
+    category: "local",
+    subcategory: "Saint-Paul-Émard–Saint-Henri-Ouest",
+    borough: BOROUGH,
+    text_fr: "Renforcer la sécurité en luttant contre la vente et la consommation de drogues.",
+    text_en: "Strengthen security by combating the sale and consumption of drugs.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-lso-11",
+    category: "local",
+    subcategory: "Saint-Paul-Émard–Saint-Henri-Ouest",
+    borough: BOROUGH,
+    text_fr: "Faire la promotion du Parc Angrignon afin d'inciter les gens à visiter ce joyau du Sud-Ouest.",
+    text_en: "Promote Angrignon Park to encourage more visitors to discover this gem of the Sud-Ouest.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+];

@@ -1,0 +1,78 @@
+import type { PromiseSeed } from "../promises-seed";
+
+const BOROUGH = "Montréal-Nord";
+
+export const MONTREAL_NORD_PROMISES: PromiseSeed[] = [
+  {
+    id: "local-mn-01",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Poursuivre le réaménagement et l'amélioration des parcs.",
+    text_en: "Continue the redevelopment and improvement of parks.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-mn-02",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Créer de nouvelles murales, tout particulièrement sur les rues commerciales, afin de développer un parcours touristique d'art de rue.",
+    text_en: "Create new murals, especially on commercial streets, to develop a street art tourist route.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-mn-03",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Augmenter le nombre de jardins communautaires.",
+    text_en: "Increase the number of community gardens.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-mn-04",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Redynamiser le secteur industriel.",
+    text_en: "Re-energize the industrial sector.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-mn-05",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Favoriser l'achat local.",
+    text_en: "Promote local purchasing.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-mn-06",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Poursuivre la sécurisation des rues, surtout dans les secteurs où il y a des écoles et augmenter les budgets pour la réfection des nids-de-poule.",
+    text_en: "Continue securing streets, especially in areas with schools, and increase budgets for pothole repair.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-mn-07",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Améliorer l'entretien des espaces verts.",
+    text_en: "Improve the maintenance of green spaces.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-mn-08",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Construire un nouveau centre sportif.",
+    text_en: "Build a new sports center.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+];

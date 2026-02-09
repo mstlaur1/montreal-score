@@ -1,7 +1,7 @@
 import { cache } from "react";
 import {
   queryPermitsByYear, queryYearlyTrends, queryContractsByRange, getLastEtlRun,
-  queryPromises, queryFirst100DaysPromises, queryLatestPromiseUpdates,
+  queryPromises, queryFirst100DaysPromises, queryBoroughPromises, queryLatestPromiseUpdates,
   queryPromiseStatusCounts, queryPromiseCategoryCounts, queryPromiseUpdateCounts,
 } from "./db";
 import { normalizeBoroughName, getBoroughSlug } from "./boroughs";
@@ -440,6 +440,31 @@ export const getPromiseSummary = cache(async (): Promise<PromiseSummary> => {
     pct_broken: total > 0 ? (broken / total) * 100 : 0,
     measurable_total, measurable_completed,
   };
+});
+
+export const getPromisesByBorough = cache(async (): Promise<Map<string, CampaignPromise[]>> => {
+  const raw = queryBoroughPromises();
+  const latestUpdates = queryLatestPromiseUpdates();
+  const updateCounts = queryPromiseUpdateCounts();
+
+  const updatesMap = new Map<string, PromiseUpdate>(
+    latestUpdates.map((u) => [u.promise_id, {
+      id: u.id, promise_id: u.promise_id, date: u.date,
+      source_url: u.source_url, source_title: u.source_title,
+      summary_fr: u.summary_fr, summary_en: u.summary_en,
+      sentiment: u.sentiment as PromiseSentiment | null,
+    }])
+  );
+  const countsMap = new Map(updateCounts.map((c) => [c.promise_id, c.count]));
+
+  const byBorough = new Map<string, CampaignPromise[]>();
+  for (const r of raw) {
+    const p = toPromise(r, updatesMap.get(r.id) ?? null, countsMap.get(r.id) ?? 0);
+    const list = byBorough.get(r.borough!) ?? [];
+    list.push(p);
+    byBorough.set(r.borough!, list);
+  }
+  return byBorough;
 });
 
 export const getPromiseCategorySummaries = cache(async (): Promise<PromiseCategorySummary[]> => {

@@ -165,6 +165,19 @@
       "broken": "Broken",
       "partially_met": "Partial"
     },
+    "progressBar": {
+      "completed": "Completed",
+      "inProgress": "In progress",
+      "broken": "Broken",
+      "notStarted": "Not started",
+      "allPromises": "All Promises",
+      "of": "of"
+    },
+    "boroughCommitmentsTitle": "Borough Commitments",
+    "boroughCommitmentsSubtitle": "Local commitments made by Ensemble Montréal candidates in each borough. Anjou and LaSalle ran under independent allied parties and are not included.",
+    "boroughLevel": "Borough-wide",
+    "district": "District",
+    "commitments": "{count} commitments",
     "methodologyTitle": "Methodology",
     "methodologyText": "Promises are extracted from the Ensemble Montréal 2025 campaign platform. Statuses are updated manually based on news reports, council decisions, and official announcements. The first 100 days countdown starts from the inauguration date (November 10, 2025)."
   },

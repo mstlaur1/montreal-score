@@ -1,0 +1,78 @@
+import type { PromiseSeed } from "../promises-seed";
+
+const BOROUGH = "L'Île-Bizard-Sainte-Geneviève";
+
+export const ILE_BIZARD_SAINTE_GENEVIEVE_PROMISES: PromiseSeed[] = [
+  {
+    id: "local-ibsg-01",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Protéger nos espaces verts, nos terres agricoles et garder la construction d'habitations au minimum.",
+    text_en: "Protect our green spaces and farmland, and keep housing construction to a minimum.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-ibsg-02",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Obtenir une compensation financière juste et récurrente de la ville centre.",
+    text_en: "Secure fair and ongoing financial compensation from the central city for preserving green spaces and farmland to prevent excessive resident taxation.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-ibsg-03",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Réparer les rues et les trottoirs, et installer des bretelles d'accès sur Jacques-Bizard.",
+    text_en: "Repair streets and sidewalks, and install access ramps on Jacques-Bizard/Gouin and Jacques-Bizard/Pierrefonds westbound.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-ibsg-04",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Implanter un système de notification local automatisé en cas d'urgences ou d'événements importants.",
+    text_en: "Implement an automated local notification system in case of emergencies or important events.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-ibsg-05",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Améliorer la propreté des parcs et des espaces publics.",
+    text_en: "Improve the cleanliness of parks and public spaces.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-ibsg-06",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Assurer un traitement rapide des plaintes soumises au système 311.",
+    text_en: "Ensure rapid processing of complaints submitted through the 311 system.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-ibsg-07",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Valoriser les associations et organismes oeuvrant dans l'arrondissement.",
+    text_en: "Support and promote local borough associations and community organizations.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-ibsg-08",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Poursuivre les démarches pour construire une école secondaire francophone.",
+    text_en: "Continue efforts to build a French-language high school.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+];

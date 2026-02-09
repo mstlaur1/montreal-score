@@ -1,0 +1,78 @@
+import type { PromiseSeed } from "../promises-seed";
+
+const BOROUGH = "Saint-Laurent";
+
+export const SAINT_LAURENT_PROMISES: PromiseSeed[] = [
+  {
+    id: "local-sl-01",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Sécuriser davantage nos rues et nos quartiers et renforcer la prévention de la criminalité chez les jeunes.",
+    text_en: "Make our streets and neighbourhoods safer and strengthen crime prevention among our youth.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-sl-02",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Favoriser le vivre-ensemble et l'inclusion de toutes les communautés.",
+    text_en: "Promote social cohesion and the inclusion of all communities.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-sl-03",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Trouver des solutions pour les inondations et faire de Saint-Laurent un leader en matière de transition écologique.",
+    text_en: "Find solutions to flooding and make Saint-Laurent a leader in ecological transition.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-sl-04",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Améliorer le réseau de transport collectif et actif.",
+    text_en: "Improve the public and active transportation network.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-sl-05",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Compléter les lignes REM vers l'Ouest-de-l'Île et vers l'aéroport P-E-Trudeau, et plaider pour l'extension de la ligne orange du métro jusqu'à Bois-Franc, ainsi que pour l'extension du boulevard Cavendish.",
+    text_en: "Complete the REM lines to the West Island and to P-E-Trudeau airport, and advocate for the extension of the orange line of the metro to Bois-Franc, as well as the extension of Cavendish Boulevard.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-sl-06",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Préserver des logements salubres grâce à des inspections renforcées et appuyer la création de logements sociaux et abordables.",
+    text_en: "Preserve clean housing through increased inspections, and support the creation of social and affordable housing.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-sl-07",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Implanter un terrain synthétique de soccer.",
+    text_en: "Install a synthetic soccer field for our children.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-sl-08",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Construire le Centre communautaire Jules-Poitras.",
+    text_en: "Build the Jules-Poitras Community Center.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+];

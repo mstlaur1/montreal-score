@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getFirst100DaysPromises, getPromiseSummary } from "@/lib/data";
+import { getFirst100DaysPromises, getPromiseSummary, getPromisesByBorough } from "@/lib/data";
 import { StatusBadge } from "@/components/StatusBadge";
 import { StatCard } from "@/components/StatCard";
-import type { PromiseStatus, PromiseSentiment } from "@/lib/types";
+import type { PromiseStatus, PromiseSentiment, CampaignPromise } from "@/lib/types";
 
 export const revalidate = 3600;
 
@@ -33,18 +33,54 @@ function get100DayProgress() {
   return { dayElapsed: Math.max(0, dayElapsed), pct, expired: now > DEADLINE_100 };
 }
 
+/** Compute status breakdown percentages from a list of promises */
+function statusBreakdown(promises: CampaignPromise[]) {
+  const total = promises.length;
+  if (total === 0) return { completed: 0, in_progress: 0, broken: 0, not_started: 0, completedN: 0, inProgressN: 0, brokenN: 0, notStartedN: 0, total: 0 };
+  const completedN = promises.filter((p) => p.status === "completed").length;
+  const inProgressN = promises.filter((p) => p.status === "in_progress").length;
+  const brokenN = promises.filter((p) => p.status === "broken").length;
+  const notStartedN = total - completedN - inProgressN - brokenN;
+  return {
+    completed: (completedN / total) * 100,
+    in_progress: (inProgressN / total) * 100,
+    broken: (brokenN / total) * 100,
+    not_started: (notStartedN / total) * 100,
+    completedN, inProgressN, brokenN, notStartedN, total,
+  };
+}
+
+/** Group a borough's promises by subcategory (borough-level vs district) */
+function groupBySubcategory(promises: CampaignPromise[]) {
+  const groups = new Map<string, CampaignPromise[]>();
+  for (const p of promises) {
+    const key = p.subcategory ?? "borough";
+    const list = groups.get(key) ?? [];
+    list.push(p);
+    groups.set(key, list);
+  }
+  return groups;
+}
+
 export default async function PromisesPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("PromisesPage");
 
-  const [first100, summary] = await Promise.all([
+  const [first100, summary, boroughMap] = await Promise.all([
     getFirst100DaysPromises(),
     getPromiseSummary(),
+    getPromisesByBorough(),
   ]);
 
   const { dayElapsed, pct, expired } = get100DayProgress();
   const completedCount = first100.filter((p) => p.status === "completed").length;
+
+  // All promises: flatten borough map + first100 for full count
+  const allPromises = [...first100];
+  for (const promises of boroughMap.values()) allPromises.push(...promises);
+  const allStats = statusBreakdown(allPromises);
+  const first100Stats = statusBreakdown(first100);
 
   const statusLabel = (s: PromiseStatus) => t(`status.${s}`);
 
@@ -57,10 +93,47 @@ export default async function PromisesPage({ params }: Props) {
     }
   };
 
+  // Sort boroughs alphabetically
+  const sortedBoroughs = [...boroughMap.entries()].sort(([a], [b]) => a.localeCompare(b, "fr"));
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-2">{t("title")}</h1>
-      <p className="text-muted mb-8">{t("subtitle")}</p>
+      <p className="text-muted mb-6">{t("subtitle")}</p>
+
+      {/* All Promises Progress Bar */}
+      <section className="mb-10">
+        <h2 className="text-lg font-semibold mb-2">{t("progressBar.allPromises")}</h2>
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-5 flex overflow-hidden">
+          {allStats.completed > 0 && (
+            <div className="bg-green-500 h-5 transition-all" style={{ width: `${allStats.completed}%` }} />
+          )}
+          {allStats.in_progress > 0 && (
+            <div className="bg-blue-500 h-5 transition-all" style={{ width: `${allStats.in_progress}%` }} />
+          )}
+          {allStats.broken > 0 && (
+            <div className="bg-red-500 h-5 transition-all" style={{ width: `${allStats.broken}%` }} />
+          )}
+        </div>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-muted">
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-green-500" />
+            {t("progressBar.completed")}: {allStats.completedN} {t("progressBar.of")} {allStats.total}
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-blue-500" />
+            {t("progressBar.inProgress")}: {allStats.inProgressN}
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-red-500" />
+            {t("progressBar.broken")}: {allStats.brokenN}
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-gray-300 dark:bg-gray-600" />
+            {t("progressBar.notStarted")}: {allStats.notStartedN}
+          </span>
+        </div>
+      </section>
 
       {/* First 100 Days */}
       <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-10">
@@ -71,16 +144,36 @@ export default async function PromisesPage({ params }: Props) {
             : t("first100.dayCount", { day: dayElapsed })}
         </p>
 
-        {/* Progress bar */}
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-1">
-          <div
-            className={`h-3 rounded-full transition-all ${expired ? "bg-red-500" : "bg-accent"}`}
-            style={{ width: `${pct}%` }}
-          />
+        {/* Status progress bar */}
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 flex overflow-hidden mb-1">
+          {first100Stats.completed > 0 && (
+            <div className="bg-green-500 h-4 transition-all" style={{ width: `${first100Stats.completed}%` }} />
+          )}
+          {first100Stats.in_progress > 0 && (
+            <div className="bg-blue-500 h-4 transition-all" style={{ width: `${first100Stats.in_progress}%` }} />
+          )}
+          {first100Stats.broken > 0 && (
+            <div className="bg-red-500 h-4 transition-all" style={{ width: `${first100Stats.broken}%` }} />
+          )}
         </div>
-        <p className="text-xs text-muted mb-6">
-          {t("first100.completed", { done: completedCount, total: first100.length })}
-        </p>
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted mb-6">
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2 h-2 rounded-sm bg-green-500" />
+            {t("progressBar.completed")}: {first100Stats.completedN}
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2 h-2 rounded-sm bg-blue-500" />
+            {t("progressBar.inProgress")}: {first100Stats.inProgressN}
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2 h-2 rounded-sm bg-red-500" />
+            {t("progressBar.broken")}: {first100Stats.brokenN}
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2 h-2 rounded-sm bg-gray-300 dark:bg-gray-600" />
+            {t("progressBar.notStarted")}: {first100Stats.notStartedN}
+          </span>
+        </div>
 
         {/* Promise list */}
         <ul className="space-y-4">
@@ -143,6 +236,66 @@ export default async function PromisesPage({ params }: Props) {
           <StatCard label={t("stat.notStarted")} value={summary.not_started} />
           <StatCard label={t("stat.inProgress")} value={summary.in_progress} />
           <StatCard label={t("stat.completed")} value={summary.completed} />
+        </div>
+      </section>
+
+      {/* Borough Commitments */}
+      <section className="mb-10">
+        <h2 className="text-2xl font-bold mb-2">{t("boroughCommitmentsTitle")}</h2>
+        <p className="text-sm text-muted mb-6">{t("boroughCommitmentsSubtitle")}</p>
+
+        <div className="space-y-6">
+          {sortedBoroughs.map(([boroughName, promises]) => {
+            const subcategories = groupBySubcategory(promises);
+            const bs = statusBreakdown(promises);
+            return (
+              <details key={boroughName} className="border border-card-border rounded-xl bg-card-bg">
+                <summary className="px-6 py-4 cursor-pointer">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-semibold">{boroughName}</h3>
+                    <span className="text-sm text-muted">
+                      {t("commitments", { count: promises.length })}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 flex overflow-hidden">
+                    {bs.completed > 0 && (
+                      <div className="bg-green-500 h-3 transition-all" style={{ width: `${bs.completed}%` }} />
+                    )}
+                    {bs.in_progress > 0 && (
+                      <div className="bg-blue-500 h-3 transition-all" style={{ width: `${bs.in_progress}%` }} />
+                    )}
+                    {bs.broken > 0 && (
+                      <div className="bg-red-500 h-3 transition-all" style={{ width: `${bs.broken}%` }} />
+                    )}
+                  </div>
+                </summary>
+                <div className="px-6 pb-6 space-y-4">
+                  {[...subcategories.entries()].map(([subcategory, items]) => (
+                    <div key={subcategory}>
+                      <h4 className="text-sm font-semibold text-muted mb-2">
+                        {subcategory === "borough" ? t("boroughLevel") : `${t("district")}: ${subcategory}`}
+                      </h4>
+                      <ul className="space-y-2">
+                        {items.map((p, i) => (
+                          <li key={p.id} className="flex items-start gap-3">
+                            <span className="text-sm font-mono text-muted mt-0.5 w-5 shrink-0">
+                              {i + 1}.
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm">
+                                {locale === "fr" ? p.text_fr : p.text_en}
+                              </p>
+                            </div>
+                            <StatusBadge status={p.status} label={statusLabel(p.status)} />
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            );
+          })}
         </div>
       </section>
 

@@ -1,9 +1,14 @@
 /**
  * Campaign promise seed data — Ensemble Montréal 2025 platform.
  *
- * Phase 1: First 100 days promises only (10 commitments).
- * Phase 2 (TODO): Add remaining ~140 promises from platform.
+ * - First 100 days: 10 city-wide commitments (defined below)
+ * - Borough commitments: ~220 local promises across 17 boroughs
+ *   (imported from data/borough-promises/)
+ *
+ * Anjou and LaSalle are absent — they ran under independent local parties.
  */
+
+import { ALL_BOROUGH_PROMISES } from "./borough-promises";
 
 export interface PromiseSeed {
   id: string;
@@ -163,4 +168,7 @@ export const PROMISE_SEEDS: PromiseSeed[] = [
     data_source: null,
     first_100_days: true,
   },
+
+  // ─── Borough-level commitments (~220 promises across 17 boroughs) ────
+  ...ALL_BOROUGH_PROMISES,
 ];

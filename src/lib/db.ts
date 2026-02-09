@@ -181,6 +181,13 @@ export function queryPromiseCategoryCounts(): {
     .all() as { category: string; total: number; completed: number; in_progress: number; broken: number }[];
 }
 
+export function queryBoroughPromises(): RawPromise[] {
+  const db = getDb();
+  return db
+    .prepare("SELECT * FROM promises WHERE borough IS NOT NULL ORDER BY borough, id")
+    .all() as RawPromise[];
+}
+
 export function queryPromiseUpdateCounts(): { promise_id: string; count: number }[] {
   const db = getDb();
   return db

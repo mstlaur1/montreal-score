@@ -1,0 +1,78 @@
+import type { PromiseSeed } from "../promises-seed";
+
+const BOROUGH = "Lachine";
+
+export const LACHINE_PROMISES: PromiseSeed[] = [
+  {
+    id: "local-lachine-01",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Ramener la rigueur budgétaire ainsi que la responsabilité et la transparence des élus.",
+    text_en: "Bring back budgetary rigor as well as responsibility and transparency from elected officials.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-lachine-02",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Soutenir les organismes communautaires et valoriser leur expertise pour accroître l'aide aux plus vulnérables.",
+    text_en: "Support community organizations and value their expertise to increase aid for the most vulnerable.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-lachine-03",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Déployer une patrouille de prévention dédiée à la sécurité et à la propreté des parcs et des rues.",
+    text_en: "Deploy a dedicated prevention patrol for the safety and cleanliness of parks and streets.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-lachine-04",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Concrétiser le centre sportif avec une approche innovante.",
+    text_en: "Build the sports center with an innovative approach.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-lachine-05",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Optimiser le transport actif et collectif, le réseau routier et la fluidité vers les pôles d'emploi.",
+    text_en: "Optimize active and public transportation, the road network, and fluidity towards employment centers.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-lachine-06",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Adapter nos infrastructures de l'eau face aux défis du développement immobilier et aux changements climatiques.",
+    text_en: "Adapt our water infrastructure to the challenges of real estate development and climate change.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-lachine-07",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Écouter nos entrepreneurs et se doter d'une vision commerciale cohérente et diversifiée.",
+    text_en: "Listen to business people and adopt a coherent and diversified commercial vision.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-lachine-08",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Améliorer l'entretien des parcs et moderniser nos plateaux sportifs, aires de jeux et chalets.",
+    text_en: "Improve park maintenance and modernize our sports facilities, playgrounds, and chalets.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+];

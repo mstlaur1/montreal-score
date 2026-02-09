@@ -1,0 +1,108 @@
+import type { PromiseSeed } from "../promises-seed";
+
+const BOROUGH = "Verdun";
+
+export const VERDUN_PROMISES: PromiseSeed[] = [
+  // ─── Borough-level ────────────────────────────────────────────────────
+  {
+    id: "local-ver-01",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Sécuriser nos milieux de vie et nos transports.",
+    text_en: "Secure our living environments and our transportation.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-ver-02",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Réparer les rues et les trottoirs, et revoir les entraves à la circulation.",
+    text_en: "Repair streets and sidewalks, and review traffic impediments.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-ver-03",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Protéger notre patrimoine naturel et bâti avec des rues et des espaces publics bien entretenus.",
+    text_en: "Protect our natural and built heritage with well-maintained streets and public spaces.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-ver-04",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Aménager des infrastructures de qualité pour tous les âges en concertation avec la population.",
+    text_en: "Develop quality infrastructure for all ages in consultation with the population.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-ver-05",
+    category: "local",
+    subcategory: "borough",
+    borough: BOROUGH,
+    text_fr: "Développer une économie locale forte bâtie avec nos entrepreneurs et basée sur nos attraits uniques, et rendre des comptes plus détaillés et fréquents sur les finances publiques et les projets majeurs.",
+    text_en: "Develop a strong local economy built with our entrepreneurs and based on our unique attractions, and provide more detailed and frequent reports on public finances and major projects.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  // ─── Desmarchais-Crawford ────────────────────────────────────────────
+  {
+    id: "local-ver-06",
+    category: "local",
+    subcategory: "Desmarchais-Crawford",
+    borough: BOROUGH,
+    text_fr: "Renforcer la présence policière pour réduire les méfaits et assurer la tranquillité des rues.",
+    text_en: "Strengthen police presence to reduce mischief and ensure street tranquility.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-ver-07",
+    category: "local",
+    subcategory: "Desmarchais-Crawford",
+    borough: BOROUGH,
+    text_fr: "Soutenir nos commerces locaux en facilitant l'accès universel.",
+    text_en: "Support our local businesses by facilitating universal access.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-ver-08",
+    category: "local",
+    subcategory: "Desmarchais-Crawford",
+    borough: BOROUGH,
+    text_fr: "Aménager des installations sportives modernes, dynamiser nos parcs et amorcer la réfection du Natatorium dans le respect de son architecture.",
+    text_en: "Develop modern sports facilities, boost our parks, and begin the repair of the Natatorium while respecting its architecture.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  // ─── Champlain–L'Île-des-Soeurs ─────────────────────────────────────
+  {
+    id: "local-ver-09",
+    category: "local",
+    subcategory: "Champlain–L'Île-des-Soeurs",
+    borough: BOROUGH,
+    text_fr: "Favoriser une densification intelligente par la construction de logements sociaux et abordables, des services de proximité et une offre sportive de qualité.",
+    text_en: "Promote intelligent densification through the construction of social and affordable housing, local services, and a quality sports offering.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-ver-10",
+    category: "local",
+    subcategory: "Champlain–L'Île-des-Soeurs",
+    borough: BOROUGH,
+    text_fr: "Redonner un véritable sentiment de tranquillité aux citoyens en renforçant la sécurité autour des berges et de la plage.",
+    text_en: "Restore a true sense of tranquility to citizens by strengthening security around the banks and the beach.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+  {
+    id: "local-ver-11",
+    category: "local",
+    subcategory: "Champlain–L'Île-des-Soeurs",
+    borough: BOROUGH,
+    text_fr: "Réévaluer le projet de pumptrack et protéger la santé du lac Lacoursière, du boisé et des berges.",
+    text_en: "Re-evaluate the pumptrack project and protect the health of Lacoursière Lake, the woodland, and the banks.",
+    measurable: false, target_value: null, target_timeline: null, auto_trackable: false, data_source: null, first_100_days: false,
+  },
+];
