@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import path from "node:path";
 import fs from "node:fs";
-import type { RawPermit, RawContract } from "./types";
+import type { RawPermit, RawContract, RawPromise, RawPromiseUpdate } from "./types";
 
 const DB_PATH = path.join(process.cwd(), "data", "montreal.db");
 
@@ -111,4 +111,79 @@ export function getLastEtlRun(dataset: string): string | null {
     )
     .get(dataset) as { finished_at: string } | undefined;
   return row?.finished_at ?? null;
+}
+
+// --- Promises ---
+
+export function queryPromises(category?: string): RawPromise[] {
+  const db = getDb();
+  if (category) {
+    return db
+      .prepare("SELECT * FROM promises WHERE category = ? ORDER BY id")
+      .all(category) as RawPromise[];
+  }
+  return db
+    .prepare("SELECT * FROM promises ORDER BY category, id")
+    .all() as RawPromise[];
+}
+
+export function queryFirst100DaysPromises(): RawPromise[] {
+  const db = getDb();
+  return db
+    .prepare("SELECT * FROM promises WHERE first_100_days = 1 ORDER BY id")
+    .all() as RawPromise[];
+}
+
+export function queryLatestPromiseUpdates(): RawPromiseUpdate[] {
+  const db = getDb();
+  return db
+    .prepare(
+      `SELECT pu.*
+       FROM promise_updates pu
+       INNER JOIN (
+         SELECT promise_id, MAX(date) AS max_date
+         FROM promise_updates GROUP BY promise_id
+       ) latest ON pu.promise_id = latest.promise_id AND pu.date = latest.max_date
+       ORDER BY pu.promise_id`
+    )
+    .all() as RawPromiseUpdate[];
+}
+
+export function queryPromiseUpdates(promiseId: string): RawPromiseUpdate[] {
+  const db = getDb();
+  return db
+    .prepare("SELECT * FROM promise_updates WHERE promise_id = ? ORDER BY date DESC")
+    .all(promiseId) as RawPromiseUpdate[];
+}
+
+export function queryPromiseStatusCounts(): { status: string; count: number; measurable: number }[] {
+  const db = getDb();
+  return db
+    .prepare(
+      `SELECT status, COUNT(*) AS count, SUM(measurable) AS measurable
+       FROM promises GROUP BY status`
+    )
+    .all() as { status: string; count: number; measurable: number }[];
+}
+
+export function queryPromiseCategoryCounts(): {
+  category: string; total: number; completed: number; in_progress: number; broken: number;
+}[] {
+  const db = getDb();
+  return db
+    .prepare(
+      `SELECT category, COUNT(*) AS total,
+              SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
+              SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) AS in_progress,
+              SUM(CASE WHEN status = 'broken' THEN 1 ELSE 0 END) AS broken
+       FROM promises GROUP BY category ORDER BY category`
+    )
+    .all() as { category: string; total: number; completed: number; in_progress: number; broken: number }[];
+}
+
+export function queryPromiseUpdateCounts(): { promise_id: string; count: number }[] {
+  const db = getDb();
+  return db
+    .prepare("SELECT promise_id, COUNT(*) AS count FROM promise_updates GROUP BY promise_id")
+    .all() as { promise_id: string; count: number }[];
 }

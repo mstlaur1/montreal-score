@@ -1,8 +1,16 @@
 import { cache } from "react";
-import { queryPermitsByYear, queryYearlyTrends, queryContractsByRange, getLastEtlRun } from "./db";
+import {
+  queryPermitsByYear, queryYearlyTrends, queryContractsByRange, getLastEtlRun,
+  queryPromises, queryFirst100DaysPromises, queryLatestPromiseUpdates,
+  queryPromiseStatusCounts, queryPromiseCategoryCounts, queryPromiseUpdateCounts,
+} from "./db";
 import { normalizeBoroughName, getBoroughSlug } from "./boroughs";
 import { calculateBoroughScores, rankBoroughs, scoreToGrade, PERMIT_TARGET_DAYS } from "./scoring";
-import type { BoroughPermitStats, BoroughScore, BoroughComparison, CitySummary, ContractStats } from "./types";
+import type {
+  BoroughPermitStats, BoroughScore, BoroughComparison, CitySummary, ContractStats,
+  CampaignPromise, PromiseUpdate, PromiseSummary, PromiseCategorySummary,
+  PromiseStatus, PromiseSentiment, PromiseCategory,
+} from "./types";
 
 /** Compute median of a sorted number array */
 function median(sorted: number[]): number {
@@ -342,4 +350,105 @@ export const getContractStats = cache(async (from: string, to: string): Promise<
     from,
     to,
   };
+});
+
+// ---------------------------------------------------------------------------
+// Promises
+// ---------------------------------------------------------------------------
+
+function toPromise(
+  r: import("./types").RawPromise,
+  latestUpdate: PromiseUpdate | null,
+  updatesCount: number,
+): CampaignPromise {
+  return {
+    id: r.id,
+    category: r.category as PromiseCategory,
+    subcategory: r.subcategory,
+    borough: r.borough,
+    text_fr: r.text_fr,
+    text_en: r.text_en,
+    measurable: r.measurable === 1,
+    target_value: r.target_value,
+    target_timeline: r.target_timeline,
+    status: r.status as PromiseStatus,
+    auto_trackable: r.auto_trackable === 1,
+    data_source: r.data_source,
+    first100Days: r.first_100_days === 1,
+    latestUpdate,
+    updatesCount,
+  };
+}
+
+export const getPromises = cache(async (category?: string): Promise<CampaignPromise[]> => {
+  const raw = queryPromises(category);
+  const latestUpdates = queryLatestPromiseUpdates();
+  const updateCounts = queryPromiseUpdateCounts();
+
+  const updatesMap = new Map<string, PromiseUpdate>(
+    latestUpdates.map((u) => [u.promise_id, {
+      id: u.id, promise_id: u.promise_id, date: u.date,
+      source_url: u.source_url, source_title: u.source_title,
+      summary_fr: u.summary_fr, summary_en: u.summary_en,
+      sentiment: u.sentiment as PromiseSentiment | null,
+    }])
+  );
+  const countsMap = new Map(updateCounts.map((c) => [c.promise_id, c.count]));
+
+  return raw.map((r) => toPromise(r, updatesMap.get(r.id) ?? null, countsMap.get(r.id) ?? 0));
+});
+
+export const getFirst100DaysPromises = cache(async (): Promise<CampaignPromise[]> => {
+  const raw = queryFirst100DaysPromises();
+  const latestUpdates = queryLatestPromiseUpdates();
+  const updateCounts = queryPromiseUpdateCounts();
+
+  const updatesMap = new Map<string, PromiseUpdate>(
+    latestUpdates.map((u) => [u.promise_id, {
+      id: u.id, promise_id: u.promise_id, date: u.date,
+      source_url: u.source_url, source_title: u.source_title,
+      summary_fr: u.summary_fr, summary_en: u.summary_en,
+      sentiment: u.sentiment as PromiseSentiment | null,
+    }])
+  );
+  const countsMap = new Map(updateCounts.map((c) => [c.promise_id, c.count]));
+
+  return raw.map((r) => toPromise(r, updatesMap.get(r.id) ?? null, countsMap.get(r.id) ?? 0));
+});
+
+export const getPromiseSummary = cache(async (): Promise<PromiseSummary> => {
+  const rows = queryPromiseStatusCounts();
+  let total = 0, not_started = 0, in_progress = 0, completed = 0, broken = 0, partially_met = 0;
+  let measurable_total = 0, measurable_completed = 0;
+
+  for (const r of rows) {
+    total += r.count;
+    measurable_total += r.measurable;
+    switch (r.status) {
+      case "not_started": not_started = r.count; break;
+      case "in_progress": in_progress = r.count; break;
+      case "completed": completed = r.count; measurable_completed = r.measurable; break;
+      case "broken": broken = r.count; break;
+      case "partially_met": partially_met = r.count; break;
+    }
+  }
+
+  return {
+    total, not_started, in_progress, completed, broken, partially_met,
+    pct_completed: total > 0 ? (completed / total) * 100 : 0,
+    pct_in_progress: total > 0 ? (in_progress / total) * 100 : 0,
+    pct_broken: total > 0 ? (broken / total) * 100 : 0,
+    measurable_total, measurable_completed,
+  };
+});
+
+export const getPromiseCategorySummaries = cache(async (): Promise<PromiseCategorySummary[]> => {
+  const raw = queryPromiseCategoryCounts();
+  return raw.map((r) => ({
+    category: r.category as PromiseCategory,
+    total: r.total,
+    completed: r.completed,
+    in_progress: r.in_progress,
+    broken: r.broken,
+  }));
 });

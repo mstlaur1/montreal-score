@@ -134,3 +134,94 @@ export interface CitySummary {
   trend_vs_last_year: number;
   last_updated: string;
 }
+
+// --- Campaign Promises ---
+
+export type PromiseStatus = "not_started" | "in_progress" | "completed" | "broken" | "partially_met";
+export type PromiseSentiment = "positive" | "negative" | "neutral" | "mixed";
+export type PromiseCategory =
+  | "housing" | "homelessness" | "security" | "cleanliness"
+  | "mobility" | "governance" | "environment" | "infrastructure"
+  | "east-montreal" | "commercial" | "economic" | "culture"
+  | "downtown" | "international" | "local";
+
+export interface RawPromise {
+  id: string;
+  category: string;
+  subcategory: string | null;
+  borough: string | null;
+  text_fr: string;
+  text_en: string;
+  measurable: number;
+  target_value: string | null;
+  target_timeline: string | null;
+  status: string;
+  auto_trackable: number;
+  data_source: string | null;
+  first_100_days: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RawPromiseUpdate {
+  id: number;
+  promise_id: string;
+  date: string;
+  source_url: string | null;
+  source_title: string | null;
+  summary_fr: string | null;
+  summary_en: string | null;
+  sentiment: string | null;
+  created_at: string;
+}
+
+export interface CampaignPromise {
+  id: string;
+  category: PromiseCategory;
+  subcategory: string | null;
+  borough: string | null;
+  text_fr: string;
+  text_en: string;
+  measurable: boolean;
+  target_value: string | null;
+  target_timeline: string | null;
+  status: PromiseStatus;
+  auto_trackable: boolean;
+  data_source: string | null;
+  first100Days: boolean;
+  latestUpdate: PromiseUpdate | null;
+  updatesCount: number;
+}
+
+export interface PromiseUpdate {
+  id: number;
+  promise_id: string;
+  date: string;
+  source_url: string | null;
+  source_title: string | null;
+  summary_fr: string | null;
+  summary_en: string | null;
+  sentiment: PromiseSentiment | null;
+}
+
+export interface PromiseSummary {
+  total: number;
+  not_started: number;
+  in_progress: number;
+  completed: number;
+  broken: number;
+  partially_met: number;
+  pct_completed: number;
+  pct_in_progress: number;
+  pct_broken: number;
+  measurable_total: number;
+  measurable_completed: number;
+}
+
+export interface PromiseCategorySummary {
+  category: PromiseCategory;
+  total: number;
+  completed: number;
+  in_progress: number;
+  broken: number;
+}

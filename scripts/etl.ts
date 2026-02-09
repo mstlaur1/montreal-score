@@ -93,6 +93,40 @@ function initSchema(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_permits_borough ON permits(arrondissement);
     CREATE INDEX IF NOT EXISTS idx_contracts_date ON contracts(approval_date);
     CREATE INDEX IF NOT EXISTS idx_contracts_supplier ON contracts(supplier);
+
+    CREATE TABLE IF NOT EXISTS promises (
+      id              TEXT PRIMARY KEY,
+      category        TEXT NOT NULL,
+      subcategory     TEXT,
+      borough         TEXT,
+      text_fr         TEXT NOT NULL,
+      text_en         TEXT NOT NULL,
+      measurable      INTEGER NOT NULL DEFAULT 0,
+      target_value    TEXT,
+      target_timeline TEXT,
+      status          TEXT NOT NULL DEFAULT 'not_started',
+      auto_trackable  INTEGER NOT NULL DEFAULT 0,
+      data_source     TEXT,
+      first_100_days  INTEGER NOT NULL DEFAULT 0,
+      created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS promise_updates (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      promise_id  TEXT NOT NULL REFERENCES promises(id),
+      date        TEXT NOT NULL,
+      source_url  TEXT,
+      source_title TEXT,
+      summary_fr  TEXT,
+      summary_en  TEXT,
+      sentiment   TEXT,
+      created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_promise_updates_promise ON promise_updates(promise_id);
+    CREATE INDEX IF NOT EXISTS idx_promises_category ON promises(category);
+    CREATE INDEX IF NOT EXISTS idx_promises_status ON promises(status);
   `);
 }
 
