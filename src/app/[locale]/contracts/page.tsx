@@ -92,6 +92,12 @@ export default async function ContractsPage({ params, searchParams }: Props) {
   const localeTag = locale === "fr" ? "fr-CA" : "en-CA";
   const fmt = (v: number) => formatCurrency(v, locale);
 
+  const presets = [
+    { label: "Coderre (2013–2017)", from: "2013-11", to: "2017-11" },
+    { label: "Plante (2017–2025)", from: "2017-11", to: "2025-11" },
+    { label: "Martinez Ferrada (2025–)", from: "2025-11", to: bounds.max },
+  ];
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
@@ -105,6 +111,7 @@ export default async function ContractsPage({ params, searchParams }: Props) {
           maxDate={bounds.max}
           locale={locale}
           labels={{ from: t("from"), to: t("to") }}
+          presets={presets}
         />
       </div>
       <p className="text-muted mb-8">{t("subtitle")}</p>
