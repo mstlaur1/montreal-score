@@ -126,11 +126,11 @@
     "distributionFootnote": "Highlighted bars = ranges adjacent to $25K (no formal process) and $139K (mandatory public tender, 2026-2027 threshold) thresholds.",
     "threshold25k": "$25K",
     "thresholdTitle": "Procurement threshold analysis",
-    "thresholdSubtitle": "In Quebec, contracts under $25K require no formal process. Above the public tender threshold ($133.8K in 2024-2025, $139K since 2026), a public call for tenders is mandatory. The analysis below applies the threshold in effect at each contract's approval date.",
+    "thresholdSubtitle": "In Quebec, contracts under $25K require no formal process. Above the public tender threshold, a public call for tenders is mandatory. The threshold has changed over time ($100K in 2017, $101.1K in 2019, $105.7K in 2022, $121.2K in late 2022, $133.8K in 2024, $139K in 2026). The analysis below applies the threshold in effect at each contract's approval date.",
     "thresholdLabel": "Just below {threshold}",
     "thresholdExpected": "Expected (symmetric band above): {expected}",
     "thresholdElevated": "{ratio}x higher than expected",
-    "thresholdMethodology": "Comparison uses a symmetric value band above the threshold as baseline. The threshold applied matches the one in effect at each contract's approval date ($133.8K for 2024-2025, $139K for 2026-2027). A ratio significantly above 1 may indicate contract splitting. Sources: <lcv>art. 573.1, Loi sur les cités et villes</lcv> ($25K threshold); <mamh>Muni-Express, MAMH</mamh> (public tender threshold).",
+    "thresholdMethodology": "Comparison uses a symmetric value band above the threshold as baseline. The threshold applied matches the one in effect at each contract's approval date. A ratio significantly above 1 may indicate contract splitting. Sources: <lcv>art. 573.3.1.2, Loi sur les cités et villes</lcv> ($25K threshold); <mamh>MAMH — Conformité des contrats municipaux</mamh> (public tender thresholds, adjusted biennially via Muni-Express).",
     "methodology": "Methodology",
     "methodologyText": "Data comes from the \"Contrats de la Ville de Montréal\" dataset on the open data portal. All contracts of $2,000 and above are published. Amounts are in Canadian dollars."
   },

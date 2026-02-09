@@ -253,19 +253,10 @@ export const getContractStats = cache(async (from: string, to: string): Promise<
   });
 
   // Threshold clustering: Quebec procurement thresholds
-  // < $25K: no formal process required
-  // $25K–threshold: invitation tender or direct agreement
+  // < $25K: no formal process required (art. 573.1 LCV)
+  // $25K–threshold: invitation tender to 2+ suppliers
   // >= threshold: mandatory public call for tenders
-  // Threshold changed Jan 1, 2026: $133,800 -> $139,000
-  const TENDER_THRESHOLD_OLD = 133800; // 2024-2025
-  const TENDER_THRESHOLD_NEW = 139000; // 2026-2027
-  const THRESHOLD_CUTOVER = "2026-01-01";
-
-  // Split contracts into eras by approval date
-  const preContracts = raw.filter((c) => c["DATE D'APPROBATION"] < THRESHOLD_CUTOVER);
-  const postContracts = raw.filter((c) => c["DATE D'APPROBATION"] >= THRESHOLD_CUTOVER);
-  const preAmounts = preContracts.map((c) => parseFloat(c.MONTANT)).filter((n) => !isNaN(n));
-  const postAmounts = postContracts.map((c) => parseFloat(c.MONTANT)).filter((n) => !isNaN(n));
+  // Sources: Muni-Express bulletins, MAMH; C-19, r. 5
 
   function clusterAroundThreshold(
     amts: number[],
@@ -279,33 +270,56 @@ export const getContractStats = cache(async (from: string, to: string): Promise<
     return { count: inBand, expected: aboveBand };
   }
 
-  const thresholdClusters = [
-    // $25K — applies to all contracts regardless of era
+  // Historical public tender thresholds by effective date
+  // Each entry: [effective_from, effective_to_exclusive, threshold, label, period_label, band_size]
+  const THRESHOLD_ERAS: {
+    from: string; to: string; threshold: number;
+    label: string; period: string; bandSize: number;
+  }[] = [
+    { from: "2011-01-01", to: "2017-07-01", threshold: 25000, label: "$25K", period: "2011–2017", bandSize: 5000 },
+    { from: "2017-07-01", to: "2019-08-01", threshold: 100000, label: "$100K", period: "2017–2019", bandSize: 10000 },
+    { from: "2019-08-01", to: "2022-01-01", threshold: 101100, label: "$101.1K", period: "2019–2021", bandSize: 10000 },
+    { from: "2022-01-01", to: "2022-10-07", threshold: 105700, label: "$105.7K", period: "Jan–Oct 2022", bandSize: 10000 },
+    { from: "2022-10-07", to: "2024-01-01", threshold: 121200, label: "$121.2K", period: "2022–2023", bandSize: 12000 },
+    { from: "2024-01-01", to: "2026-01-01", threshold: 133800, label: "$133.8K", period: "2024–2025", bandSize: 13800 },
+    { from: "2026-01-01", to: "2028-01-01", threshold: 139000, label: "$139K", period: "2026–2027", bandSize: 14000 },
+  ];
+
+  // $25K threshold applies to all contracts regardless of era
+  const thresholdClusters: { threshold: number; label: string; period: string; count: number; expected: number }[] = [
     {
       threshold: 25000,
       label: "$25K",
       period: "",
       ...clusterAroundThreshold(amounts, 25000, 5000),
     },
-    // Old tender threshold — only pre-2026 contracts
-    ...(preAmounts.length > 0
-      ? [{
-          threshold: TENDER_THRESHOLD_OLD,
-          label: "$133.8K",
-          period: "2024–2025",
-          ...clusterAroundThreshold(preAmounts, TENDER_THRESHOLD_OLD, 13800),
-        }]
-      : []),
-    // New tender threshold — only 2026+ contracts
-    ...(postAmounts.length > 0
-      ? [{
-          threshold: TENDER_THRESHOLD_NEW,
-          label: "$139K",
-          period: "2026–2027",
-          ...clusterAroundThreshold(postAmounts, TENDER_THRESHOLD_NEW, 14000),
-        }]
-      : []),
   ];
+
+  // For each threshold era that overlaps the selected date range,
+  // filter contracts to that era and run clustering
+  for (const era of THRESHOLD_ERAS) {
+    // Skip eras that don't overlap with selected range
+    if (era.to <= from || era.from >= to) continue;
+    // Skip the pre-2017 $25K era (already covered above as the universal $25K check)
+    if (era.threshold === 25000) continue;
+
+    const eraAmounts = raw
+      .filter((c) => {
+        const d = c["DATE D'APPROBATION"];
+        return d >= era.from && d < era.to;
+      })
+      .map((c) => parseFloat(c.MONTANT))
+      .filter((n) => !isNaN(n));
+
+    if (eraAmounts.length > 0) {
+      thresholdClusters.push({
+        threshold: era.threshold,
+        label: era.label,
+        period: era.period,
+        ...clusterAroundThreshold(eraAmounts, era.threshold, era.bandSize),
+      });
+    }
+  }
 
   return {
     totalContracts: raw.length,

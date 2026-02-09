@@ -126,11 +126,11 @@
     "distributionFootnote": "Barres accentuées = tranches adjacentes aux seuils de 25 000$ (gré à gré) et 139 000$ (appel d'offres public obligatoire, seuil 2026-2027).",
     "threshold25k": "25 000$",
     "thresholdTitle": "Analyse des seuils d'approvisionnement",
-    "thresholdSubtitle": "Au Québec, les contrats sous 25 000$ n'exigent aucun processus formel. Au-dessus du seuil d'appel d'offres public (133 800$ en 2024-2025, 139 000$ depuis 2026), un appel d'offres public est obligatoire. L'analyse ci-dessous applique le seuil en vigueur au moment de l'approbation de chaque contrat.",
+    "thresholdSubtitle": "Au Québec, les contrats sous 25 000$ n'exigent aucun processus formel. Au-dessus du seuil d'appel d'offres public, un appel d'offres public est obligatoire. Ce seuil a évolué (100 000$ en 2017, 101 100$ en 2019, 105 700$ en 2022, 121 200$ fin 2022, 133 800$ en 2024, 139 000$ en 2026). L'analyse ci-dessous applique le seuil en vigueur au moment de l'approbation de chaque contrat.",
     "thresholdLabel": "Juste sous {threshold}",
     "thresholdExpected": "Attendu (bande symétrique au-dessus): {expected}",
     "thresholdElevated": "{ratio}x plus élevé que prévu",
-    "thresholdMethodology": "La comparaison utilise une bande de valeur symétrique au-dessus du seuil comme référence. Le seuil appliqué correspond à celui en vigueur à la date d'approbation du contrat (133 800$ pour 2024-2025, 139 000$ pour 2026-2027). Un ratio significativement supérieur à 1 peut indiquer du fractionnement de contrats. Sources: <lcv>art. 573.1, Loi sur les cités et villes</lcv> (seuil de 25 000$); <mamh>Muni-Express, MAMH</mamh> (seuil d'appel d'offres public).",
+    "thresholdMethodology": "La comparaison utilise une bande de valeur symétrique au-dessus du seuil comme référence. Le seuil appliqué correspond à celui en vigueur à la date d'approbation du contrat. Un ratio significativement supérieur à 1 peut indiquer du fractionnement de contrats. Sources: <lcv>art. 573.3.1.2, Loi sur les cités et villes</lcv> (seuil de 25 000$); <mamh>MAMH — Conformité des contrats municipaux</mamh> (seuils d'appel d'offres public, ajustés aux deux ans via Muni-Express).",
     "methodology": "Méthodologie",
     "methodologyText": "Les données proviennent du jeu de données « Contrats de la Ville de Montréal » du portail de données ouvertes. Tous les contrats de 2 000$ et plus y sont publiés. Les montants sont en dollars canadiens."
   },
