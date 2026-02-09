@@ -22,15 +22,22 @@ function getDb(): Database.Database {
 
 /**
  * Query permits for a given year.
- * Returns fields matching what data.ts expects from RawPermit.
+ * When housingOnly is true, filters to permits with nb_logements > 0
+ * (i.e. projects that add dwelling units — the ones subject to the 90-day target).
  */
-export function queryPermitsByYear(year: number): RawPermit[] {
+export function queryPermitsByYear(
+  year: number,
+  options?: { housingOnly?: boolean }
+): RawPermit[] {
   const db = getDb();
+  const housingFilter = options?.housingOnly
+    ? ` AND nb_logements IS NOT NULL AND nb_logements != '' AND CAST(nb_logements AS INTEGER) > 0`
+    : "";
   return db
     .prepare(
-      `SELECT arrondissement, date_debut, date_emission
+      `SELECT arrondissement, date_debut, date_emission, permit_type, nb_logements
        FROM permits
-       WHERE date_debut >= ? AND date_debut < ?
+       WHERE date_debut >= ? AND date_debut < ?${housingFilter}
        ORDER BY date_debut DESC`
     )
     .all(`${year}-01-01`, `${year + 1}-01-01`) as RawPermit[];

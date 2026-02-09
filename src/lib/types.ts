@@ -1,19 +1,10 @@
-/** Raw permit record from Montreal open data */
+/** Raw permit record as stored in local SQLite DB */
 export interface RawPermit {
-  no_demande: number;
-  id_permis: number | null;
+  arrondissement: string | null;
   date_debut: string | null;
   date_emission: string | null;
-  emplacement: string | null;
-  arrondissement: string | null;
-  code_type_base_demande: "TR" | "DE" | "CO" | "CA";
-  description_type_demande: string | null;
-  description_type_batiment: string | null;
-  description_categorie_batiment: string | null;
-  nature_travaux: string | null;
+  permit_type: string | null;  // code_type_base_demande: TR, DE, CO, CA
   nb_logements: number | null;
-  longitude: number | null;
-  latitude: number | null;
 }
 
 /** Processed permit with calculated fields */
@@ -48,6 +39,12 @@ export interface BoroughPermitStats {
   pct_within_120_days: number;
   trend_vs_last_year: number; // negative = improving
   year: number;
+  // Housing-only metrics (nb_logements > 0)
+  housing_permits: number;
+  housing_issued: number;
+  housing_median_days: number;
+  housing_pct_within_90_days: number;
+  housing_trend_vs_last_year: number;
 }
 
 /** Borough grade */
@@ -153,6 +150,10 @@ export interface CitySummary {
   worst_borough: string;
   trend_vs_last_year: number;
   last_updated: string;
+  // Housing-only metrics
+  housing_permits_ytd: number;
+  housing_median_days: number;
+  housing_pct_within_target: number;
 }
 
 // --- Campaign Promises ---

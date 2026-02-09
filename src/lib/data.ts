@@ -44,13 +44,16 @@ function processingDays(dateDebut: string | null, dateEmission: string | null): 
 
 /**
  * Get borough permit stats for a given year.
+ * Computes stats for ALL permits and housing-only (nb_logements > 0) in one pass.
  * Wrapped with React cache() to deduplicate across components in the same request.
  */
 export const getBoroughPermitStats = cache(async (year: number): Promise<BoroughPermitStats[]> => {
-  const currentPermits = queryPermitsByYear(year);
-  const prevPermits = queryPermitsByYear(year - 1);
+  const currentAll = queryPermitsByYear(year);
+  const prevAll = queryPermitsByYear(year - 1);
+  const currentHousing = queryPermitsByYear(year, { housingOnly: true });
+  const prevHousing = queryPermitsByYear(year - 1, { housingOnly: true });
 
-  function computeStats(permits: typeof currentPermits) {
+  function computeStats(permits: typeof currentAll) {
     const byBorough = new Map<string, { total: number; days: number[] }>();
 
     for (const p of permits) {
@@ -71,8 +74,10 @@ export const getBoroughPermitStats = cache(async (year: number): Promise<Borough
     return byBorough;
   }
 
-  const current = computeStats(currentPermits);
-  const prev = computeStats(prevPermits);
+  const current = computeStats(currentAll);
+  const prev = computeStats(prevAll);
+  const currentH = computeStats(currentHousing);
+  const prevH = computeStats(prevHousing);
 
   const stats: BoroughPermitStats[] = [];
 
@@ -81,6 +86,13 @@ export const getBoroughPermitStats = cache(async (year: number): Promise<Borough
     const med = median(sorted);
     const prevData = prev.get(borough);
     const prevMedian = prevData ? median(prevData.days.sort((a, b) => a - b)) : med;
+
+    // Housing stats for this borough
+    const hData = currentH.get(borough);
+    const hSorted = hData ? hData.days.sort((a, b) => a - b) : [];
+    const hMed = median(hSorted);
+    const hPrev = prevH.get(borough);
+    const hPrevMedian = hPrev ? median(hPrev.days.sort((a, b) => a - b)) : hMed;
 
     stats.push({
       borough,
@@ -95,6 +107,12 @@ export const getBoroughPermitStats = cache(async (year: number): Promise<Borough
       pct_within_120_days: sorted.length > 0 ? (sorted.filter((d) => d <= 120).length / sorted.length) * 100 : 0,
       trend_vs_last_year: med - prevMedian,
       year,
+      // Housing-only
+      housing_permits: hData?.total ?? 0,
+      housing_issued: hSorted.length,
+      housing_median_days: hMed,
+      housing_pct_within_90_days: hSorted.length > 0 ? (hSorted.filter((d) => d <= 90).length / hSorted.length) * 100 : 0,
+      housing_trend_vs_last_year: hMed - hPrevMedian,
     });
   }
 
@@ -112,18 +130,20 @@ export async function getBoroughScores(year: number): Promise<BoroughScore[]> {
 
 /**
  * Get data formatted for the bar chart.
+ * Uses housing-only median as the primary metric.
  */
 export async function getBoroughComparisonData(year: number): Promise<BoroughComparison[]> {
   const stats = await getBoroughPermitStats(year);
   const scores = calculateBoroughScores(stats);
 
   return stats
+    .filter((s) => s.housing_permits > 0) // only boroughs with housing permits
     .map((s) => {
       const score = scores.find((sc) => sc.slug === s.slug);
       return {
         borough: s.borough,
         slug: s.slug,
-        value: s.median_processing_days,
+        value: s.housing_median_days,
         target: PERMIT_TARGET_DAYS,
         grade: score?.permits_grade || scoreToGrade(0),
       };
@@ -133,6 +153,7 @@ export async function getBoroughComparisonData(year: number): Promise<BoroughCom
 
 /**
  * Get city-wide summary statistics.
+ * Includes both all-permit and housing-only metrics.
  */
 export async function getCitySummary(year: number): Promise<CitySummary> {
   const stats = await getBoroughPermitStats(year);
@@ -147,6 +168,9 @@ export async function getCitySummary(year: number): Promise<CitySummary> {
       worst_borough: "N/A",
       trend_vs_last_year: 0,
       last_updated: getLastEtlRun("permits") ?? new Date().toISOString(),
+      housing_permits_ytd: 0,
+      housing_median_days: 0,
+      housing_pct_within_target: 0,
     };
   }
 
@@ -172,6 +196,17 @@ export async function getCitySummary(year: number): Promise<CitySummary> {
   const avgTrend =
     stats.reduce((sum, s) => sum + s.trend_vs_last_year, 0) / stats.length;
 
+  // Housing-only city-wide stats
+  const housingTotal = stats.reduce((sum, s) => sum + s.housing_permits, 0);
+  const housingMedians = stats.map((s) => s.housing_median_days).filter((d) => d > 0);
+  const housingCityMedian = median(housingMedians.sort((a, b) => a - b));
+  const housingIssued = stats.reduce((sum, s) => sum + s.housing_issued, 0);
+  const housingWithinTarget = stats.reduce(
+    (sum, s) => sum + (s.housing_pct_within_90_days * s.housing_issued) / 100,
+    0
+  );
+  const housingPctWithin = housingIssued > 0 ? (housingWithinTarget / housingIssued) * 100 : 0;
+
   return {
     total_permits_ytd: totalPermits,
     median_processing_days: cityMedian,
@@ -181,6 +216,9 @@ export async function getCitySummary(year: number): Promise<CitySummary> {
     worst_borough: worst.borough,
     trend_vs_last_year: avgTrend,
     last_updated: getLastEtlRun("permits") ?? new Date().toISOString(),
+    housing_permits_ytd: housingTotal,
+    housing_median_days: housingCityMedian,
+    housing_pct_within_target: housingPctWithin,
   };
 }
 

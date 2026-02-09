@@ -4,11 +4,22 @@ import { getBoroughComparisonData, getCitySummary, getYearlyTrendData } from "@/
 import { PERMIT_TARGET_DAYS, PREVIOUS_TARGET_DAYS } from "@/lib/scoring";
 import { PermitBarChart } from "@/components/PermitBarChart";
 import { StatCard } from "@/components/StatCard";
+import { YearSelector } from "@/components/YearSelector";
 
 export const revalidate = 3600;
 
+const MIN_YEAR = 2015;
+
+/** Administration presets — last full calendar year of each term */
+const ADMIN_PRESETS = [
+  { label: "Coderre (2017)", year: 2017 },
+  { label: "Plante (2025)", year: 2025 },
+  { label: "Martinez Ferrada (2026)", year: 2026 },
+];
+
 type Props = {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ year?: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -20,29 +31,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function PermitsPage({ params }: Props) {
+export default async function PermitsPage({ params, searchParams }: Props) {
   const { locale } = await params;
+  const { year: yearParam } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("PermitsPage");
   const tChart = await getTranslations("PermitBarChart");
 
   const currentYear = new Date().getFullYear();
-  let comparison, summary, trends;
+  const maxYear = currentYear;
 
-  try {
-    [comparison, summary, trends] = await Promise.all([
-      getBoroughComparisonData(currentYear),
-      getCitySummary(currentYear),
-      getYearlyTrendData(),
-    ]);
-  } catch {
-    const fallbackYear = currentYear - 1;
-    [comparison, summary, trends] = await Promise.all([
-      getBoroughComparisonData(fallbackYear),
-      getCitySummary(fallbackYear),
-      getYearlyTrendData(),
-    ]);
-  }
+  // Parse and clamp year from search params; default to last full year
+  let selectedYear = yearParam ? parseInt(yearParam, 10) : currentYear - 1;
+  if (isNaN(selectedYear) || selectedYear < MIN_YEAR) selectedYear = MIN_YEAR;
+  if (selectedYear > maxYear) selectedYear = maxYear;
+
+  const [comparison, summary, trends] = await Promise.all([
+    getBoroughComparisonData(selectedYear),
+    getCitySummary(selectedYear),
+    getYearlyTrendData(),
+  ]);
 
   const localeTag = locale === "fr" ? "fr-CA" : "en-CA";
 
@@ -54,25 +62,36 @@ export default async function PermitsPage({ params }: Props) {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-2">{t("title")}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
+        <h1 className="text-3xl font-bold">{t("title")}</h1>
+        <YearSelector
+          selectedYear={selectedYear}
+          minYear={MIN_YEAR}
+          maxYear={maxYear}
+          label={t("year")}
+          presets={ADMIN_PRESETS}
+        />
+      </div>
       <p className="text-muted mb-8">
         {t("subtitle", { target: PERMIT_TARGET_DAYS, previousTarget: PREVIOUS_TARGET_DAYS })}
       </p>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      {/* Stats row — housing permits (primary metric) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
         <StatCard
-          label={t("permitsThisYear")}
-          value={summary.total_permits_ytd.toLocaleString(localeTag)}
+          label={t("housingPermits")}
+          value={summary.housing_permits_ytd.toLocaleString(localeTag)}
+          detail={t("allPermitsCount", { count: summary.total_permits_ytd.toLocaleString(localeTag) })}
         />
         <StatCard
-          label={t("medianDelay")}
-          value={Math.round(summary.median_processing_days)}
+          label={t("housingMedian")}
+          value={Math.round(summary.housing_median_days)}
           unit={t("days")}
+          detail={t("allPermitsMedian", { days: Math.round(summary.median_processing_days) })}
         />
         <StatCard
           label={t("withinTarget", { target: PERMIT_TARGET_DAYS })}
-          value={Math.round(summary.pct_within_target)}
+          value={Math.round(summary.housing_pct_within_target)}
           unit={t("percent")}
         />
         <StatCard
@@ -88,26 +107,33 @@ export default async function PermitsPage({ params }: Props) {
           trendLabel={summary.trend_vs_last_year < 0 ? t("improvement") : t("deterioration")}
         />
       </div>
+      <p className="text-xs text-muted mb-8">{t("housingNote")}</p>
 
       {/* Borough comparison chart */}
-      <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
-        <h2 className="text-xl font-bold mb-4">
-          {t("medianByBorough")}
-        </h2>
-        <PermitBarChart
-          data={chartData}
-          targetDays={PERMIT_TARGET_DAYS}
-          labels={{
-            yAxis: tChart("yAxisLabel"),
-            tooltipLabel: tChart("tooltipLabel"),
-            tooltipUnit: t("days"),
-            targetLabel: tChart("targetLabel", { target: PERMIT_TARGET_DAYS }),
-          }}
-        />
-        <p className="text-xs text-muted mt-4 text-center">
-          {t("chartFootnote", { target: PERMIT_TARGET_DAYS })}
-        </p>
-      </section>
+      {chartData.length > 0 ? (
+        <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
+          <h2 className="text-xl font-bold mb-4">
+            {t("housingMedianByBorough")}
+          </h2>
+          <PermitBarChart
+            data={chartData}
+            targetDays={PERMIT_TARGET_DAYS}
+            labels={{
+              yAxis: tChart("yAxisLabel"),
+              tooltipLabel: tChart("tooltipLabel"),
+              tooltipUnit: t("days"),
+              targetLabel: tChart("targetLabel", { target: PERMIT_TARGET_DAYS }),
+            }}
+          />
+          <p className="text-xs text-muted mt-4 text-center">
+            {t("chartFootnote", { target: PERMIT_TARGET_DAYS })}
+          </p>
+        </section>
+      ) : (
+        <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8 text-center text-muted">
+          <p>{t("noHousingData")}</p>
+        </section>
+      )}
 
       {/* Historical trends */}
       <section className="border border-card-border rounded-xl p-6 bg-card-bg">

@@ -52,6 +52,8 @@ export function gradeBgClass(grade: Grade): string {
 
 /**
  * Score a borough's permit performance on a 0-100 scale.
+ * Uses housing-only metrics (nb_logements > 0) — the permits subject to the 90-day target.
+ * Falls back to all-permit metrics for boroughs with no housing permits.
  *
  * Factors:
  * - Median processing time vs target (40% weight)
@@ -59,18 +61,23 @@ export function gradeBgClass(grade: Grade): string {
  * - Year-over-year trend (20% weight)
  */
 export function scorePermits(stats: BoroughPermitStats): number {
+  const hasHousing = stats.housing_issued > 0;
+  const medDays = hasHousing ? stats.housing_median_days : stats.median_processing_days;
+  const pctWithin = hasHousing ? stats.housing_pct_within_90_days : stats.pct_within_90_days;
+  const trend = hasHousing ? stats.housing_trend_vs_last_year : stats.trend_vs_last_year;
+
   // Median time score: 100 if at/below target, degrades linearly
   // At 2x target = 0 points
-  const medianRatio = stats.median_processing_days / PERMIT_TARGET_DAYS;
+  const medianRatio = medDays / PERMIT_TARGET_DAYS;
   const medianScore = Math.max(0, Math.min(100, (1 - (medianRatio - 1)) * 100));
 
   // Percentage within target: direct mapping to 0-100
-  const pctScore = stats.pct_within_90_days;
+  const pctScore = pctWithin;
 
   // Trend score: improving = bonus, worsening = penalty
   // trend_vs_last_year is negative when improving
   // -30 days improvement = 100, +30 days worse = 0, 0 change = 50
-  const trendScore = Math.max(0, Math.min(100, 50 - stats.trend_vs_last_year * (50 / 30)));
+  const trendScore = Math.max(0, Math.min(100, 50 - trend * (50 / 30)));
 
   return Math.round(medianScore * 0.4 + pctScore * 0.4 + trendScore * 0.2);
 }

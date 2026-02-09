@@ -120,12 +120,22 @@ async function ckanSqlQuery(sql: string): Promise<Record<string, unknown>[]> {
 // ---------------------------------------------------------------------------
 
 function initSchema(db: Database.Database) {
+  // Migration: add new permit columns if missing (for existing DBs)
+  try {
+    db.exec(`ALTER TABLE permits ADD COLUMN permit_type TEXT`);
+  } catch { /* column already exists */ }
+  try {
+    db.exec(`ALTER TABLE permits ADD COLUMN nb_logements INTEGER`);
+  } catch { /* column already exists */ }
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS permits (
       _id            INTEGER PRIMARY KEY,
       arrondissement TEXT,
       date_debut     TEXT,
-      date_emission  TEXT
+      date_emission  TEXT,
+      permit_type    TEXT,
+      nb_logements   INTEGER
     );
 
     CREATE TABLE IF NOT EXISTS contracts (
@@ -149,6 +159,7 @@ function initSchema(db: Database.Database) {
       finished_at TEXT
     );
 
+    -- Migration: add columns if missing (idempotent via pragma check)
     CREATE INDEX IF NOT EXISTS idx_permits_date ON permits(date_debut);
     CREATE INDEX IF NOT EXISTS idx_permits_borough ON permits(arrondissement);
     CREATE INDEX IF NOT EXISTS idx_contracts_date ON contracts(approval_date);
@@ -197,8 +208,8 @@ function initSchema(db: Database.Database) {
 
 async function loadPermits(db: Database.Database, years: number[]) {
   const insert = db.prepare(`
-    INSERT OR REPLACE INTO permits (_id, arrondissement, date_debut, date_emission)
-    VALUES (@_id, @arrondissement, @date_debut, @date_emission)
+    INSERT OR REPLACE INTO permits (_id, arrondissement, date_debut, date_emission, permit_type, nb_logements)
+    VALUES (@_id, @arrondissement, @date_debut, @date_emission, @permit_type, @nb_logements)
   `);
   const insertMany = db.transaction((rows: Record<string, unknown>[]) => {
     for (const r of rows) insert.run(r);
@@ -208,15 +219,21 @@ async function loadPermits(db: Database.Database, years: number[]) {
 
   for (const year of years) {
     const sql = `
-      SELECT "_id", "arrondissement", "date_debut", "date_emission"
+      SELECT "_id", "arrondissement", "date_debut", "date_emission",
+             "code_type_base_demande" AS "permit_type", "nb_logements"
       FROM "${PERMITS_RESOURCE_ID}"
       WHERE "date_debut" >= '${year}-01-01'
         AND "date_debut" < '${year + 1}-01-01'
     `;
     console.log(`📋 Permits ${year}...`);
     const records = await ckanSqlQuery(sql);
-    if (records.length > 0) {
-      insertMany(records);
+    // nb_logements comes as string from CKAN — parse to integer
+    const mapped = records.map((r) => ({
+      ...r,
+      nb_logements: r.nb_logements ? parseInt(r.nb_logements as string, 10) || null : null,
+    }));
+    if (mapped.length > 0) {
+      insertMany(mapped);
     }
     console.log(`   ${records.length} rows`);
     totalRows += records.length;

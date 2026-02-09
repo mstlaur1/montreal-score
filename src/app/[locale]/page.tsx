@@ -27,11 +27,9 @@ export default async function Home({ params }: Props) {
 
   const currentYear = new Date().getFullYear();
 
-  // Permits
-  let permitSummary;
-  try {
-    permitSummary = await getCitySummary(currentYear);
-  } catch {
+  // Permits — use current year, fall back to previous if housing data is sparse
+  let permitSummary = await getCitySummary(currentYear);
+  if (permitSummary.housing_permits_ytd < 10) {
     permitSummary = await getCitySummary(currentYear - 1);
   }
 
@@ -135,9 +133,9 @@ export default async function Home({ params }: Props) {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <p className="text-sm text-muted">{t("medianDelay")}</p>
+              <p className="text-sm text-muted">{t("housingMedian")}</p>
               <p className="text-2xl font-bold">
-                {Math.round(permitSummary.median_processing_days)}
+                {Math.round(permitSummary.housing_median_days)}
                 <span className="text-sm font-normal text-muted ml-1">{t("days")}</span>
               </p>
               <p className="text-xs text-muted">{t("targetDetail", { target: PERMIT_TARGET_DAYS })}</p>
@@ -145,7 +143,7 @@ export default async function Home({ params }: Props) {
             <div>
               <p className="text-sm text-muted">{t("onTime")}</p>
               <p className="text-2xl font-bold">
-                {Math.round(permitSummary.pct_within_target)}
+                {Math.round(permitSummary.housing_pct_within_target)}
                 <span className="text-sm font-normal text-muted ml-1">%</span>
               </p>
               <p className="text-xs text-muted">{t("permitsWithinTarget", { target: PERMIT_TARGET_DAYS })}</p>
