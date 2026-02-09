@@ -104,6 +104,8 @@
     },
     "title": "Municipal Contracts",
     "subtitle": "All contracts over $2,000 approved by the City of Montreal. Data from the open data portal.",
+    "from": "From",
+    "to": "To",
     "totalContracts": "Contracts",
     "totalValue": "Total value",
     "avgValue": "Avg per contract",

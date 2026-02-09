@@ -104,6 +104,8 @@
     },
     "title": "Contrats municipaux",
     "subtitle": "Tous les contrats de plus de 2 000$ approuvés par la Ville de Montréal. Données provenant du portail de données ouvertes.",
+    "from": "De",
+    "to": "À",
     "totalContracts": "Contrats",
     "totalValue": "Valeur totale",
     "avgValue": "Moyenne par contrat",

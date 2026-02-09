@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { queryPermitsByYear, queryYearlyTrends, queryContractsByYear, getLastEtlRun } from "./db";
+import { queryPermitsByYear, queryYearlyTrends, queryContractsByRange, getLastEtlRun } from "./db";
 import { normalizeBoroughName, getBoroughSlug } from "./boroughs";
 import { calculateBoroughScores, rankBoroughs, scoreToGrade, PERMIT_TARGET_DAYS } from "./scoring";
 import type { BoroughPermitStats, BoroughScore, BoroughComparison, CitySummary, ContractStats } from "./types";
@@ -183,10 +183,11 @@ export async function getYearlyTrendData() {
 // --- Contracts ---
 
 /**
- * Get contract stats aggregated from live CKAN data.
+ * Get contract stats aggregated for a date range.
+ * from/to are "YYYY-MM-DD" strings (to is exclusive).
  */
-export const getContractStats = cache(async (year: number): Promise<ContractStats> => {
-  const raw = queryContractsByYear(year);
+export const getContractStats = cache(async (from: string, to: string): Promise<ContractStats> => {
+  const raw = queryContractsByRange(from, to);
 
   const amounts = raw
     .map((c) => parseFloat(c.MONTANT))
@@ -316,6 +317,7 @@ export const getContractStats = cache(async (year: number): Promise<ContractStat
     top10ConcentrationPct,
     distribution,
     thresholdClusters,
-    year,
+    from,
+    to,
   };
 });

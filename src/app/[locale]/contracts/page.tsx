@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getContractStats } from "@/lib/data";
+import { getContractDateBounds } from "@/lib/db";
 import { StatCard } from "@/components/StatCard";
 import { ContractHistogram } from "@/components/ContractHistogram";
+import { DateRangeSelector } from "@/components/DateRangeSelector";
 
 export const revalidate = 3600;
 
 type Props = {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ from?: string; to?: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -29,20 +32,81 @@ function formatCurrency(value: number, locale: string): string {
   }).format(value);
 }
 
-export default async function ContractsPage({ params }: Props) {
+function parseYearMonth(param: string | undefined): { year: number; month: number } | null {
+  if (!param) return null;
+  const match = param.match(/^(\d{4})-(\d{2})$/);
+  if (!match) return null;
+  const year = parseInt(match[1], 10);
+  const month = parseInt(match[2], 10);
+  if (month < 1 || month > 12) return null;
+  return { year, month };
+}
+
+function toDateStr(year: number, month: number): string {
+  return `${year}-${String(month).padStart(2, "0")}-01`;
+}
+
+function nextMonth(year: number, month: number): { year: number; month: number } {
+  return month === 12 ? { year: year + 1, month: 1 } : { year, month: month + 1 };
+}
+
+export default async function ContractsPage({ params, searchParams }: Props) {
   const { locale } = await params;
+  const { from: fromParam, to: toParam } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("ContractsPage");
 
-  const currentYear = new Date().getFullYear();
-  const stats = await getContractStats(currentYear);
+  const bounds = getContractDateBounds();
+  const [boundsMinY, boundsMinM] = bounds.min.split("-").map(Number);
+  const [boundsMaxY, boundsMaxM] = bounds.max.split("-").map(Number);
+
+  // Default: last 12 months
+  const now = new Date();
+  const defaultTo = { year: now.getFullYear(), month: now.getMonth() + 1 };
+  const defaultFrom = {
+    year: defaultTo.month <= 12 ? defaultTo.year - 1 : defaultTo.year,
+    month: ((defaultTo.month - 1 + 12 - 12) % 12) + 1,
+  };
+
+  let from = parseYearMonth(fromParam) ?? defaultFrom;
+  let to = parseYearMonth(toParam) ?? defaultTo;
+
+  // Clamp to bounds
+  if (from.year < boundsMinY || (from.year === boundsMinY && from.month < boundsMinM)) {
+    from = { year: boundsMinY, month: boundsMinM };
+  }
+  if (to.year > boundsMaxY || (to.year === boundsMaxY && to.month > boundsMaxM)) {
+    to = { year: boundsMaxY, month: boundsMaxM };
+  }
+  // Ensure from <= to
+  if (from.year > to.year || (from.year === to.year && from.month > to.month)) {
+    to = { ...from };
+  }
+
+  const fromDate = toDateStr(from.year, from.month);
+  const toExcl = nextMonth(to.year, to.month);
+  const toDate = toDateStr(toExcl.year, toExcl.month);
+
+  const stats = await getContractStats(fromDate, toDate);
 
   const localeTag = locale === "fr" ? "fr-CA" : "en-CA";
   const fmt = (v: number) => formatCurrency(v, locale);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-2">{t("title")}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
+        <h1 className="text-3xl font-bold">{t("title")}</h1>
+        <DateRangeSelector
+          fromYear={from.year}
+          fromMonth={from.month}
+          toYear={to.year}
+          toMonth={to.month}
+          minDate={bounds.min}
+          maxDate={bounds.max}
+          locale={locale}
+          labels={{ from: t("from"), to: t("to") }}
+        />
+      </div>
       <p className="text-muted mb-8">{t("subtitle")}</p>
 
       {/* Stats row */}

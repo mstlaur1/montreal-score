@@ -115,7 +115,8 @@ export interface ContractStats {
   distribution: { label: string; min: number; max: number; count: number; totalValue: number }[];
   /** Contracts in "just below threshold" zones */
   thresholdClusters: { threshold: number; label: string; period: string; count: number; expected: number }[];
-  year: number;
+  from: string;
+  to: string;
 }
 
 /** City-wide summary stats */

@@ -59,10 +59,10 @@ export function queryYearlyTrends(
 }
 
 /**
- * Query contracts for a given year.
- * Uses column aliases to match RawContract French field names.
+ * Query contracts within a date range.
+ * from/to are "YYYY-MM-DD" strings (to is exclusive).
  */
-export function queryContractsByYear(year: number): RawContract[] {
+export function queryContractsByRange(from: string, to: string): RawContract[] {
   const db = getDb();
   return db
     .prepare(
@@ -77,7 +77,25 @@ export function queryContractsByYear(year: number): RawContract[] {
        WHERE approval_date >= ? AND approval_date < ?
        ORDER BY approval_date DESC`
     )
-    .all(`${year}-01-01`, `${year + 1}-01-01`) as RawContract[];
+    .all(from, to) as RawContract[];
+}
+
+/**
+ * Get the earliest and latest month with contract data.
+ * Returns { min: "2011-01", max: "2026-02" }.
+ */
+export function getContractDateBounds(): { min: string; max: string } {
+  const db = getDb();
+  const row = db
+    .prepare(
+      `SELECT
+         MIN(substr(approval_date, 1, 7)) AS min,
+         MAX(substr(approval_date, 1, 7)) AS max
+       FROM contracts
+       WHERE approval_date IS NOT NULL`
+    )
+    .get() as { min: string; max: string };
+  return row;
 }
 
 /**
