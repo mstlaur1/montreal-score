@@ -51,6 +51,17 @@ export function gradeBgClass(grade: Grade): string {
 }
 
 /**
+ * Grade based on median processing days alone.
+ * Used for chart bar coloring where the visual (bar height) = median days.
+ * At/below target = A, degrades linearly up to 2x target = F.
+ */
+export function medianDaysToGrade(medianDays: number): Grade {
+  const ratio = medianDays / PERMIT_TARGET_DAYS;
+  const score = Math.max(0, Math.min(100, (1 - (ratio - 1)) * 100));
+  return scoreToGrade(score);
+}
+
+/**
  * Score a borough's permit performance on a 0-100 scale.
  * Uses housing-only metrics (nb_logements > 0) — the permits subject to the 90-day target.
  * Falls back to all-permit metrics for boroughs with no housing permits.

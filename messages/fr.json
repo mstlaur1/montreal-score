@@ -67,6 +67,16 @@
     "historicalTrend": "Tendance historique",
     "year": "Année",
     "permitsFiled": "Permis déposés",
+    "filterLabel": "Filtrer",
+    "filterAll": "Tous les permis",
+    "filterHousing": "Résidentiels",
+    "filterTR": "Rénovations (TR)",
+    "filterCO": "Construction (CO)",
+    "filterDE": "Démolition (DE)",
+    "filterCA": "Agrandissements (CA)",
+    "medianDays": "Délai médian",
+    "yoyTitle": "Variation annuelle des permis déposés",
+    "yoyYAxis": "% de variation",
     "methodology": "Méthodologie",
     "methodologyText": "Cette page montre uniquement les permis résidentiels — projets ajoutant des logements (nb_logements > 0 dans le jeu de données). La cible de 90 jours s'applique à ces projets résidentiels, et non aux permis d'abattage d'arbres, piscines, clôtures ou déneigement. Les délais sont calculés à partir des champs date_debut (date de demande) et date_emission (date d'émission). Le délai médian est utilisé plutôt que la moyenne pour réduire l'impact des cas extrêmes. Les données sont mises à jour chaque semaine par la Ville."
   },
@@ -74,7 +84,8 @@
     "yAxisLabel": "Jours",
     "tooltipDays": "{value} jours",
     "tooltipLabel": "Délai médian",
-    "targetLabel": "Cible: {target}j"
+    "targetLabel": "Cible: {target}j",
+    "previousTargetLabel": "Ancienne: {target}j"
   },
   "BoroughCard": {
     "medianDays": "{count} jours médians",

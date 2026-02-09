@@ -21,15 +21,17 @@ interface PermitBarChartProps {
     grade: Grade;
   }[];
   targetDays?: number;
+  previousTargetDays?: number;
   labels: {
     yAxis: string;
     tooltipLabel: string;
     tooltipUnit: string;
     targetLabel: string;
+    previousTargetLabel?: string;
   };
 }
 
-export function PermitBarChart({ data, targetDays = 90, labels }: PermitBarChartProps) {
+export function PermitBarChart({ data, targetDays = 90, previousTargetDays, labels }: PermitBarChartProps) {
   const chartData = data.map((d) => ({
     ...d,
     shortName: d.borough
@@ -68,11 +70,19 @@ export function PermitBarChart({ data, targetDays = 90, labels }: PermitBarChart
             borderRadius: "8px",
           }}
         />
+        {previousTargetDays && labels.previousTargetLabel && (
+          <ReferenceLine
+            y={previousTargetDays}
+            stroke="var(--muted)"
+            strokeDasharray="5 5"
+            label={{ value: labels.previousTargetLabel, position: "insideTopLeft", fontSize: 11 }}
+          />
+        )}
         <ReferenceLine
           y={targetDays}
           stroke="var(--grade-a)"
           strokeDasharray="5 5"
-          label={{ value: labels.targetLabel, position: "right", fontSize: 12 }}
+          label={{ value: labels.targetLabel, position: "insideTopLeft", fontSize: 12 }}
         />
         <Bar dataKey="medianDays" radius={[4, 4, 0, 0]}>
           {chartData.map((entry, index) => (

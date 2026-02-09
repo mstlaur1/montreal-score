@@ -1,12 +1,12 @@
 import { cache } from "react";
 import {
-  queryPermitsByYear, queryYearlyTrends, queryContractsByRange, getLastEtlRun,
+  queryPermitsByYear, queryYearlyTrends, queryPermitsForTrends, queryContractsByRange, getLastEtlRun,
   querySoleSourceByYear, querySoleSourceTopRecipients, queryYearlyContractsBySource,
   queryPromises, queryFirst100DaysPromises, queryBoroughPromises, queryLatestPromiseUpdates,
   queryPromiseStatusCounts, queryPromiseCategoryCounts, queryPromiseUpdateCounts,
 } from "./db";
 import { normalizeBoroughName, getBoroughSlug } from "./boroughs";
-import { calculateBoroughScores, rankBoroughs, scoreToGrade, PERMIT_TARGET_DAYS } from "./scoring";
+import { calculateBoroughScores, rankBoroughs, medianDaysToGrade, PERMIT_TARGET_DAYS } from "./scoring";
 import { normalizeSupplierName } from "./supplier-normalization";
 import type {
   BoroughPermitStats, BoroughScore, BoroughComparison, CitySummary, ContractStats,
@@ -134,20 +134,16 @@ export async function getBoroughScores(year: number): Promise<BoroughScore[]> {
  */
 export async function getBoroughComparisonData(year: number): Promise<BoroughComparison[]> {
   const stats = await getBoroughPermitStats(year);
-  const scores = calculateBoroughScores(stats);
 
   return stats
     .filter((s) => s.housing_permits > 0) // only boroughs with housing permits
-    .map((s) => {
-      const score = scores.find((sc) => sc.slug === s.slug);
-      return {
-        borough: s.borough,
-        slug: s.slug,
-        value: s.housing_median_days,
-        target: PERMIT_TARGET_DAYS,
-        grade: score?.permits_grade || scoreToGrade(0),
-      };
-    })
+    .map((s) => ({
+      borough: s.borough,
+      slug: s.slug,
+      value: s.housing_median_days,
+      target: PERMIT_TARGET_DAYS,
+      grade: medianDaysToGrade(s.housing_median_days),
+    }))
     .sort((a, b) => a.value - b.value);
 }
 
@@ -227,6 +223,41 @@ export async function getCitySummary(year: number): Promise<CitySummary> {
  */
 export async function getYearlyTrendData() {
   return queryYearlyTrends(2015);
+}
+
+export type YearlyPermitTrend = { year: number; total: number; medianDays: number };
+
+/**
+ * Get yearly permit trends with median processing days.
+ * Groups raw permits by year, computes processing days, calculates median.
+ */
+export function getYearlyPermitTrends(
+  startYear: number = 2015,
+  options?: { permitType?: string; housingOnly?: boolean }
+): YearlyPermitTrend[] {
+  const rows = queryPermitsForTrends(startYear, options);
+
+  const byYear = new Map<number, { total: number; days: number[] }>();
+
+  for (const row of rows) {
+    const y = parseInt(row.year, 10);
+    if (isNaN(y)) continue;
+
+    if (!byYear.has(y)) byYear.set(y, { total: 0, days: [] });
+    const bucket = byYear.get(y)!;
+    bucket.total++;
+
+    const d = processingDays(row.date_debut, row.date_emission);
+    if (d !== null) bucket.days.push(d);
+  }
+
+  const result: YearlyPermitTrend[] = [];
+  for (const [year, data] of byYear) {
+    const sorted = data.days.sort((a, b) => a - b);
+    result.push({ year, total: data.total, medianDays: median(sorted) });
+  }
+
+  return result.sort((a, b) => a.year - b.year);
 }
 
 // --- Contracts ---

@@ -66,6 +66,37 @@ export function queryYearlyTrends(
 }
 
 /**
+ * Query raw permit rows for trend computation.
+ * Returns date_debut and date_emission so median processing days can be
+ * calculated in the data layer (SQLite has no PERCENTILE).
+ */
+export function queryPermitsForTrends(
+  startYear: number = 2015,
+  options?: { permitType?: string; housingOnly?: boolean }
+): { year: string; date_debut: string | null; date_emission: string | null }[] {
+  const db = getDb();
+  const conditions = [`date_debut >= ?`];
+  const params: (string | number)[] = [`${startYear}-01-01`];
+
+  if (options?.permitType) {
+    conditions.push(`permit_type = ?`);
+    params.push(options.permitType);
+  }
+  if (options?.housingOnly) {
+    conditions.push(`nb_logements IS NOT NULL AND nb_logements != '' AND CAST(nb_logements AS INTEGER) > 0`);
+  }
+
+  return db
+    .prepare(
+      `SELECT substr(date_debut, 1, 4) AS year, date_debut, date_emission
+       FROM permits
+       WHERE ${conditions.join(" AND ")}
+       ORDER BY date_debut`
+    )
+    .all(...params) as { year: string; date_debut: string | null; date_emission: string | null }[];
+}
+
+/**
  * Intergovernmental / institutional suppliers that are budget transfers,
  * not procurement contracts. Excluded from analysis by default.
  */

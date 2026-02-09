@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getBoroughComparisonData, getCitySummary, getYearlyTrendData } from "@/lib/data";
+import { getBoroughComparisonData, getCitySummary, getYearlyPermitTrends } from "@/lib/data";
+import type { YearlyPermitTrend } from "@/lib/data";
 import { PERMIT_TARGET_DAYS, PREVIOUS_TARGET_DAYS } from "@/lib/scoring";
 import { PermitBarChart } from "@/components/PermitBarChart";
+import { PermitTrendSection } from "@/components/PermitTrendSection";
 import { StatCard } from "@/components/StatCard";
 import { YearSelector } from "@/components/YearSelector";
 
@@ -46,11 +48,27 @@ export default async function PermitsPage({ params, searchParams }: Props) {
   if (isNaN(selectedYear) || selectedYear < MIN_YEAR) selectedYear = MIN_YEAR;
   if (selectedYear > maxYear) selectedYear = maxYear;
 
-  const [comparison, summary, trends] = await Promise.all([
-    getBoroughComparisonData(selectedYear),
-    getCitySummary(selectedYear),
-    getYearlyTrendData(),
-  ]);
+  // Compute all trend variants in parallel
+  const [comparison, summary, trendsAll, trendsHousing, trendsTR, trendsCO, trendsDE, trendsCA] =
+    await Promise.all([
+      getBoroughComparisonData(selectedYear),
+      getCitySummary(selectedYear),
+      getYearlyPermitTrends(MIN_YEAR),
+      getYearlyPermitTrends(MIN_YEAR, { housingOnly: true }),
+      getYearlyPermitTrends(MIN_YEAR, { permitType: "TR" }),
+      getYearlyPermitTrends(MIN_YEAR, { permitType: "CO" }),
+      getYearlyPermitTrends(MIN_YEAR, { permitType: "DE" }),
+      getYearlyPermitTrends(MIN_YEAR, { permitType: "CA" }),
+    ]);
+
+  const trendsByFilter: Record<string, YearlyPermitTrend[]> = {
+    all: trendsAll,
+    housing: trendsHousing,
+    TR: trendsTR,
+    CO: trendsCO,
+    DE: trendsDE,
+    CA: trendsCA,
+  };
 
   const localeTag = locale === "fr" ? "fr-CA" : "en-CA";
 
@@ -118,11 +136,13 @@ export default async function PermitsPage({ params, searchParams }: Props) {
           <PermitBarChart
             data={chartData}
             targetDays={PERMIT_TARGET_DAYS}
+            previousTargetDays={PREVIOUS_TARGET_DAYS}
             labels={{
               yAxis: tChart("yAxisLabel"),
               tooltipLabel: tChart("tooltipLabel"),
               tooltipUnit: t("days"),
               targetLabel: tChart("targetLabel", { target: PERMIT_TARGET_DAYS }),
+              previousTargetLabel: tChart("previousTargetLabel", { target: PREVIOUS_TARGET_DAYS }),
             }}
           />
           <p className="text-xs text-muted mt-4 text-center">
@@ -135,32 +155,29 @@ export default async function PermitsPage({ params, searchParams }: Props) {
         </section>
       )}
 
-      {/* Historical trends */}
-      <section className="border border-card-border rounded-xl p-6 bg-card-bg">
-        <h2 className="text-xl font-bold mb-4">{t("historicalTrend")}</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-card-border text-left">
-                <th className="py-2 pr-4">{t("year")}</th>
-                <th className="py-2">{t("permitsFiled")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {trends.map(
-                (tr: { year: number; totalPermits: number }) => (
-                  <tr key={tr.year} className="border-b border-card-border">
-                    <td className="py-2 pr-4 font-mono">{tr.year}</td>
-                    <td className="py-2">
-                      {tr.totalPermits.toLocaleString(localeTag)}
-                    </td>
-                  </tr>
-                )
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      {/* Historical trends + YoY chart (shared filter) */}
+      <div className="mb-8">
+        <PermitTrendSection
+          trends={trendsByFilter}
+          locale={locale}
+          labels={{
+            filterLabel: t("filterLabel"),
+            filterAll: t("filterAll"),
+            filterHousing: t("filterHousing"),
+            filterTR: t("filterTR"),
+            filterCO: t("filterCO"),
+            filterDE: t("filterDE"),
+            filterCA: t("filterCA"),
+            year: t("year"),
+            permitsFiled: t("permitsFiled"),
+            medianDays: t("medianDays"),
+            historicalTrend: t("historicalTrend"),
+            days: t("days"),
+            yoyTitle: t("yoyTitle"),
+            yoyYAxis: t("yoyYAxis"),
+          }}
+        />
+      </div>
 
       {/* Methodology */}
       <section className="mt-8 text-sm text-muted">
