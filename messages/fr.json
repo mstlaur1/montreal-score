@@ -8,7 +8,8 @@
     "contracts": "Contrats",
     "boroughs": "Arrondissements",
     "311": "311",
-    "about": "À propos"
+    "about": "À propos",
+    "promises": "Promesses"
   },
   "Footer": {
     "dataFrom": "Données provenant de",
@@ -134,6 +135,37 @@
     "thresholdMethodology": "La comparaison utilise une bande de valeur symétrique au-dessus du seuil comme référence. Le seuil appliqué correspond à celui en vigueur à la date d'approbation du contrat. Un ratio significativement supérieur à 1 peut indiquer du fractionnement de contrats. Sources: <lcv>art. 573.3.1.2, Loi sur les cités et villes</lcv> (seuil de 25 000$); <mamh>MAMH — Conformité des contrats municipaux</mamh> (seuils d'appel d'offres public, ajustés aux deux ans via Muni-Express).",
     "methodology": "Méthodologie",
     "methodologyText": "Les données proviennent du jeu de données « Contrats de la Ville de Montréal » du portail de données ouvertes. Tous les contrats de 2 000$ et plus y sont publiés. Les montants sont en dollars canadiens."
+  },
+  "PromisesPage": {
+    "metadata": {
+      "title": "Promesses électorales — MontréalScore",
+      "description": "Suivi des promesses électorales de la mairesse Martinez Ferrada pour Montréal."
+    },
+    "title": "Suivi des promesses électorales",
+    "subtitle": "Suivi des engagements de la mairesse Soraya Martinez Ferrada par rapport aux résultats concrets.",
+    "first100": {
+      "title": "Les 100 premiers jours",
+      "dayCount": "Jour {day} sur 100",
+      "expired": "La période de 100 jours est terminée",
+      "completed": "{done} sur {total} complétées"
+    },
+    "target": "Cible",
+    "summaryTitle": "Aperçu",
+    "stat": {
+      "total": "Promesses totales",
+      "notStarted": "Non démarrées",
+      "inProgress": "En cours",
+      "completed": "Complétées"
+    },
+    "status": {
+      "not_started": "Non démarrée",
+      "in_progress": "En cours",
+      "completed": "Complétée",
+      "broken": "Rompue",
+      "partially_met": "Partielle"
+    },
+    "methodologyTitle": "Méthodologie",
+    "methodologyText": "Les promesses sont extraites de la plateforme électorale d'Ensemble Montréal 2025. Les statuts sont mis à jour manuellement à partir de reportages, décisions du conseil et annonces officielles. Le décompte des 100 premiers jours débute à la date d'assermentation (10 novembre 2025)."
   },
   "LocaleSwitcher": {
     "label": "EN"

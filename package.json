@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "etl": "tsx scripts/etl.ts",
-    "etl:full": "tsx scripts/etl.ts --full"
+    "etl:full": "tsx scripts/etl.ts --full",
+    "promises:seed": "tsx scripts/seed-promises.ts"
   },
   "dependencies": {
     "better-sqlite3": "^12.6.2",

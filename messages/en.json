@@ -8,7 +8,8 @@
     "contracts": "Contracts",
     "boroughs": "Boroughs",
     "311": "311",
-    "about": "About"
+    "about": "About",
+    "promises": "Promises"
   },
   "Footer": {
     "dataFrom": "Data from",
@@ -134,6 +135,37 @@
     "thresholdMethodology": "Comparison uses a symmetric value band above the threshold as baseline. The threshold applied matches the one in effect at each contract's approval date. A ratio significantly above 1 may indicate contract splitting. Sources: <lcv>art. 573.3.1.2, Loi sur les cités et villes</lcv> ($25K threshold); <mamh>MAMH — Conformité des contrats municipaux</mamh> (public tender thresholds, adjusted biennially via Muni-Express).",
     "methodology": "Methodology",
     "methodologyText": "Data comes from the \"Contrats de la Ville de Montréal\" dataset on the open data portal. All contracts of $2,000 and above are published. Amounts are in Canadian dollars."
+  },
+  "PromisesPage": {
+    "metadata": {
+      "title": "Campaign Promises — MontréalScore",
+      "description": "Tracking Mayor Martinez Ferrada's campaign promises for Montreal."
+    },
+    "title": "Campaign Promise Tracker",
+    "subtitle": "Tracking Mayor Soraya Martinez Ferrada's campaign commitments against real-world outcomes.",
+    "first100": {
+      "title": "First 100 Days",
+      "dayCount": "Day {day} of 100",
+      "expired": "100-day period has ended",
+      "completed": "{done} of {total} completed"
+    },
+    "target": "Target",
+    "summaryTitle": "Overview",
+    "stat": {
+      "total": "Total promises",
+      "notStarted": "Not started",
+      "inProgress": "In progress",
+      "completed": "Completed"
+    },
+    "status": {
+      "not_started": "Not started",
+      "in_progress": "In progress",
+      "completed": "Completed",
+      "broken": "Broken",
+      "partially_met": "Partial"
+    },
+    "methodologyTitle": "Methodology",
+    "methodologyText": "Promises are extracted from the Ensemble Montréal 2025 campaign platform. Statuses are updated manually based on news reports, council decisions, and official announcements. The first 100 days countdown starts from the inauguration date (November 10, 2025)."
   },
   "LocaleSwitcher": {
     "label": "FR"
