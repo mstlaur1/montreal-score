@@ -30,9 +30,32 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Metadata" });
+  const altLocale = locale === "fr" ? "en" : "fr";
   return {
+    metadataBase: new URL("https://montrealscore.ashwater.ca"),
     title: t("siteTitle"),
     description: t("siteDescription"),
+    openGraph: {
+      title: t("siteTitle"),
+      description: t("siteDescription"),
+      url: `https://montrealscore.ashwater.ca/${locale}`,
+      siteName: "MontréalScore",
+      locale: locale === "fr" ? "fr_CA" : "en_CA",
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title: t("siteTitle"),
+      description: t("siteDescription"),
+    },
+    alternates: {
+      canonical: `https://montrealscore.ashwater.ca/${locale}`,
+      languages: {
+        fr: `https://montrealscore.ashwater.ca/fr`,
+        en: `https://montrealscore.ashwater.ca/en`,
+        "x-default": `https://montrealscore.ashwater.ca/fr`,
+      },
+    },
   };
 }
 
@@ -48,6 +71,26 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   return (
     <html lang={locale}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "MontréalScore",
+              url: "https://montrealscore.ashwater.ca",
+              description: "Municipal performance tracker for Montreal — permits, contracts, and campaign promises.",
+              inLanguage: [locale === "fr" ? "fr-CA" : "en-CA"],
+              publisher: {
+                "@type": "Organization",
+                name: "Ashwater",
+                url: "https://ashwater.ca",
+              },
+            }),
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -96,8 +139,8 @@ export default async function LocaleLayout({ children, params }: Props) {
                   donnees.montreal.ca
                 </a>
                 . {tFooter("openSourceBy")}{" "}
-                <a href="https://brule.ai" className="underline hover:text-accent">
-                  Brulé AI
+                <a href="https://ashwater.ca" className="underline hover:text-accent">
+                  Ashwater
                 </a>
                 .
               </p>

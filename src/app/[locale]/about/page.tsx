@@ -11,6 +11,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: t("metadata.title"),
     description: t("metadata.description"),
+    alternates: {
+      canonical: `https://montrealscore.ashwater.ca/${locale}/about`,
+      languages: { fr: "/fr/about", en: "/en/about" },
+    },
   };
 }
 
@@ -100,8 +104,8 @@ export default async function AboutPage({ params }: Props) {
         <h2 id="contact" className="text-xl font-bold mt-8 mb-3">{t("contactTitle")}</h2>
         <p>
           {t.rich("contactBody", {
-            brule: (chunks) => (
-              <a href="https://brule.ai" className="text-accent underline" target="_blank" rel="noopener noreferrer">
+            ashwater: (chunks) => (
+              <a href="https://ashwater.ca" className="text-accent underline" target="_blank" rel="noopener noreferrer">
                 {chunks}
               </a>
             ),

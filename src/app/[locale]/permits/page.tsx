@@ -30,6 +30,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: t("metadata.title"),
     description: t("metadata.description"),
+    alternates: {
+      canonical: `https://montrealscore.ashwater.ca/${locale}/permits`,
+      languages: { fr: "/fr/permits", en: "/en/permits" },
+    },
   };
 }
 
