@@ -25,6 +25,20 @@ export default async function AboutPage({ params }: Props) {
 
       <section className="space-y-4 text-base leading-relaxed">
         <p>{t("intro")}</p>
+        <p>{t("intro2")}</p>
+
+        <h2 className="text-xl font-bold mt-8 mb-3">{t("whatTitle")}</h2>
+        <ul className="space-y-3 ml-1">
+          <li>
+            <strong>{t("whatPromises")}</strong> — {t("whatPromisesDetail")}
+          </li>
+          <li>
+            <strong>{t("whatPermits")}</strong> — {t("whatPermitsDetail")}
+          </li>
+          <li>
+            <strong>{t("whatContracts")}</strong> — {t("whatContractsDetail")}
+          </li>
+        </ul>
 
         <h2 className="text-xl font-bold mt-8 mb-3">{t("whyTitle")}</h2>
         <p>{t("whyBody")}</p>
@@ -50,16 +64,10 @@ export default async function AboutPage({ params }: Props) {
             <strong>{t("dataPermits")}</strong> — {t("dataPermitsDetail")}
           </li>
           <li>
-            <strong>{t("data311")}</strong> — {t("data311Detail")}
-          </li>
-          <li>
-            <strong>{t("dataSnow")}</strong> — {t("dataSnowDetail")}
-          </li>
-          <li>
-            <strong>{t("dataRoads")}</strong> — {t("dataRoadsDetail")}
-          </li>
-          <li>
             <strong>{t("dataContracts")}</strong> — {t("dataContractsDetail")}
+          </li>
+          <li>
+            <strong>{t("dataPromises")}</strong> — {t("dataPromisesDetail")}
           </li>
         </ul>
 
@@ -70,7 +78,24 @@ export default async function AboutPage({ params }: Props) {
           <li>{t("methodologyPct")}</li>
           <li>{t("methodologyTrend")}</li>
         </ul>
-        <p className="mt-2">{t("methodologyNote")}</p>
+        <p className="mt-2">{t("methodologyPromises")}</p>
+
+        <h2 className="text-xl font-bold mt-8 mb-3">{t("contributeTitle")}</h2>
+        <p>{t("contributeBody")}</p>
+        <ul className="list-disc list-inside space-y-1 ml-4">
+          <li>{t("contributeTip")}</li>
+          <li>{t("contributeSource")}</li>
+          <li>{t("contributeCorrection")}</li>
+        </ul>
+        <p className="mt-2">
+          {t.rich("contributeHow", {
+            email: (chunks) => (
+              <a href="mailto:contact@brule.ai" className="text-accent underline">
+                {chunks}
+              </a>
+            ),
+          })}
+        </p>
 
         <h2 className="text-xl font-bold mt-8 mb-3">{t("openSourceTitle")}</h2>
         <p>
@@ -91,8 +116,13 @@ export default async function AboutPage({ params }: Props) {
         <h2 className="text-xl font-bold mt-8 mb-3">{t("contactTitle")}</h2>
         <p>
           {t.rich("contactBody", {
-            link: (chunks) => (
-              <a href="https://brule.ai" className="text-accent underline">
+            brule: (chunks) => (
+              <a href="https://brule.ai" className="text-accent underline" target="_blank" rel="noopener noreferrer">
+                {chunks}
+              </a>
+            ),
+            email: (chunks) => (
+              <a href="mailto:contact@brule.ai" className="text-accent underline">
                 {chunks}
               </a>
             ),

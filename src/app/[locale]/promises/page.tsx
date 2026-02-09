@@ -36,17 +36,19 @@ function get100DayProgress() {
 /** Compute status breakdown percentages from a list of promises */
 function statusBreakdown(promises: CampaignPromise[]) {
   const total = promises.length;
-  if (total === 0) return { completed: 0, in_progress: 0, broken: 0, not_started: 0, completedN: 0, inProgressN: 0, brokenN: 0, notStartedN: 0, total: 0 };
+  if (total === 0) return { completed: 0, in_progress: 0, broken: 0, partially_met: 0, not_started: 0, completedN: 0, inProgressN: 0, brokenN: 0, partialN: 0, notStartedN: 0, total: 0 };
   const completedN = promises.filter((p) => p.status === "completed").length;
   const inProgressN = promises.filter((p) => p.status === "in_progress").length;
   const brokenN = promises.filter((p) => p.status === "broken").length;
-  const notStartedN = total - completedN - inProgressN - brokenN;
+  const partialN = promises.filter((p) => p.status === "partially_met").length;
+  const notStartedN = total - completedN - inProgressN - brokenN - partialN;
   return {
     completed: (completedN / total) * 100,
     in_progress: (inProgressN / total) * 100,
     broken: (brokenN / total) * 100,
+    partially_met: (partialN / total) * 100,
     not_started: (notStartedN / total) * 100,
-    completedN, inProgressN, brokenN, notStartedN, total,
+    completedN, inProgressN, brokenN, partialN, notStartedN, total,
   };
 }
 
@@ -106,23 +108,30 @@ export default async function PromisesPage({ params }: Props) {
         <h2 className="text-lg font-semibold mb-2">{t("progressBar.allPromises")}</h2>
         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-5 flex overflow-hidden">
           {allStats.completed > 0 && (
-            <div className="bg-green-500 h-5 transition-all" style={{ width: `${allStats.completed}%` }} />
+            <div className="bg-green-700 h-5 transition-all" style={{ width: `${allStats.completed}%` }} />
           )}
           {allStats.in_progress > 0 && (
-            <div className="bg-blue-500 h-5 transition-all" style={{ width: `${allStats.in_progress}%` }} />
+            <div className="bg-yellow-400 h-5 transition-all" style={{ width: `${allStats.in_progress}%` }} />
           )}
           {allStats.broken > 0 && (
             <div className="bg-red-500 h-5 transition-all" style={{ width: `${allStats.broken}%` }} />
           )}
+          {allStats.partially_met > 0 && (
+            <div className="bg-emerald-400 h-5 transition-all" style={{ width: `${allStats.partially_met}%` }} />
+          )}
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-muted">
           <span className="flex items-center gap-1">
-            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-green-500" />
+            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-green-700" />
             {t("progressBar.completed")}: {allStats.completedN} {t("progressBar.of")} {allStats.total}
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-blue-500" />
+            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-yellow-400" />
             {t("progressBar.inProgress")}: {allStats.inProgressN}
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-400" />
+            {t("progressBar.partial")}: {allStats.partialN}
           </span>
           <span className="flex items-center gap-1">
             <span className="inline-block w-2.5 h-2.5 rounded-sm bg-red-500" />
@@ -131,6 +140,22 @@ export default async function PromisesPage({ params }: Props) {
           <span className="flex items-center gap-1">
             <span className="inline-block w-2.5 h-2.5 rounded-sm bg-gray-300 dark:bg-gray-600" />
             {t("progressBar.notStarted")}: {allStats.notStartedN}
+          </span>
+        </div>
+        {/* Sentiment legend */}
+        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-xs text-muted">
+          <span>{t("sentiment.label")}:</span>
+          <span className="flex items-center gap-1">
+            <span className="text-green-600 dark:text-green-400 font-bold">+</span> {t("sentiment.positive")}
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="text-yellow-600 dark:text-yellow-400 font-bold">~</span> {t("sentiment.mixed")}
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="text-red-600 dark:text-red-400 font-bold">-</span> {t("sentiment.negative")}
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="text-muted font-bold">?</span> {t("sentiment.unknown")}
           </span>
         </div>
       </section>
@@ -147,23 +172,30 @@ export default async function PromisesPage({ params }: Props) {
         {/* Status progress bar */}
         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 flex overflow-hidden mb-1">
           {first100Stats.completed > 0 && (
-            <div className="bg-green-500 h-4 transition-all" style={{ width: `${first100Stats.completed}%` }} />
+            <div className="bg-green-700 h-4 transition-all" style={{ width: `${first100Stats.completed}%` }} />
           )}
           {first100Stats.in_progress > 0 && (
-            <div className="bg-blue-500 h-4 transition-all" style={{ width: `${first100Stats.in_progress}%` }} />
+            <div className="bg-yellow-400 h-4 transition-all" style={{ width: `${first100Stats.in_progress}%` }} />
           )}
           {first100Stats.broken > 0 && (
             <div className="bg-red-500 h-4 transition-all" style={{ width: `${first100Stats.broken}%` }} />
           )}
+          {first100Stats.partially_met > 0 && (
+            <div className="bg-emerald-400 h-4 transition-all" style={{ width: `${first100Stats.partially_met}%` }} />
+          )}
         </div>
         <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted mb-6">
           <span className="flex items-center gap-1">
-            <span className="inline-block w-2 h-2 rounded-sm bg-green-500" />
+            <span className="inline-block w-2 h-2 rounded-sm bg-green-700" />
             {t("progressBar.completed")}: {first100Stats.completedN}
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block w-2 h-2 rounded-sm bg-blue-500" />
+            <span className="inline-block w-2 h-2 rounded-sm bg-yellow-400" />
             {t("progressBar.inProgress")}: {first100Stats.inProgressN}
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2 h-2 rounded-sm bg-emerald-400" />
+            {t("progressBar.partial")}: {first100Stats.partialN}
           </span>
           <span className="flex items-center gap-1">
             <span className="inline-block w-2 h-2 rounded-sm bg-red-500" />
@@ -206,21 +238,26 @@ export default async function PromisesPage({ params }: Props) {
                   </div>
                 </div>
                 {update && (
-                  <div className="ml-8 mt-2">
-                    <p className="text-xs text-muted">
-                      {locale === "fr" ? update.summary_fr : update.summary_en}
-                    </p>
-                    {update.source_url && (
-                      <a
-                        href={update.source_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-accent hover:underline mt-1 inline-block"
-                      >
-                        {update.source_title ?? t("source")} &rarr;
-                      </a>
-                    )}
-                  </div>
+                  <details className="ml-8 mt-1">
+                    <summary className="text-xs text-accent cursor-pointer hover:underline">
+                      {t("latestUpdate")} — {update.date}
+                    </summary>
+                    <div className="mt-1">
+                      <p className="text-xs text-muted">
+                        {locale === "fr" ? update.summary_fr : update.summary_en}
+                      </p>
+                      {update.source_url && (
+                        <a
+                          href={update.source_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-accent hover:underline mt-1 inline-block"
+                        >
+                          {update.source_title ?? t("source")} &rarr;
+                        </a>
+                      )}
+                    </div>
+                  </details>
                 )}
               </li>
             );
@@ -259,13 +296,16 @@ export default async function PromisesPage({ params }: Props) {
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 flex overflow-hidden">
                     {bs.completed > 0 && (
-                      <div className="bg-green-500 h-3 transition-all" style={{ width: `${bs.completed}%` }} />
+                      <div className="bg-green-700 h-3 transition-all" style={{ width: `${bs.completed}%` }} />
                     )}
                     {bs.in_progress > 0 && (
-                      <div className="bg-blue-500 h-3 transition-all" style={{ width: `${bs.in_progress}%` }} />
+                      <div className="bg-yellow-400 h-3 transition-all" style={{ width: `${bs.in_progress}%` }} />
                     )}
                     {bs.broken > 0 && (
                       <div className="bg-red-500 h-3 transition-all" style={{ width: `${bs.broken}%` }} />
+                    )}
+                    {bs.partially_met > 0 && (
+                      <div className="bg-emerald-400 h-3 transition-all" style={{ width: `${bs.partially_met}%` }} />
                     )}
                   </div>
                 </summary>
@@ -276,19 +316,54 @@ export default async function PromisesPage({ params }: Props) {
                         {subcategory === "borough" ? t("boroughLevel") : `${t("district")}: ${subcategory}`}
                       </h4>
                       <ul className="space-y-2">
-                        {items.map((p, i) => (
-                          <li key={p.id} className="flex items-start gap-3">
-                            <span className="text-sm font-mono text-muted mt-0.5 w-5 shrink-0">
-                              {i + 1}.
-                            </span>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm">
-                                {locale === "fr" ? p.text_fr : p.text_en}
-                              </p>
+                        {items.map((p, i) => {
+                          const update = p.latestUpdate;
+                          const sentiment = update ? sentimentIcon(update.sentiment) : null;
+                          return (
+                          <li key={p.id} className="border-b border-card-border pb-2 last:border-0 last:pb-0">
+                            <div className="flex items-start gap-3">
+                              <span className="text-sm font-mono text-muted mt-0.5 w-5 shrink-0">
+                                {i + 1}.
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm">
+                                  {locale === "fr" ? p.text_fr : p.text_en}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                {sentiment && (
+                                  <span className={`text-sm font-bold ${sentiment.cls}`} title={update?.sentiment ?? ""}>
+                                    {sentiment.icon}
+                                  </span>
+                                )}
+                                <StatusBadge status={p.status} label={statusLabel(p.status)} />
+                              </div>
                             </div>
-                            <StatusBadge status={p.status} label={statusLabel(p.status)} />
+                            {update && (
+                              <details className="ml-8 mt-1">
+                                <summary className="text-xs text-accent cursor-pointer hover:underline">
+                                  {t("latestUpdate")} — {update.date}
+                                </summary>
+                                <div className="mt-1">
+                                  <p className="text-xs text-muted">
+                                    {locale === "fr" ? update.summary_fr : update.summary_en}
+                                  </p>
+                                  {update.source_url && (
+                                    <a
+                                      href={update.source_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-xs text-accent hover:underline mt-1 inline-block"
+                                    >
+                                      {update.source_title ?? t("source")} &rarr;
+                                    </a>
+                                  )}
+                                </div>
+                              </details>
+                            )}
                           </li>
-                        ))}
+                          );
+                        })}
                       </ul>
                     </div>
                   ))}

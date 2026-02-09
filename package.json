@@ -9,7 +9,8 @@
     "lint": "eslint",
     "etl": "tsx scripts/etl.ts",
     "etl:full": "tsx scripts/etl.ts --full",
-    "promises:seed": "tsx scripts/seed-promises.ts"
+    "promises:seed": "tsx scripts/seed-promises.ts",
+    "admin": "tsx scripts/admin.ts"
   },
   "dependencies": {
     "better-sqlite3": "^12.6.2",
@@ -23,11 +24,13 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/better-sqlite3": "^7.6.13",
+    "@types/express": "^5.0.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "express": "^5.2.1",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"
