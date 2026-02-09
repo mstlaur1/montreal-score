@@ -286,12 +286,18 @@ export const getContractStats = cache(async (from: string, to: string): Promise<
   ];
 
   // $25K threshold applies to all contracts regardless of era
-  const thresholdClusters: { threshold: number; label: string; period: string; count: number; expected: number }[] = [
+  const thresholdClusters: {
+    threshold: number; label: string; period: string;
+    count: number; expected: number;
+    belowThreshold: number; totalInEra: number;
+  }[] = [
     {
       threshold: 25000,
       label: "$25K",
       period: "",
       ...clusterAroundThreshold(amounts, 25000, 5000),
+      belowThreshold: amounts.filter((a) => a < 25000).length,
+      totalInEra: amounts.length,
     },
   ];
 
@@ -317,6 +323,8 @@ export const getContractStats = cache(async (from: string, to: string): Promise<
         label: era.label,
         period: era.period,
         ...clusterAroundThreshold(eraAmounts, era.threshold, era.bandSize),
+        belowThreshold: eraAmounts.filter((a) => a < era.threshold).length,
+        totalInEra: eraAmounts.length,
       });
     }
   }

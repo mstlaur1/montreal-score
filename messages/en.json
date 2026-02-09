@@ -130,6 +130,7 @@
     "thresholdLabel": "Just below {threshold}",
     "thresholdExpected": "Expected (symmetric band above): {expected}",
     "thresholdElevated": "{ratio}x higher than expected",
+    "belowThreshold": "{count} of {total} contracts below threshold ({pct}%)",
     "thresholdMethodology": "Comparison uses a symmetric value band above the threshold as baseline. The threshold applied matches the one in effect at each contract's approval date. A ratio significantly above 1 may indicate contract splitting. Sources: <lcv>art. 573.3.1.2, Loi sur les cités et villes</lcv> ($25K threshold); <mamh>MAMH — Conformité des contrats municipaux</mamh> (public tender thresholds, adjusted biennially via Muni-Express).",
     "methodology": "Methodology",
     "methodologyText": "Data comes from the \"Contrats de la Ville de Montréal\" dataset on the open data portal. All contracts of $2,000 and above are published. Amounts are in Canadian dollars."

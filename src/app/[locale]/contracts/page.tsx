@@ -226,6 +226,15 @@ export default async function ContractsPage({ params, searchParams }: Props) {
                     {t("thresholdElevated", { ratio: ratio.toFixed(1) })}
                   </p>
                 )}
+                <p className="text-xs text-muted mt-2 border-t border-card-border pt-2">
+                  {t("belowThreshold", {
+                    count: tc.belowThreshold.toLocaleString(localeTag),
+                    total: tc.totalInEra.toLocaleString(localeTag),
+                    pct: tc.totalInEra > 0
+                      ? ((tc.belowThreshold / tc.totalInEra) * 100).toFixed(1)
+                      : "0",
+                  })}
+                </p>
               </div>
             );
           })}

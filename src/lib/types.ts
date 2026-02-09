@@ -114,7 +114,11 @@ export interface ContractStats {
   /** Distribution buckets for histogram */
   distribution: { label: string; min: number; max: number; count: number; totalValue: number }[];
   /** Contracts in "just below threshold" zones */
-  thresholdClusters: { threshold: number; label: string; period: string; count: number; expected: number }[];
+  thresholdClusters: {
+    threshold: number; label: string; period: string;
+    count: number; expected: number;
+    belowThreshold: number; totalInEra: number;
+  }[];
   from: string;
   to: string;
 }
