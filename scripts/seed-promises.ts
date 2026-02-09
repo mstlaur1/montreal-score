@@ -9,6 +9,7 @@ import Database from "better-sqlite3";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { PROMISE_SEEDS } from "../data/promises-seed.js";
+import { PLATFORM_PROMISE_SEEDS } from "../data/platform-promises-seed.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_PATH = path.join(__dirname, "..", "data", "montreal.db");
@@ -56,9 +57,10 @@ function main() {
     }
   });
 
-  insertMany(PROMISE_SEEDS);
+  const allSeeds = [...PROMISE_SEEDS, ...PLATFORM_PROMISE_SEEDS];
+  insertMany(allSeeds);
   db.close();
-  console.log(`Seeded ${PROMISE_SEEDS.length} promises.`);
+  console.log(`Seeded ${allSeeds.length} promises (${PROMISE_SEEDS.length} original + ${PLATFORM_PROMISE_SEEDS.length} platform).`);
 }
 
 main();

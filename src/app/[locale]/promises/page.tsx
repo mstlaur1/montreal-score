@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getFirst100DaysPromises, getPromiseSummary, getPromisesByBorough } from "@/lib/data";
+import { getFirst100DaysPromises, getPromiseSummary, getPromisesByBorough, getPlatformPromisesByCategory } from "@/lib/data";
 import { StatusBadge } from "@/components/StatusBadge";
 import { StatCard } from "@/components/StatCard";
 import type { PromiseStatus, PromiseSentiment, CampaignPromise } from "@/lib/types";
@@ -73,18 +73,23 @@ export default async function PromisesPage({ params }: Props) {
   setRequestLocale(locale);
   const t = await getTranslations("PromisesPage");
 
-  const [first100, summary, boroughMap] = await Promise.all([
+  const [first100, summary, boroughMap, platformMap] = await Promise.all([
     getFirst100DaysPromises(),
     getPromiseSummary(),
     getPromisesByBorough(),
+    getPlatformPromisesByCategory(),
   ]);
 
   const { dayElapsed, pct, expired } = get100DayProgress();
   const completedCount = first100.filter((p) => p.status === "completed").length;
 
-  // All promises: flatten borough map + first100 for full count
+  // All promises: flatten borough map + first100 + platform for full count
   const allPromises = [...first100];
   for (const promises of boroughMap.values()) allPromises.push(...promises);
+  for (const promises of platformMap.values()) allPromises.push(...promises);
+
+  // Sort platform categories by promise count (descending)
+  const sortedCategories = [...platformMap.entries()].sort(([, a], [, b]) => b.length - a.length);
   const allStats = statusBreakdown(allPromises);
   const first100Stats = statusBreakdown(first100);
 
@@ -277,6 +282,101 @@ export default async function PromisesPage({ params }: Props) {
           <StatCard label={t("stat.notStarted")} value={summary.not_started} />
           <StatCard label={t("stat.inProgress")} value={summary.in_progress} />
           <StatCard label={t("stat.completed")} value={summary.completed} />
+        </div>
+      </section>
+
+      {/* City-wide Platform Commitments */}
+      <section className="mb-10">
+        <h2 className="text-2xl font-bold mb-2">{t("platformCommitmentsTitle")}</h2>
+        <p className="text-sm text-muted mb-6">{t("platformCommitmentsSubtitle")}</p>
+
+        <div className="space-y-6">
+          {sortedCategories.map(([categoryName, promises]) => {
+            const cs = statusBreakdown(promises);
+            return (
+              <details key={categoryName} className="border border-card-border rounded-xl bg-card-bg">
+                <summary className="px-6 py-4 cursor-pointer">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-semibold">{t(`category.${categoryName}`)}</h3>
+                    <span className="text-sm text-muted">
+                      {t("commitments", { count: promises.length })}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 flex overflow-hidden">
+                    {cs.completed > 0 && (
+                      <div className="bg-green-700 h-3 transition-all" style={{ width: `${cs.completed}%` }} />
+                    )}
+                    {cs.in_progress > 0 && (
+                      <div className="bg-yellow-400 h-3 transition-all" style={{ width: `${cs.in_progress}%` }} />
+                    )}
+                    {cs.broken > 0 && (
+                      <div className="bg-red-500 h-3 transition-all" style={{ width: `${cs.broken}%` }} />
+                    )}
+                    {cs.partially_met > 0 && (
+                      <div className="bg-emerald-400 h-3 transition-all" style={{ width: `${cs.partially_met}%` }} />
+                    )}
+                  </div>
+                </summary>
+                <div className="px-6 pb-6">
+                  <ul className="space-y-2">
+                    {promises.map((p, i) => {
+                      const update = p.latestUpdate;
+                      const sentiment = update ? sentimentIcon(update.sentiment) : null;
+                      return (
+                        <li key={p.id} className="border-b border-card-border pb-2 last:border-0 last:pb-0">
+                          <div className="flex items-start gap-3">
+                            <span className="text-sm font-mono text-muted mt-0.5 w-5 shrink-0">
+                              {i + 1}.
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm">
+                                {locale === "fr" ? p.text_fr : p.text_en}
+                              </p>
+                              {p.target_value && (
+                                <span className="text-xs text-muted">
+                                  {t("target")}: {p.target_value}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {sentiment && (
+                                <span className={`text-sm font-bold ${sentiment.cls}`} title={update?.sentiment ?? ""}>
+                                  {sentiment.icon}
+                                </span>
+                              )}
+                              <StatusBadge status={p.status} label={statusLabel(p.status)} />
+                            </div>
+                          </div>
+                          {update && (
+                            <details className="ml-8 mt-1">
+                              <summary className="text-xs text-accent cursor-pointer hover:underline">
+                                {t("latestUpdate")} — {update.date}
+                              </summary>
+                              <div className="mt-1">
+                                <p className="text-xs text-muted">
+                                  {locale === "fr" ? update.summary_fr : update.summary_en}
+                                </p>
+                                {update.source_url && (
+                                  <a
+                                    href={update.source_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-accent hover:underline mt-1 inline-block"
+                                  >
+                                    {update.source_title ?? t("source")} &rarr;
+                                  </a>
+                                )}
+                              </div>
+                            </details>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </details>
+            );
+          })}
         </div>
       </section>
 

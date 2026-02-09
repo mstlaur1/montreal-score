@@ -2,7 +2,7 @@ import { cache } from "react";
 import {
   queryPermitsByYear, queryYearlyTrends, queryPermitsForTrends, queryContractsByRange, getLastEtlRun,
   querySoleSourceByYear, querySoleSourceTopRecipients, queryYearlyContractsBySource,
-  queryPromises, queryFirst100DaysPromises, queryBoroughPromises, queryLatestPromiseUpdates,
+  queryPromises, queryFirst100DaysPromises, queryBoroughPromises, queryPlatformPromises, queryLatestPromiseUpdates,
   queryPromiseStatusCounts, queryPromiseCategoryCounts, queryPromiseUpdateCounts,
 } from "./db";
 import { normalizeBoroughName, getBoroughSlug } from "./boroughs";
@@ -599,6 +599,31 @@ export const getPromisesByBorough = cache(async (): Promise<Map<string, Campaign
     byBorough.set(r.borough!, list);
   }
   return byBorough;
+});
+
+export const getPlatformPromisesByCategory = cache(async (): Promise<Map<string, CampaignPromise[]>> => {
+  const raw = queryPlatformPromises();
+  const latestUpdates = queryLatestPromiseUpdates();
+  const updateCounts = queryPromiseUpdateCounts();
+
+  const updatesMap = new Map<string, PromiseUpdate>(
+    latestUpdates.map((u) => [u.promise_id, {
+      id: u.id, promise_id: u.promise_id, date: u.date,
+      source_url: u.source_url, source_title: u.source_title,
+      summary_fr: u.summary_fr, summary_en: u.summary_en,
+      sentiment: u.sentiment as PromiseSentiment | null,
+    }])
+  );
+  const countsMap = new Map(updateCounts.map((c) => [c.promise_id, c.count]));
+
+  const byCategory = new Map<string, CampaignPromise[]>();
+  for (const r of raw) {
+    const p = toPromise(r, updatesMap.get(r.id) ?? null, countsMap.get(r.id) ?? 0);
+    const list = byCategory.get(r.category) ?? [];
+    list.push(p);
+    byCategory.set(r.category, list);
+  }
+  return byCategory;
 });
 
 export const getPromiseCategorySummaries = cache(async (): Promise<PromiseCategorySummary[]> => {

@@ -254,6 +254,23 @@
       "negative": "Négatif",
       "unknown": "Aucune donnée"
     },
+    "platformCommitmentsTitle": "Engagements de la plateforme",
+    "platformCommitmentsSubtitle": "Engagements de la plateforme électorale d'Ensemble Montréal 2025, organisés par thème. Ces promesses couvrent l'ensemble de la ville.",
+    "category": {
+      "housing": "Logement",
+      "homelessness": "Itinérance",
+      "security": "Sécurité",
+      "cleanliness": "Propreté",
+      "mobility": "Mobilité",
+      "governance": "Gouvernance",
+      "environment": "Environnement",
+      "infrastructure": "Infrastructures",
+      "east-montreal": "Est de Montréal",
+      "economy": "Économie",
+      "culture": "Culture, arts et patrimoine",
+      "downtown": "Centre-ville",
+      "international": "Rayonnement international"
+    },
     "boroughCommitmentsTitle": "Engagements par arrondissement",
     "boroughCommitmentsSubtitle": "Engagements locaux pris par les candidats d'Ensemble Montréal dans chaque arrondissement. Anjou et LaSalle ont été représentés par des partis locaux alliés et ne sont pas inclus.",
     "boroughLevel": "Arrondissement",

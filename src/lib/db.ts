@@ -252,6 +252,13 @@ export function queryBoroughPromises(): RawPromise[] {
     .all() as RawPromise[];
 }
 
+export function queryPlatformPromises(): RawPromise[] {
+  const db = getDb();
+  return db
+    .prepare("SELECT * FROM promises WHERE borough IS NULL AND first_100_days = 0 ORDER BY category, id")
+    .all() as RawPromise[];
+}
+
 export function queryPromiseUpdateCounts(): { promise_id: string; count: number }[] {
   const db = getDb();
   return db
