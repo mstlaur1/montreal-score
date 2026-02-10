@@ -105,6 +105,8 @@
     "medianDays": "Median days",
     "yoyTitle": "Year-over-year change in permits filed",
     "yoyYAxis": "% change",
+    "from": "From",
+    "to": "To",
     "methodology": "Methodology",
     "methodologyText": "This page shows housing permits only — projects that add dwelling units (nb_logements > 0 in the dataset). The 90-day processing target applies to these residential projects, not to tree cutting, pool, fence, or snow permits. Processing times are calculated from the date_debut (application date) and date_emission (issuance date) fields. The median is used instead of the average to reduce the impact of outliers. Data is updated weekly by the City."
   },

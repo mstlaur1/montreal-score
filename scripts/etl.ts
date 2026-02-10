@@ -130,15 +130,19 @@ function initSchema(db: Database.Database) {
   try {
     db.exec(`ALTER TABLE promises ADD COLUMN needs_help INTEGER NOT NULL DEFAULT 0`);
   } catch { /* column already exists */ }
+  try {
+    db.exec(`ALTER TABLE permits ADD COLUMN processing_days INTEGER`);
+  } catch { /* column already exists */ }
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS permits (
-      _id            INTEGER PRIMARY KEY,
-      arrondissement TEXT,
-      date_debut     TEXT,
-      date_emission  TEXT,
-      permit_type    TEXT,
-      nb_logements   INTEGER
+      _id             INTEGER PRIMARY KEY,
+      arrondissement  TEXT,
+      date_debut      TEXT,
+      date_emission   TEXT,
+      permit_type     TEXT,
+      nb_logements    INTEGER,
+      processing_days INTEGER
     );
 
     CREATE TABLE IF NOT EXISTS contracts (
@@ -166,6 +170,7 @@ function initSchema(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_permits_date ON permits(date_debut);
     CREATE INDEX IF NOT EXISTS idx_permits_borough ON permits(arrondissement);
     CREATE INDEX IF NOT EXISTS idx_permits_date_type ON permits(date_debut, permit_type);
+    CREATE INDEX IF NOT EXISTS idx_permits_range_stats ON permits(date_debut, arrondissement, processing_days, nb_logements, permit_type);
     CREATE INDEX IF NOT EXISTS idx_contracts_date ON contracts(approval_date);
     CREATE INDEX IF NOT EXISTS idx_contracts_supplier ON contracts(supplier);
     CREATE INDEX IF NOT EXISTS idx_contracts_source ON contracts(source);
@@ -244,6 +249,15 @@ async function loadPermits(db: Database.Database, years: number[]) {
     totalRows += records.length;
     await sleep(1000); // rate-limit courtesy
   }
+
+  // Populate pre-computed processing_days for newly inserted rows
+  db.exec(`
+    UPDATE permits SET processing_days =
+      CASE WHEN date_emission IS NOT NULL AND date_emission != '' AND date_debut IS NOT NULL
+           THEN MAX(0, CAST(julianday(date_emission) - julianday(date_debut) AS INTEGER))
+           ELSE NULL END
+    WHERE processing_days IS NULL
+  `);
 
   return totalRows;
 }

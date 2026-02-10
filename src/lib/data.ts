@@ -1,6 +1,10 @@
 import { cache } from "react";
+import path from "node:path";
+import fs from "node:fs";
 import {
-  queryPermitsByYear, queryYearlyTrends, queryPermitsForTrends, queryAllPermitsForTrends, queryContractsByRange, queryContractsInBand, getLastEtlRun,
+  queryPermitsByYear, queryPermitAggsByRange, queryPermitMediansByRange,
+  queryYearlyTrends, queryPermitsForTrends, queryAllPermitsForTrends,
+  queryContractsByRange, queryContractsInBand, getLastEtlRun,
   querySoleSourceByYear, querySoleSourceTopRecipients, queryYearlyContractsBySource,
   queryRoundNumberContracts, queryComparisonBandCount, queryMonthlyDistribution as queryMonthlyDistributionDb,
   queryDeptSupplierPairs, queryDeptTotals, querySupplierHalfPeriodTotals, searchContracts,
@@ -134,6 +138,190 @@ export async function getBoroughScores(year: number): Promise<BoroughScore[]> {
 }
 
 /**
+ * Get borough permit stats for a date range — optimized with SQL aggregation.
+ * Uses GROUP BY for counts (returns ~19 rows) and a lean days-only query for median/p90.
+ * trend_vs_last_year is set to 0 when the range spans more than 1 calendar year.
+ */
+export const getBoroughPermitStatsRange = cache(async (fromDate: string, toDate: string): Promise<BoroughPermitStats[]> => {
+  const fromDt = new Date(fromDate);
+  const toDt = new Date(toDate);
+  const rangeMs = toDt.getTime() - fromDt.getTime();
+  const oneYearMs = 366 * 24 * 60 * 60 * 1000;
+  const isSingleYear = rangeMs <= oneYearMs;
+
+  // SQL-aggregated counts (~19 rows each)
+  const allAggs = queryPermitAggsByRange(fromDate, toDate);
+  const housingAggs = queryPermitAggsByRange(fromDate, toDate, { housingOnly: true });
+
+  // SQL-computed median + p90 (~19 rows each)
+  const allMedians = queryPermitMediansByRange(fromDate, toDate);
+  const housingMedians = queryPermitMediansByRange(fromDate, toDate, { housingOnly: true });
+
+  // Group by normalized borough name
+  function groupAggs(rows: typeof allAggs) {
+    const byBorough = new Map<string, { total: number; issued: number; sum_days: number; within_90: number; within_120: number }>();
+    for (const r of rows) {
+      const borough = normalizeBoroughName(r.arrondissement);
+      const existing = byBorough.get(borough);
+      if (existing) {
+        existing.total += r.total;
+        existing.issued += r.issued;
+        existing.sum_days += r.sum_days;
+        existing.within_90 += r.within_90;
+        existing.within_120 += r.within_120;
+      } else {
+        byBorough.set(borough, { total: r.total, issued: r.issued, sum_days: r.sum_days, within_90: r.within_90, within_120: r.within_120 });
+      }
+    }
+    return byBorough;
+  }
+
+  function groupMedians(rows: typeof allMedians) {
+    const byBorough = new Map<string, { median_days: number; p90_days: number }>();
+    for (const r of rows) {
+      byBorough.set(normalizeBoroughName(r.arrondissement), { median_days: r.median_days, p90_days: r.p90_days });
+    }
+    return byBorough;
+  }
+
+  const allAggsMap = groupAggs(allAggs);
+  const housingAggsMap = groupAggs(housingAggs);
+  const allMediansMap = groupMedians(allMedians);
+  const housingMediansMap = groupMedians(housingMedians);
+
+  // For single-year ranges, get previous period median for trend
+  let prevMediansMap = new Map<string, { median_days: number; p90_days: number }>();
+  let prevHousingMediansMap = new Map<string, { median_days: number; p90_days: number }>();
+  if (isSingleYear) {
+    const prevFrom = new Date(fromDt);
+    prevFrom.setFullYear(prevFrom.getFullYear() - 1);
+    const prevTo = new Date(toDt);
+    prevTo.setFullYear(prevTo.getFullYear() - 1);
+    const pf = prevFrom.toISOString().slice(0, 10);
+    const pt = prevTo.toISOString().slice(0, 10);
+    prevMediansMap = groupMedians(queryPermitMediansByRange(pf, pt));
+    prevHousingMediansMap = groupMedians(queryPermitMediansByRange(pf, pt, { housingOnly: true }));
+  }
+
+  const stats: BoroughPermitStats[] = [];
+
+  for (const [borough, agg] of allAggsMap) {
+    const m = allMediansMap.get(borough);
+    const med = m?.median_days ?? 0;
+    const prevMed = prevMediansMap.get(borough)?.median_days ?? med;
+
+    const hAgg = housingAggsMap.get(borough);
+    const hm = housingMediansMap.get(borough);
+    const hMed = hm?.median_days ?? 0;
+    const hPrevMed = prevHousingMediansMap.get(borough)?.median_days ?? hMed;
+
+    stats.push({
+      borough,
+      slug: getBoroughSlug(borough),
+      total_permits: agg.total,
+      permits_issued: agg.issued,
+      permits_pending: agg.total - agg.issued,
+      median_processing_days: med,
+      avg_processing_days: agg.issued > 0 ? agg.sum_days / agg.issued : 0,
+      p90_processing_days: m?.p90_days ?? 0,
+      pct_within_90_days: agg.issued > 0 ? (agg.within_90 / agg.issued) * 100 : 0,
+      pct_within_120_days: agg.issued > 0 ? (agg.within_120 / agg.issued) * 100 : 0,
+      trend_vs_last_year: isSingleYear ? med - prevMed : 0,
+      year: fromDt.getFullYear(),
+      housing_permits: hAgg?.total ?? 0,
+      housing_issued: hAgg?.issued ?? 0,
+      housing_median_days: hMed,
+      housing_pct_within_90_days: hAgg && hAgg.issued > 0 ? (hAgg.within_90 / hAgg.issued) * 100 : 0,
+      housing_trend_vs_last_year: isSingleYear ? hMed - hPrevMed : 0,
+    });
+  }
+
+  return stats;
+});
+
+/**
+ * Get borough comparison data for a date range.
+ */
+export async function getBoroughComparisonDataRange(fromDate: string, toDate: string): Promise<BoroughComparison[]> {
+  const stats = await getBoroughPermitStatsRange(fromDate, toDate);
+  return stats
+    .filter((s) => s.housing_permits > 0)
+    .map((s) => ({
+      borough: s.borough,
+      slug: s.slug,
+      value: s.housing_median_days,
+      target: PERMIT_TARGET_DAYS,
+      grade: medianDaysToGrade(s.housing_median_days),
+    }))
+    .sort((a, b) => a.value - b.value);
+}
+
+/**
+ * Get city-wide summary for a date range.
+ */
+export async function getCitySummaryRange(fromDate: string, toDate: string): Promise<CitySummary> {
+  const stats = await getBoroughPermitStatsRange(fromDate, toDate);
+
+  if (stats.length === 0) {
+    return {
+      total_permits_ytd: 0,
+      median_processing_days: 0,
+      pct_within_target: 0,
+      target_days: PERMIT_TARGET_DAYS,
+      best_borough: "N/A",
+      worst_borough: "N/A",
+      trend_vs_last_year: 0,
+      last_updated: getLastEtlRun("permits") ?? new Date().toISOString(),
+      housing_permits_ytd: 0,
+      housing_median_days: 0,
+      housing_pct_within_target: 0,
+    };
+  }
+
+  const allMedians = stats.map((s) => s.median_processing_days).filter((d) => d > 0);
+  const cityMedian = median(allMedians.sort((a, b) => a - b));
+  const totalPermits = stats.reduce((sum, s) => sum + s.total_permits, 0);
+  const totalIssued = stats.reduce((sum, s) => sum + s.permits_issued, 0);
+  const withinTarget = stats.reduce(
+    (sum, s) => sum + (s.pct_within_90_days * s.permits_issued) / 100, 0
+  );
+  const pctWithinTarget = totalIssued > 0 ? (withinTarget / totalIssued) * 100 : 0;
+
+  const withHousing = stats.filter((s) => s.housing_issued > 0);
+  const best = withHousing.length > 0
+    ? withHousing.reduce((a, b) => a.housing_median_days < b.housing_median_days ? a : b)
+    : stats[0];
+  const worst = withHousing.length > 0
+    ? withHousing.reduce((a, b) => a.housing_median_days > b.housing_median_days ? a : b)
+    : stats[0];
+
+  const avgTrend = stats.reduce((sum, s) => sum + s.trend_vs_last_year, 0) / stats.length;
+
+  const housingTotal = stats.reduce((sum, s) => sum + s.housing_permits, 0);
+  const housingMedians = stats.map((s) => s.housing_median_days).filter((d) => d > 0);
+  const housingCityMedian = median(housingMedians.sort((a, b) => a - b));
+  const housingIssued = stats.reduce((sum, s) => sum + s.housing_issued, 0);
+  const housingWithinTarget = stats.reduce(
+    (sum, s) => sum + (s.housing_pct_within_90_days * s.housing_issued) / 100, 0
+  );
+  const housingPctWithin = housingIssued > 0 ? (housingWithinTarget / housingIssued) * 100 : 0;
+
+  return {
+    total_permits_ytd: totalPermits,
+    median_processing_days: cityMedian,
+    pct_within_target: pctWithinTarget,
+    target_days: PERMIT_TARGET_DAYS,
+    best_borough: best.borough,
+    worst_borough: worst.borough,
+    trend_vs_last_year: avgTrend,
+    last_updated: getLastEtlRun("permits") ?? new Date().toISOString(),
+    housing_permits_ytd: housingTotal,
+    housing_median_days: housingCityMedian,
+    housing_pct_within_target: housingPctWithin,
+  };
+}
+
+/**
  * Get data formatted for the bar chart.
  * Uses housing-only median as the primary metric.
  */
@@ -236,18 +424,25 @@ export type YearlyPermitTrend = { year: number; total: number; medianDays: numbe
 type TrendFilterKey = "all" | "housing" | "TR" | "CO" | "DE" | "CA";
 
 /**
- * Get ALL yearly permit trend variants in a single DB fetch + single pass.
- * Buckets each row into the applicable filters (all, housing, TR, CO, DE, CA),
- * then computes medians per year per filter. Returns a Record keyed by filter.
- *
- * Replaces 6 separate getYearlyPermitTrends() calls that each fetched ~242K rows.
+ * Get ALL yearly permit trend variants from pre-computed JSON cache.
+ * Cache is generated by scripts/migrations/cache-permit-trends.js during deploy.
+ * Falls back to SQL computation if cache doesn't exist.
  */
 export const getAllYearlyPermitTrends = cache(
   (startYear: number = 2015): Record<TrendFilterKey, YearlyPermitTrend[]> => {
+    // Try reading from pre-computed cache (generated during deploy)
+    const cachePath = path.join(process.cwd(), "data", "permit-trends.json");
+    try {
+      const raw = fs.readFileSync(cachePath, "utf-8");
+      return JSON.parse(raw) as Record<TrendFilterKey, YearlyPermitTrend[]>;
+    } catch {
+      // Cache doesn't exist — fall back to SQL computation
+    }
+
+    // Fallback: compute from DB (slow path, ~650ms)
+    const filters: TrendFilterKey[] = ["all", "housing", "TR", "CO", "DE", "CA"];
     const rows = queryAllPermitsForTrends(startYear);
 
-    // Initialize buckets: filterKey → year → { total, days[] }
-    const filters: TrendFilterKey[] = ["all", "housing", "TR", "CO", "DE", "CA"];
     const buckets = new Map<TrendFilterKey, Map<number, { total: number; days: number[] }>>();
     for (const f of filters) buckets.set(f, new Map());
 
@@ -259,7 +454,6 @@ export const getAllYearlyPermitTrends = cache(
       const isHousing = row.nb_logements != null && row.nb_logements > 0;
       const pt = row.permit_type;
 
-      // Determine which filters this row belongs to
       const applicable: TrendFilterKey[] = ["all"];
       if (isHousing) applicable.push("housing");
       if (pt === "TR") applicable.push("TR");
@@ -276,7 +470,6 @@ export const getAllYearlyPermitTrends = cache(
       }
     }
 
-    // Compute medians and build results
     const result = {} as Record<TrendFilterKey, YearlyPermitTrend[]>;
     for (const f of filters) {
       const yearMap = buckets.get(f)!;

@@ -3,7 +3,8 @@ import path from "node:path";
 import fs from "node:fs";
 import type { RawPermit, RawContract, RawPromise, RawPromiseUpdate } from "./types";
 
-const DB_PATH = path.join(process.cwd(), "data", "montreal.db");
+const DB_FILE = process.env.DB_FILE || "montreal.db";
+const DB_PATH = path.join(process.cwd(), "data", DB_FILE);
 
 let _db: Database.Database | null = null;
 let _hasFts: boolean | null = null;
@@ -72,6 +73,121 @@ export function queryPermitsByYear(
        ORDER BY date_debut DESC`
     )
     .all(`${year}-01-01`, `${year + 1}-01-01`) as RawPermit[];
+}
+
+/**
+ * Query permits within a date range.
+ * fromDate/toDate are "YYYY-MM-DD" strings (toDate is exclusive).
+ * When housingOnly is true, filters to permits with nb_logements > 0.
+ */
+export function queryPermitsByRange(
+  fromDate: string,
+  toDate: string,
+  options?: { housingOnly?: boolean }
+): RawPermit[] {
+  const db = getDb();
+  const housingFilter = options?.housingOnly
+    ? ` AND nb_logements IS NOT NULL AND nb_logements != '' AND CAST(nb_logements AS INTEGER) > 0`
+    : "";
+  return db
+    .prepare(
+      `SELECT arrondissement, date_debut, date_emission, permit_type, nb_logements
+       FROM permits
+       WHERE date_debut >= ? AND date_debut < ?${housingFilter}
+       ORDER BY date_debut DESC`
+    )
+    .all(fromDate, toDate) as RawPermit[];
+}
+
+/**
+ * Aggregate permit stats by borough for a date range — SQL-level GROUP BY.
+ * Uses pre-computed processing_days column. Returns ~19 rows.
+ */
+export function queryPermitAggsByRange(
+  fromDate: string,
+  toDate: string,
+  options?: { housingOnly?: boolean }
+): {
+  arrondissement: string;
+  total: number;
+  issued: number;
+  sum_days: number;
+  within_90: number;
+  within_120: number;
+}[] {
+  const db = getDb();
+  const housingFilter = options?.housingOnly
+    ? ` AND nb_logements IS NOT NULL AND nb_logements != '' AND CAST(nb_logements AS INTEGER) > 0`
+    : "";
+  return db
+    .prepare(
+      `SELECT arrondissement,
+              COUNT(*) AS total,
+              SUM(CASE WHEN processing_days IS NOT NULL THEN 1 ELSE 0 END) AS issued,
+              SUM(COALESCE(processing_days, 0)) AS sum_days,
+              SUM(CASE WHEN processing_days IS NOT NULL AND processing_days <= 90 THEN 1 ELSE 0 END) AS within_90,
+              SUM(CASE WHEN processing_days IS NOT NULL AND processing_days <= 120 THEN 1 ELSE 0 END) AS within_120
+       FROM permits
+       WHERE date_debut >= ? AND date_debut < ?
+         AND arrondissement IS NOT NULL AND arrondissement != ''${housingFilter}
+       GROUP BY arrondissement`
+    )
+    .all(fromDate, toDate) as {
+      arrondissement: string; total: number; issued: number;
+      sum_days: number; within_90: number; within_120: number;
+    }[];
+}
+
+/**
+ * Compute median + p90 processing days per borough entirely in SQL.
+ * Uses window functions on pre-computed processing_days. Returns ~19 rows.
+ */
+export function queryPermitMediansByRange(
+  fromDate: string,
+  toDate: string,
+  options?: { housingOnly?: boolean }
+): { arrondissement: string; median_days: number; p90_days: number }[] {
+  const db = getDb();
+  const housingFilter = options?.housingOnly
+    ? ` AND nb_logements IS NOT NULL AND nb_logements != '' AND CAST(nb_logements AS INTEGER) > 0`
+    : "";
+  return db
+    .prepare(
+      `WITH ranked AS (
+        SELECT arrondissement, processing_days AS days,
+               ROW_NUMBER() OVER (PARTITION BY arrondissement ORDER BY processing_days) AS rn,
+               COUNT(*) OVER (PARTITION BY arrondissement) AS cnt
+        FROM permits
+        WHERE date_debut >= ? AND date_debut < ?
+          AND arrondissement IS NOT NULL AND arrondissement != ''
+          AND processing_days IS NOT NULL${housingFilter}
+      )
+      SELECT arrondissement,
+             AVG(CASE WHEN rn IN ((cnt+1)/2, (cnt+2)/2) THEN days END) AS median_days,
+             MAX(CASE WHEN rn = CAST(cnt * 0.9 AS INTEGER) + 1 THEN days END) AS p90_days
+      FROM ranked
+      WHERE rn IN ((cnt+1)/2, (cnt+2)/2) OR rn = CAST(cnt * 0.9 AS INTEGER) + 1
+      GROUP BY arrondissement`
+    )
+    .all(fromDate, toDate) as { arrondissement: string; median_days: number; p90_days: number }[];
+}
+
+/**
+ * Get the earliest and latest month with permit data.
+ * Returns { min: "2015-01", max: "2026-02" }.
+ */
+export function getPermitDateBounds(): { min: string; max: string } {
+  const db = getDb();
+  const row = db
+    .prepare(
+      `SELECT
+         MIN(substr(date_debut, 1, 7)) AS min,
+         MAX(substr(date_debut, 1, 7)) AS max
+       FROM permits
+       WHERE date_debut IS NOT NULL AND date_debut != ''`
+    )
+    .get() as { min: string | null; max: string | null };
+  return { min: row?.min ?? "2015-01", max: row?.max ?? "2026-01" };
 }
 
 /**

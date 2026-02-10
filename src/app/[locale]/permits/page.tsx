@@ -1,26 +1,38 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getBoroughComparisonData, getCitySummary, getAllYearlyPermitTrends } from "@/lib/data";
+import { getBoroughComparisonDataRange, getCitySummaryRange, getAllYearlyPermitTrends } from "@/lib/data";
+import { getPermitDateBounds } from "@/lib/db";
 import { PERMIT_TARGET_DAYS, PREVIOUS_TARGET_DAYS } from "@/lib/scoring";
 import { PermitBarChart } from "@/components/PermitBarChart";
 import { PermitTrendSection } from "@/components/PermitTrendSection";
 import { StatCard } from "@/components/StatCard";
-import { YearSelector } from "@/components/YearSelector";
+import { DateRangeSelector } from "@/components/DateRangeSelector";
 
 export const revalidate = 3600;
 
 const MIN_YEAR = 2015;
 
-/** Administration presets — last full calendar year of each term */
-const ADMIN_PRESETS = [
-  { label: "Coderre (2017)", year: 2017 },
-  { label: "Plante (2025)", year: 2025 },
-  { label: "Martinez Ferrada (2026)", year: 2026 },
-];
+function parseYearMonth(param: string | undefined): { year: number; month: number } | null {
+  if (!param) return null;
+  const match = param.match(/^(\d{4})-(\d{2})$/);
+  if (!match) return null;
+  const year = parseInt(match[1], 10);
+  const month = parseInt(match[2], 10);
+  if (month < 1 || month > 12) return null;
+  return { year, month };
+}
+
+function toDateStr(year: number, month: number): string {
+  return `${year}-${String(month).padStart(2, "0")}-01`;
+}
+
+function nextMonth(year: number, month: number): { year: number; month: number } {
+  return month === 12 ? { year: year + 1, month: 1 } : { year, month: month + 1 };
+}
 
 type Props = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ year?: string }>;
+  searchParams: Promise<{ from?: string; to?: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -45,24 +57,51 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PermitsPage({ params, searchParams }: Props) {
   const { locale } = await params;
-  const { year: yearParam } = await searchParams;
+  const { from: fromParam, to: toParam } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("PermitsPage");
   const tChart = await getTranslations("PermitBarChart");
 
-  const currentYear = new Date().getFullYear();
-  const maxYear = currentYear;
+  const bounds = getPermitDateBounds();
+  const [boundsMinY, boundsMinM] = bounds.min.split("-").map(Number);
+  const [boundsMaxY, boundsMaxM] = bounds.max.split("-").map(Number);
 
-  // Parse and clamp year from search params; default to last full year
-  let selectedYear = yearParam ? parseInt(yearParam, 10) : currentYear - 1;
-  if (isNaN(selectedYear) || selectedYear < MIN_YEAR) selectedYear = MIN_YEAR;
-  if (selectedYear > maxYear) selectedYear = maxYear;
+  // Default: previous full calendar year (Jan–Dec)
+  const currentYear = new Date().getFullYear();
+  const defaultFrom = { year: currentYear - 1, month: 1 };
+  const defaultTo = { year: currentYear - 1, month: 12 };
+
+  let from = parseYearMonth(fromParam) ?? defaultFrom;
+  let to = parseYearMonth(toParam) ?? defaultTo;
+
+  // Clamp to bounds
+  if (from.year < boundsMinY || (from.year === boundsMinY && from.month < boundsMinM)) {
+    from = { year: boundsMinY, month: boundsMinM };
+  }
+  if (to.year > boundsMaxY || (to.year === boundsMaxY && to.month > boundsMaxM)) {
+    to = { year: boundsMaxY, month: boundsMaxM };
+  }
+  // Ensure from <= to
+  if (from.year > to.year || (from.year === to.year && from.month > to.month)) {
+    to = { ...from };
+  }
+
+  const fromDate = toDateStr(from.year, from.month);
+  const toExcl = nextMonth(to.year, to.month);
+  const toDate = toDateStr(toExcl.year, toExcl.month);
+
+  // Administration presets (month-precise inauguration dates)
+  const presets = [
+    { label: "Coderre (2014–2017)", from: "2014-01", to: "2017-10" },
+    { label: "Plante (2017–2025)", from: "2017-11", to: "2025-10" },
+    { label: "Martinez Ferrada (2025–)", from: "2025-11", to: bounds.max },
+  ];
 
   // Fetch borough data + all trend variants (single DB query + single pass)
   const [comparison, summary, trendsByFilter] =
     await Promise.all([
-      getBoroughComparisonData(selectedYear),
-      getCitySummary(selectedYear),
+      getBoroughComparisonDataRange(fromDate, toDate),
+      getCitySummaryRange(fromDate, toDate),
       Promise.resolve(getAllYearlyPermitTrends(MIN_YEAR)),
     ]);
 
@@ -74,16 +113,24 @@ export default async function PermitsPage({ params, searchParams }: Props) {
     grade: c.grade,
   }));
 
+  // Determine if trend card is meaningful (single-year range)
+  const rangeMs = new Date(toDate).getTime() - new Date(fromDate).getTime();
+  const isSingleYear = rangeMs <= 366 * 24 * 60 * 60 * 1000;
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
         <h1 className="text-3xl font-bold">{t("title")}</h1>
-        <YearSelector
-          selectedYear={selectedYear}
-          minYear={MIN_YEAR}
-          maxYear={maxYear}
-          label={t("year")}
-          presets={ADMIN_PRESETS}
+        <DateRangeSelector
+          fromYear={from.year}
+          fromMonth={from.month}
+          toYear={to.year}
+          toMonth={to.month}
+          minDate={bounds.min}
+          maxDate={bounds.max}
+          locale={locale}
+          labels={{ from: t("from"), to: t("to") }}
+          presets={presets}
         />
       </div>
       <p className="text-muted mb-8">
@@ -91,7 +138,7 @@ export default async function PermitsPage({ params, searchParams }: Props) {
       </p>
 
       {/* Stats row — housing permits (primary metric) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+      <div className={`grid grid-cols-2 ${isSingleYear ? "md:grid-cols-4" : "md:grid-cols-3"} gap-4 mb-4`}>
         <StatCard
           label={t("housingPermits")}
           value={summary.housing_permits_ytd.toLocaleString(localeTag)}
@@ -108,18 +155,20 @@ export default async function PermitsPage({ params, searchParams }: Props) {
           value={Math.round(summary.housing_pct_within_target)}
           unit={t("percent")}
         />
-        <StatCard
-          label={t("trend")}
-          value={
-            summary.trend_vs_last_year < 0
-              ? Math.abs(Math.round(summary.trend_vs_last_year))
-              : `+${Math.round(summary.trend_vs_last_year)}`
-          }
-          unit={t("days")}
-          detail={t("vsLastYear")}
-          trend={summary.trend_vs_last_year < -5 ? "down" : summary.trend_vs_last_year > 5 ? "up" : "flat"}
-          trendLabel={summary.trend_vs_last_year < 0 ? t("improvement") : t("deterioration")}
-        />
+        {isSingleYear && (
+          <StatCard
+            label={t("trend")}
+            value={
+              summary.trend_vs_last_year < 0
+                ? Math.abs(Math.round(summary.trend_vs_last_year))
+                : `+${Math.round(summary.trend_vs_last_year)}`
+            }
+            unit={t("days")}
+            detail={t("vsLastYear")}
+            trend={summary.trend_vs_last_year < -5 ? "down" : summary.trend_vs_last_year > 5 ? "up" : "flat"}
+            trendLabel={summary.trend_vs_last_year < 0 ? t("improvement") : t("deterioration")}
+          />
+        )}
       </div>
       <p className="text-xs text-muted mb-8">{t("housingNote")}</p>
 

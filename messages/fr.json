@@ -105,6 +105,8 @@
     "medianDays": "Délai médian",
     "yoyTitle": "Variation annuelle des permis déposés",
     "yoyYAxis": "% de variation",
+    "from": "De",
+    "to": "À",
     "methodology": "Méthodologie",
     "methodologyText": "Cette page montre uniquement les permis résidentiels — projets ajoutant des logements (nb_logements > 0 dans le jeu de données). La cible de 90 jours s'applique à ces projets résidentiels, et non aux permis d'abattage d'arbres, piscines, clôtures ou déneigement. Les délais sont calculés à partir des champs date_debut (date de demande) et date_emission (date d'émission). Le délai médian est utilisé plutôt que la moyenne pour réduire l'impact des cas extrêmes. Les données sont mises à jour chaque semaine par la Ville."
   },
