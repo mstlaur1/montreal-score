@@ -13,8 +13,16 @@ git pull --ff-only
 echo "==> Running ETL (incremental)..."
 npm run etl
 
+echo "==> Building FTS5 search index..."
+node scripts/build-fts.js
+
 echo "==> Building production bundle..."
 npm run build
+
+echo "==> Linking standalone assets..."
+ln -sf "$PROJECT_DIR/.next/static" "$PROJECT_DIR/.next/standalone/.next/static"
+ln -sf "$PROJECT_DIR/public" "$PROJECT_DIR/.next/standalone/public"
+ln -sf "$PROJECT_DIR/messages" "$PROJECT_DIR/.next/standalone/messages"
 
 echo "==> Restarting montreal-score service..."
 sudo systemctl restart montreal-score

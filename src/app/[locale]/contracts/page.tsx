@@ -16,7 +16,7 @@ export const revalidate = 3600;
 
 type Props = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ from?: string; to?: string; q?: string; page?: string }>;
+  searchParams: Promise<{ from?: string; to?: string; q?: string; page?: string; sort?: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -67,7 +67,7 @@ function getMonthName(month: number, locale: string): string {
 
 export default async function ContractsPage({ params, searchParams }: Props) {
   const { locale } = await params;
-  const { from: fromParam, to: toParam, q: searchQuery, page: pageParam } = await searchParams;
+  const { from: fromParam, to: toParam, q: searchQuery, page: pageParam, sort: sortParam } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("ContractsPage");
 
@@ -113,7 +113,7 @@ export default async function ContractsPage({ params, searchParams }: Props) {
       getDeptSupplierLoyalty(fromDate, toDate),
       getSupplierGrowth(fromDate, toDate),
       getRoundNumberAnalysis(fromDate, toDate),
-      searchQuery ? searchContractsCached(fromDate, toDate, searchQuery, searchPage) : Promise.resolve(null),
+      searchQuery ? searchContractsCached(fromDate, toDate, searchQuery, searchPage, sortParam) : Promise.resolve(null),
     ]);
   const normExamples = getNormalizationExamples();
 
@@ -126,15 +126,41 @@ export default async function ContractsPage({ params, searchParams }: Props) {
     { label: "Martinez Ferrada (2025–)", from: "2025-11", to: bounds.max },
   ];
 
-  // Build URL params for pagination links
-  function buildUrl(page: number): string {
+  // Build URL params for pagination/sort links
+  function buildUrl(page: number, sort?: string): string {
     const params = new URLSearchParams();
     if (fromParam) params.set("from", fromParam);
     if (toParam) params.set("to", toParam);
     if (searchQuery) params.set("q", searchQuery);
     if (page > 1) params.set("page", String(page));
+    const s = sort ?? sortParam;
+    if (s) params.set("sort", s);
     const qs = params.toString();
     return qs ? `?${qs}` : "";
+  }
+
+  function sortUrl(column: string): string {
+    // Toggle: no sort → asc → desc → no sort
+    const current = sortParam || "";
+    let next: string | undefined;
+    if (current === `${column}_asc`) next = `${column}_desc`;
+    else if (current === `${column}_desc`) next = undefined;
+    else next = `${column}_asc`;
+    const params = new URLSearchParams();
+    if (fromParam) params.set("from", fromParam);
+    if (toParam) params.set("to", toParam);
+    if (searchQuery) params.set("q", searchQuery);
+    // Reset to page 1 when changing sort
+    if (next) params.set("sort", next);
+    const qs = params.toString();
+    return qs ? `?${qs}` : "";
+  }
+
+  function sortIndicator(column: string): string {
+    const current = sortParam || "";
+    if (current === `${column}_asc`) return " \u25B2";
+    if (current === `${column}_desc`) return " \u25BC";
+    return "";
   }
 
   return (
@@ -177,10 +203,10 @@ export default async function ContractsPage({ params, searchParams }: Props) {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-card-border text-left">
-                        <th className="py-2 pr-3">{t("searchDate")}</th>
-                        <th className="py-2 pr-3">{t("supplier")}</th>
-                        <th className="py-2 pr-3">{t("department")}</th>
-                        <th className="py-2 pr-3 text-right">{t("searchAmount")}</th>
+                        <th className="py-2 pr-3"><a href={sortUrl("date")} className="hover:text-accent">{t("searchDate")}{sortIndicator("date")}</a></th>
+                        <th className="py-2 pr-3"><a href={sortUrl("supplier")} className="hover:text-accent">{t("supplier")}{sortIndicator("supplier")}</a></th>
+                        <th className="py-2 pr-3"><a href={sortUrl("service")} className="hover:text-accent">{t("department")}{sortIndicator("service")}</a></th>
+                        <th className="py-2 pr-3 text-right"><a href={sortUrl("amount")} className="hover:text-accent">{t("searchAmount")}{sortIndicator("amount")}</a></th>
                         <th className="py-2 pr-3">{t("searchSource")}</th>
                         <th className="py-2">{t("searchDescription")}</th>
                       </tr>
@@ -740,8 +766,8 @@ export default async function ContractsPage({ params, searchParams }: Props) {
         <p className="text-muted text-sm mb-6">{t("notableFindingsSubtitle")}</p>
         <div className="space-y-6">
           <div className="border-l-4 border-amber-500 pl-4">
-            <h3 className="font-semibold mb-1">{t("findingProanimaTitle")}</h3>
-            <p className="text-sm text-muted">{t("findingProanimaBody")}</p>
+            <h3 className="font-semibold mb-1">{t("findingTrustRoyalTitle")}</h3>
+            <p className="text-sm text-muted">{t("findingTrustRoyalBody")}</p>
           </div>
           <div className="border-l-4 border-amber-500 pl-4">
             <h3 className="font-semibold mb-1">{t("findingSoleSourceGrowthTitle")}</h3>

@@ -674,16 +674,13 @@ export const getMonthlyDistribution = cache(async (from: string, to: string): Pr
   const raw = queryMonthlyDistributionDb(from, to);
   if (raw.length === 0) return [];
 
-  const mean = raw.reduce((sum, r) => sum + r.count, 0) / raw.length;
-  const variance = raw.reduce((sum, r) => sum + (r.count - mean) ** 2, 0) / raw.length;
-  const stddev = Math.sqrt(variance);
-  const outlierThreshold = mean + 0.5 * stddev;
+  const maxCount = Math.max(...raw.map((r) => r.count));
 
   return raw.map((r) => ({
     month: r.month,
     count: r.count,
     totalValue: r.totalValue,
-    isOutlier: r.count > outlierThreshold,
+    isOutlier: r.count === maxCount,
   }));
 });
 
@@ -832,29 +829,60 @@ function parseAmountQuery(query: string): { min?: number; max?: number } | null 
   return null;
 }
 
+// --- Cross-request LRU cache for search (module-level, persists across requests) ---
+const SEARCH_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const SEARCH_CACHE_MAX = 200;
+const searchLru = new Map<string, { result: ContractSearchResult; expires: number }>();
+
+function lruGet(key: string): ContractSearchResult | null {
+  const entry = searchLru.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expires) { searchLru.delete(key); return null; }
+  // Move to end (most recently used)
+  searchLru.delete(key);
+  searchLru.set(key, entry);
+  return entry.result;
+}
+
+function lruSet(key: string, result: ContractSearchResult): void {
+  if (searchLru.size >= SEARCH_CACHE_MAX) {
+    // Evict oldest (first entry in Map iteration order)
+    const oldest = searchLru.keys().next().value;
+    if (oldest) searchLru.delete(oldest);
+  }
+  searchLru.set(key, { result, expires: Date.now() + SEARCH_CACHE_TTL });
+}
+
 export const searchContractsCached = cache(async (
-  from: string, to: string, query: string, page: number
+  from: string, to: string, query: string, page: number, sort?: string
 ): Promise<ContractSearchResult> => {
+  const cacheKey = `${from}|${to}|${query}|${page}|${sort || ""}`;
+  const cached = lruGet(cacheKey);
+  if (cached) return cached;
+
   const perPage = 25;
   const offset = (page - 1) * perPage;
 
   const amountFilter = parseAmountQuery(query);
   const textQuery = amountFilter ? "" : query;
 
-  const { results: rawResults, totalCount } = searchContracts(from, to, textQuery, perPage, offset, amountFilter ?? undefined);
+  const { results: rawResults, totalCount } = searchContracts(from, to, textQuery, perPage, offset, amountFilter ?? undefined, sort);
 
   const results = rawResults.map((r) => ({
     ...r,
     supplier: r.supplier ? normalizeSupplierName(r.supplier) : r.supplier,
   }));
 
-  return {
+  const result: ContractSearchResult = {
     results,
     totalCount,
     page,
     totalPages: Math.ceil(totalCount / perPage),
     query,
   };
+
+  lruSet(cacheKey, result);
+  return result;
 });
 
 // ---------------------------------------------------------------------------

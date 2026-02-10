@@ -191,8 +191,8 @@
     "yearlyTrendTotal": "Total",
     "notableFindingsTitle": "Constats notables",
     "notableFindingsSubtitle": "Tendances et anomalies dans les données contractuelles qui méritent un examen approfondi. Ce sont des observations, pas des accusations — chacune peut avoir une explication légitime.",
-    "findingProanimaTitle": "Contrat de gré à gré de 158 M$ pour le contrôle animalier",
-    "findingProanimaBody": "En novembre 2023, le conseil municipal a octroyé un contrat de gré à gré de 10 ans d'une valeur de 158 M$ à Proanima Montréal, un organisme à but non lucratif, pour les services de gestion animalière sur tout le territoire. C'est le 4e plus gros contrat dans le jeu de données et le 2e plus gros octroi de gré à gré. En tant que seul fournisseur de ces services sur l'île, la justification est légalement valide — mais l'ampleur soulève des questions sur la surveillance et l'optimisation des coûts.",
+    "findingTrustRoyalTitle": "1,3 G$ à Trust Royal du Canada — services financiers, pas de l'approvisionnement",
+    "findingTrustRoyalBody": "Trust Royal du Canada (Royal Trust, filiale de RBC) apparaît dans les données avec 1,3 G$ répartis sur 124 contrats, tous étiquetés « Autres - Administration générale ». Il s'agit de services fiduciaires — gestion de fonds de pension, émissions obligataires et frais fiduciaires — et non d'approvisionnement typique. Contrairement aux transferts intergouvernementaux (ARTM, STM) que nous filtrons, ces contrats de services financiers restent dans les données et gonflent les classements de fournisseurs et les totaux de dépenses.",
     "findingSoleSourceGrowthTitle": "Les dépenses de gré à gré ont été multipliées par 8,6 en une décennie",
     "findingSoleSourceGrowthBody": "La valeur des contrats de gré à gré est passée de 48 M$ en 2015 à 414 M$ en 2025. Si une partie s'explique par des projets d'infrastructure avec des justifications légitimes de fournisseur unique, la tendance dépasse largement l'inflation et la croissance budgétaire globale.",
     "findingDurokingTitle": "Duroking Construction : 14 variantes de nom cachant 257 M$+",
@@ -228,7 +228,7 @@
     "searchNext": "Suivant",
     "searchPage": "Page {page} de {total}",
     "loyaltyTitle": "Fidélité service-fournisseur",
-    "loyaltySubtitle": "Quels services concentrent leurs dépenses chez un seul fournisseur? Les paires où un fournisseur reçoit plus de 50% du budget d'un service peuvent indiquer une concurrence limitée ou une dépendance à un fournisseur unique.",
+    "loyaltySubtitle": "Quels services concentrent leurs dépenses contractuelles chez un seul fournisseur? Le pourcentage indique la part du fournisseur dans la valeur totale des contrats de ce service pour la période sélectionnée (et non le budget global du service). Les paires dépassant 50% peuvent indiquer une concurrence limitée ou une dépendance à un fournisseur unique.",
     "loyaltyDepartment": "Service",
     "loyaltySupplier": "Fournisseur",
     "loyaltyContracts": "Contrats",
@@ -243,7 +243,7 @@
     "growthPct": "Croissance",
     "growthNone": "Pas assez de données pour calculer les trajectoires de croissance. Cette analyse nécessite des fournisseurs avec plus de 100 000$ dans les deux moitiés de la période — essayez de sélectionner une période plus large (p. ex. 5 ans et plus).",
     "monthlyTitle": "Tendances mensuelles de dépenses",
-    "monthlySubtitle": "Distribution mensuelle des approbations de contrats sur la période sélectionnée. Les mois dépassant la moyenne de plus d'un demi écart-type sont mis en évidence — les tendances saisonnières peuvent indiquer des poussées de fin d'exercice ou une pression budgétaire.",
+    "monthlySubtitle": "Distribution mensuelle des approbations de contrats sur la période sélectionnée. Le mois le plus actif est mis en évidence.",
     "monthlyMonth": "Mois",
     "monthlyContracts": "Contrats",
     "monthlyValue": "Valeur totale",
@@ -278,7 +278,8 @@
       "total": "Promesses totales",
       "notStarted": "Non démarrées",
       "inProgress": "En cours",
-      "completed": "Complétées"
+      "completed": "Complétées",
+      "needsHelp": "Besoin de votre aide"
     },
     "status": {
       "not_started": "Non démarrée",
@@ -326,8 +327,7 @@
     "district": "District",
     "commitments": "{count} engagements",
     "helpUs": "Aidez-nous!",
-    "stat.needsHelp": "Besoin de votre aide",
-    "methodologyTitle": "Méthodologie",
+        "methodologyTitle": "Méthodologie",
     "methodologyText": "Les promesses sont extraites de la plateforme électorale d'Ensemble Montréal 2025. Les statuts sont mis à jour manuellement à partir de reportages, décisions du conseil et annonces officielles. Le décompte des 100 premiers jours débute à la date d'assermentation (10 novembre 2025)."
   },
   "VolunteerPage": {

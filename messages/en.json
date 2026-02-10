@@ -191,8 +191,8 @@
     "yearlyTrendTotal": "Total",
     "notableFindingsTitle": "Notable findings",
     "notableFindingsSubtitle": "Patterns and outliers in the contract data that warrant further investigation. These are observations, not accusations — each may have a legitimate explanation.",
-    "findingProanimaTitle": "$158M sole-source contract for animal control",
-    "findingProanimaBody": "In November 2023, city council awarded a 10-year sole-source contract (gré à gré) worth $158M to Proanima Montréal, a non-profit, for city-wide animal management services. This is the 4th largest single contract in the dataset and the 2nd largest sole-source award. As the only provider of these services on the island, the sole-source justification is legally valid — but the scale raises questions about oversight and value for money.",
+    "findingTrustRoyalTitle": "$1.3B to Trust Royal du Canada — financial services, not procurement",
+    "findingTrustRoyalBody": "Trust Royal du Canada (Royal Trust, part of RBC) appears in the dataset with $1.3B across 124 contracts, all labelled \"Autres - Administration générale\". These are financial trustee services — pension fund management, bond issuances, and fiduciary fees — not typical procurement. Unlike intergovernmental transfers (ARTM, STM), which we filter, these financial service contracts remain in the data and inflate top-supplier rankings and total spending figures.",
     "findingSoleSourceGrowthTitle": "Sole-source spending grew 8.6x in a decade",
     "findingSoleSourceGrowthBody": "Sole-source contract value went from $48M in 2015 to $414M in 2025. While some of this reflects larger infrastructure projects with legitimate sole-supplier justifications, the trend significantly outpaces inflation and overall budget growth.",
     "findingDurokingTitle": "Duroking Construction: 14 name variants hiding $257M+",
@@ -228,7 +228,7 @@
     "searchNext": "Next",
     "searchPage": "Page {page} of {total}",
     "loyaltyTitle": "Department-supplier loyalty",
-    "loyaltySubtitle": "Which departments concentrate their spending with a single supplier? Pairs where one supplier receives over 50% of a department's budget may indicate limited competition or sole-supplier dependence.",
+    "loyaltySubtitle": "Which departments concentrate their contract spending with a single supplier? The percentage shown is the supplier's share of that department's total contract value in the selected period (not the department's overall budget). Pairs exceeding 50% may indicate limited competition or sole-supplier dependence.",
     "loyaltyDepartment": "Department",
     "loyaltySupplier": "Supplier",
     "loyaltyContracts": "Contracts",
@@ -243,7 +243,7 @@
     "growthPct": "Growth",
     "growthNone": "Not enough data to compute growth trajectories. This analysis requires suppliers with over $100K in both halves of the period — try selecting a wider date range (e.g. 5+ years).",
     "monthlyTitle": "Monthly spending patterns",
-    "monthlySubtitle": "Monthly distribution of contract approvals across the selected period. Months that exceed the average by more than half a standard deviation are highlighted — seasonal patterns may indicate fiscal year-end rushes or budget pressure.",
+    "monthlySubtitle": "Monthly distribution of contract approvals across the selected period. The busiest month is highlighted.",
     "monthlyMonth": "Month",
     "monthlyContracts": "Contracts",
     "monthlyValue": "Total value",
@@ -278,7 +278,8 @@
       "total": "Total promises",
       "notStarted": "Not started",
       "inProgress": "In progress",
-      "completed": "Completed"
+      "completed": "Completed",
+      "needsHelp": "Needs your help"
     },
     "status": {
       "not_started": "Not started",
@@ -326,8 +327,7 @@
     "district": "District",
     "commitments": "{count} commitments",
     "helpUs": "Help Us!",
-    "stat.needsHelp": "Needs your help",
-    "methodologyTitle": "Methodology",
+        "methodologyTitle": "Methodology",
     "methodologyText": "Promises are extracted from the Ensemble Montréal 2025 campaign platform. Statuses are updated manually based on news reports, council decisions, and official announcements. The first 100 days countdown starts from the inauguration date (November 10, 2025)."
   },
   "VolunteerPage": {

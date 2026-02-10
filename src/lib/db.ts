@@ -6,6 +6,7 @@ import type { RawPermit, RawContract, RawPromise, RawPromiseUpdate } from "./typ
 const DB_PATH = path.join(process.cwd(), "data", "montreal.db");
 
 let _db: Database.Database | null = null;
+let _hasFts: boolean | null = null;
 
 function getDb(): Database.Database {
   if (!_db) {
@@ -18,6 +19,31 @@ function getDb(): Database.Database {
     _db.pragma("journal_mode = WAL");
   }
   return _db;
+}
+
+/** Check once whether the FTS5 index exists. */
+function hasFts(): boolean {
+  if (_hasFts === null) {
+    const db = getDb();
+    const row = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='contracts_fts'").get();
+    _hasFts = !!row;
+  }
+  return _hasFts;
+}
+
+/**
+ * Convert a user search query to an FTS5 MATCH expression.
+ * Each word becomes a prefix token: "pomerleau inc" → "pomerleau* inc*"
+ * Special FTS5 characters are stripped to prevent syntax errors.
+ */
+function toFtsQuery(query: string): string {
+  return query
+    .replace(/[":(){}*^~\-+|]/g, " ")  // strip FTS5 special chars
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => `"${w}"*`)
+    .join(" ");
 }
 
 /**
@@ -505,9 +531,20 @@ export function querySupplierHalfPeriodTotals(from: string, to: string, midpoint
  * Search contracts by keyword across supplier, service, and description,
  * and/or by contract value (montant) range.
  */
+const SORT_MAP: Record<string, string> = {
+  date_asc: "approval_date ASC",
+  date_desc: "approval_date DESC",
+  supplier_asc: "supplier COLLATE NOCASE ASC",
+  supplier_desc: "supplier COLLATE NOCASE DESC",
+  service_asc: "service COLLATE NOCASE ASC",
+  service_desc: "service COLLATE NOCASE DESC",
+  amount_asc: "CAST(montant AS REAL) ASC",
+  amount_desc: "CAST(montant AS REAL) DESC",
+};
+
 export function searchContracts(
   from: string, to: string, query: string, limit: number, offset: number,
-  amountFilter?: { min?: number; max?: number }
+  amountFilter?: { min?: number; max?: number }, sort?: string
 ): { results: { supplier: string; service: string; description: string; montant: number; approval_date: string; source: string }[]; totalCount: number } {
   const db = getDb();
   const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
@@ -521,11 +558,18 @@ export function searchContracts(
   const params: (string | number)[] = [from, to, ...INTERGOVERNMENTAL_SUPPLIERS];
 
   if (query) {
-    // Escape LIKE wildcards so % and _ are treated as literals
-    const escaped = query.replace(/[%_]/g, (c) => `\\${c}`);
-    const likePattern = `%${escaped}%`;
-    conditions.push(`(supplier LIKE ? ESCAPE '\\' COLLATE NOCASE OR service LIKE ? ESCAPE '\\' COLLATE NOCASE OR description LIKE ? ESCAPE '\\' COLLATE NOCASE)`);
-    params.push(likePattern, likePattern, likePattern);
+    if (hasFts()) {
+      // Use FTS5 index for fast text search
+      const ftsExpr = toFtsQuery(query);
+      conditions.push(`rowid IN (SELECT rowid FROM contracts_fts WHERE contracts_fts MATCH ?)`);
+      params.push(ftsExpr);
+    } else {
+      // Fallback to LIKE scan if FTS index not built
+      const escaped = query.replace(/[%_]/g, (c) => `\\${c}`);
+      const likePattern = `%${escaped}%`;
+      conditions.push(`(supplier LIKE ? ESCAPE '\\' COLLATE NOCASE OR service LIKE ? ESCAPE '\\' COLLATE NOCASE OR description LIKE ? ESCAPE '\\' COLLATE NOCASE)`);
+      params.push(likePattern, likePattern, likePattern);
+    }
   }
 
   if (amountFilter?.min != null) {
@@ -538,8 +582,8 @@ export function searchContracts(
   }
 
   const whereClause = conditions.join(" AND ");
-  // Sort by value when filtering by amount, by date when filtering by text
-  const orderBy = amountFilter ? "montant DESC, approval_date DESC" : "approval_date DESC";
+  const defaultOrder = amountFilter ? "CAST(montant AS REAL) DESC, approval_date DESC" : "approval_date DESC";
+  const orderBy = (sort && SORT_MAP[sort]) || defaultOrder;
 
   const countRow = db
     .prepare(`SELECT COUNT(*) AS count FROM contracts WHERE ${whereClause}`)
