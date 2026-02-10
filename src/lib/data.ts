@@ -1,6 +1,6 @@
 import { cache } from "react";
 import {
-  queryPermitsByYear, queryYearlyTrends, queryPermitsForTrends, queryContractsByRange, queryContractsInBand, getLastEtlRun,
+  queryPermitsByYear, queryYearlyTrends, queryPermitsForTrends, queryAllPermitsForTrends, queryContractsByRange, queryContractsInBand, getLastEtlRun,
   querySoleSourceByYear, querySoleSourceTopRecipients, queryYearlyContractsBySource,
   queryRoundNumberContracts, queryComparisonBandCount, queryMonthlyDistribution as queryMonthlyDistributionDb,
   queryDeptSupplierPairs, queryDeptTotals, querySupplierHalfPeriodTotals, searchContracts,
@@ -232,9 +232,68 @@ export async function getYearlyTrendData() {
 
 export type YearlyPermitTrend = { year: number; total: number; medianDays: number };
 
+type TrendFilterKey = "all" | "housing" | "TR" | "CO" | "DE" | "CA";
+
 /**
- * Get yearly permit trends with median processing days.
- * Groups raw permits by year, computes processing days, calculates median.
+ * Get ALL yearly permit trend variants in a single DB fetch + single pass.
+ * Buckets each row into the applicable filters (all, housing, TR, CO, DE, CA),
+ * then computes medians per year per filter. Returns a Record keyed by filter.
+ *
+ * Replaces 6 separate getYearlyPermitTrends() calls that each fetched ~242K rows.
+ */
+export const getAllYearlyPermitTrends = cache(
+  (startYear: number = 2015): Record<TrendFilterKey, YearlyPermitTrend[]> => {
+    const rows = queryAllPermitsForTrends(startYear);
+
+    // Initialize buckets: filterKey → year → { total, days[] }
+    const filters: TrendFilterKey[] = ["all", "housing", "TR", "CO", "DE", "CA"];
+    const buckets = new Map<TrendFilterKey, Map<number, { total: number; days: number[] }>>();
+    for (const f of filters) buckets.set(f, new Map());
+
+    for (const row of rows) {
+      const y = parseInt(row.year, 10);
+      if (isNaN(y)) continue;
+
+      const d = processingDays(row.date_debut, row.date_emission);
+      const isHousing = row.nb_logements != null && row.nb_logements > 0;
+      const pt = row.permit_type;
+
+      // Determine which filters this row belongs to
+      const applicable: TrendFilterKey[] = ["all"];
+      if (isHousing) applicable.push("housing");
+      if (pt === "TR") applicable.push("TR");
+      else if (pt === "CO") applicable.push("CO");
+      else if (pt === "DE") applicable.push("DE");
+      else if (pt === "CA") applicable.push("CA");
+
+      for (const f of applicable) {
+        const yearMap = buckets.get(f)!;
+        if (!yearMap.has(y)) yearMap.set(y, { total: 0, days: [] });
+        const bucket = yearMap.get(y)!;
+        bucket.total++;
+        if (d !== null) bucket.days.push(d);
+      }
+    }
+
+    // Compute medians and build results
+    const result = {} as Record<TrendFilterKey, YearlyPermitTrend[]>;
+    for (const f of filters) {
+      const yearMap = buckets.get(f)!;
+      const trends: YearlyPermitTrend[] = [];
+      for (const [year, data] of yearMap) {
+        const sorted = data.days.sort((a, b) => a - b);
+        trends.push({ year, total: data.total, medianDays: median(sorted) });
+      }
+      result[f] = trends.sort((a, b) => a.year - b.year);
+    }
+
+    return result;
+  }
+);
+
+/**
+ * Get yearly permit trends with median processing days (single filter variant).
+ * Kept for backward compatibility — callers that need only one variant.
  */
 export function getYearlyPermitTrends(
   startYear: number = 2015,

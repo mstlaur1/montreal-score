@@ -127,6 +127,25 @@ export function queryPermitsForTrends(
 }
 
 /**
+ * Query ALL raw permit rows for trend computation in a single pass.
+ * Returns permit_type and nb_logements so the data layer can bucket
+ * into filter variants (all, housing, TR, CO, DE, CA) without re-querying.
+ */
+export function queryAllPermitsForTrends(
+  startYear: number = 2015
+): { year: string; date_debut: string | null; date_emission: string | null; permit_type: string | null; nb_logements: number | null }[] {
+  const db = getDb();
+  return db
+    .prepare(
+      `SELECT substr(date_debut, 1, 4) AS year, date_debut, date_emission, permit_type, nb_logements
+       FROM permits
+       WHERE date_debut >= ?
+       ORDER BY date_debut`
+    )
+    .all(`${startYear}-01-01`) as { year: string; date_debut: string | null; date_emission: string | null; permit_type: string | null; nb_logements: number | null }[];
+}
+
+/**
  * Intergovernmental / institutional suppliers that are budget transfers,
  * not procurement contracts. Excluded from analysis by default.
  */

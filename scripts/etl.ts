@@ -165,6 +165,7 @@ function initSchema(db: Database.Database) {
     -- Migration: add columns if missing (idempotent via pragma check)
     CREATE INDEX IF NOT EXISTS idx_permits_date ON permits(date_debut);
     CREATE INDEX IF NOT EXISTS idx_permits_borough ON permits(arrondissement);
+    CREATE INDEX IF NOT EXISTS idx_permits_date_type ON permits(date_debut, permit_type);
     CREATE INDEX IF NOT EXISTS idx_contracts_date ON contracts(approval_date);
     CREATE INDEX IF NOT EXISTS idx_contracts_supplier ON contracts(supplier);
     CREATE INDEX IF NOT EXISTS idx_contracts_source ON contracts(source);

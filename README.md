@@ -2,9 +2,11 @@
 
 A free, open-source government accountability tracker for Montreal. Borough-by-borough performance grades powered by the city's own open data.
 
+**Live:** [montrealscore.ashwater.ca](https://montrealscore.ashwater.ca)
+
 ## What is this?
 
-MontréalScore aggregates Montreal's publicly available government data — construction permits, 311 service requests, snow removal, road work, budgets, and more — and transforms it into clear, comparable performance grades for each of Montreal's 19 boroughs.
+MontréalScore aggregates Montreal's publicly available government data — construction permits, city contracts, 311 service requests, and campaign promises — and transforms it into clear, comparable performance metrics for each of Montreal's 19 boroughs.
 
 The city publishes the data. We make it legible.
 
@@ -12,21 +14,19 @@ The city publishes the data. We make it legible.
 
 Montreal's new mayor promised a **90-day construction permit standard**. The previous administration set a 120-day target. Neither has been publicly tracked. Meanwhile:
 
-- The city-wide average is **213 days**
+- The city-wide median is **213 days**
 - Some boroughs average **600+ days**
-- One developer waited **42 months** for a permit
 - Montreal ranks **dead last** among Quebec's 20 largest cities for permit speed
 
-This isn't just about permits. It's about whether your borough picks up your 311 calls, clears your street after a snowstorm, finishes road work on time, and spends your tax dollars responsibly.
+This isn't just about permits. It's about whether your city government spends your tax dollars responsibly and delivers on the promises it made to get elected.
 
 ## Features
 
-- **Borough Scorecards** — A-F letter grades across permits, 311 responsiveness, infrastructure, safety, and fiscal responsibility
-- **Permit Tracker** — Processing times by borough vs. the 90-day target, trends since 1990
-- **311 Dashboard** — Response times, resolution rates, and the worst "black holes" by category
-- **Snow Removal** — Post-storm completion tracking by borough
-- **Political Promise Tracker** — Did the mayor deliver on her 100-day plan?
-- **Open API** — All data available programmatically
+- **Permit Tracker** — Housing permit processing times by borough vs. the 90-day target, historical trends since 2015
+- **Contract Explorer** — Procurement analysis with threshold clustering, contract splitting detection, sole-source tracking
+- **311 Dashboard** — Service request volumes, resolution rates, and response times by borough
+- **Promise Tracker** — First 100 days and full platform promises with source-linked status updates
+- **Bilingual** — Full French and English support
 
 ## Data Sources
 
@@ -35,22 +35,19 @@ All data comes from [donnees.montreal.ca](https://donnees.montreal.ca), Montreal
 | Dataset | Update Frequency |
 |---|---|
 | Construction Permits | Weekly |
-| 311 Service Requests | Daily |
-| Snow Removal | Seasonal |
-| Road Construction | Regular |
 | City Contracts | Regular |
-| Municipal Budget | Annual |
-| Crime Statistics | Regular |
+| 311 Service Requests | Quarterly |
+| Campaign Promises | Manual (source-linked) |
 
 ## Tech Stack
 
-- **Frontend:** Next.js 15 + Tailwind CSS
-- **Database:** Supabase (PostgreSQL + PostGIS)
-- **Data Pipeline:** Python ETL scripts
-- **Charts:** Recharts / D3.js
-- **Maps:** Mapbox GL JS
-- **Hosting:** Vercel
-- **i18n:** French-first, English second
+- **Framework:** Next.js 16 (App Router) + React 19 + TypeScript 5
+- **Styling:** Tailwind CSS v4
+- **Database:** SQLite (better-sqlite3, readonly in app, WAL mode)
+- **Charts:** Recharts v2
+- **i18n:** next-intl v4 (French default, English)
+- **ETL:** TypeScript scripts fetching from Montreal's CKAN API
+- **Hosting:** Cloudflare Tunnel → Debian home server
 
 ## Getting Started
 
@@ -58,14 +55,13 @@ All data comes from [donnees.montreal.ca](https://donnees.montreal.ca), Montreal
 # Install dependencies
 npm install
 
-# Set up environment variables
-cp .env.example .env.local
+# Fetch data from Montreal open data portal
+npm run etl:full        # permits + contracts (all years)
+npm run etl:311:full    # 311 service requests
+npm run promises:seed   # campaign promises
 
 # Run the development server
 npm run dev
-
-# Run the data pipeline
-python scripts/ingest_permits.py
 ```
 
 ## Project Structure
@@ -75,11 +71,11 @@ montreal-score/
 ├── src/
 │   ├── app/              # Next.js App Router pages
 │   ├── components/       # React components
-│   ├── lib/              # Utilities, API clients, scoring logic
-│   └── i18n/             # Translations (fr/en)
-├── scripts/              # Python data ingestion & ETL
-├── supabase/             # Database migrations & seed data
-└── public/               # Static assets
+│   ├── lib/              # Data layer, scoring, types
+│   └── i18n/             # Routing, translations (fr/en)
+├── scripts/              # TypeScript ETL & seed scripts
+├── data/                 # SQLite database + seed data
+└── messages/             # Translation JSON files
 ```
 
 ## Contributing
@@ -92,4 +88,4 @@ MIT
 
 ## Contact
 
-Built by [Brulé AI](https://brule.ai).
+Built by [Ashwater](https://ashwater.ca).

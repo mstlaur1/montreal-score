@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getBoroughComparisonData, getCitySummary, getYearlyPermitTrends } from "@/lib/data";
-import type { YearlyPermitTrend } from "@/lib/data";
+import { getBoroughComparisonData, getCitySummary, getAllYearlyPermitTrends } from "@/lib/data";
 import { PERMIT_TARGET_DAYS, PREVIOUS_TARGET_DAYS } from "@/lib/scoring";
 import { PermitBarChart } from "@/components/PermitBarChart";
 import { PermitTrendSection } from "@/components/PermitTrendSection";
@@ -52,27 +51,13 @@ export default async function PermitsPage({ params, searchParams }: Props) {
   if (isNaN(selectedYear) || selectedYear < MIN_YEAR) selectedYear = MIN_YEAR;
   if (selectedYear > maxYear) selectedYear = maxYear;
 
-  // Compute all trend variants in parallel
-  const [comparison, summary, trendsAll, trendsHousing, trendsTR, trendsCO, trendsDE, trendsCA] =
+  // Fetch borough data + all trend variants (single DB query + single pass)
+  const [comparison, summary, trendsByFilter] =
     await Promise.all([
       getBoroughComparisonData(selectedYear),
       getCitySummary(selectedYear),
-      getYearlyPermitTrends(MIN_YEAR),
-      getYearlyPermitTrends(MIN_YEAR, { housingOnly: true }),
-      getYearlyPermitTrends(MIN_YEAR, { permitType: "TR" }),
-      getYearlyPermitTrends(MIN_YEAR, { permitType: "CO" }),
-      getYearlyPermitTrends(MIN_YEAR, { permitType: "DE" }),
-      getYearlyPermitTrends(MIN_YEAR, { permitType: "CA" }),
+      Promise.resolve(getAllYearlyPermitTrends(MIN_YEAR)),
     ]);
-
-  const trendsByFilter: Record<string, YearlyPermitTrend[]> = {
-    all: trendsAll,
-    housing: trendsHousing,
-    TR: trendsTR,
-    CO: trendsCO,
-    DE: trendsDE,
-    CA: trendsCA,
-  };
 
   const localeTag = locale === "fr" ? "fr-CA" : "en-CA";
 

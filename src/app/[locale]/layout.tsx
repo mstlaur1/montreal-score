@@ -40,9 +40,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: "MontréalScore",
       locale: locale === "fr" ? "fr_CA" : "en_CA",
       type: "website",
+      images: [
+        {
+          url: "https://montrealscore.ashwater.ca/og-image.png",
+          width: 1200,
+          height: 630,
+          alt: "MontréalScore",
+        },
+      ],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
+      images: ["https://montrealscore.ashwater.ca/og-image.png"],
     },
     alternates: {
       canonical: `https://montrealscore.ashwater.ca/${locale}`,
