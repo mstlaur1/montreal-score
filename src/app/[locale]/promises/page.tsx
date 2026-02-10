@@ -6,7 +6,7 @@ import { StatCard } from "@/components/StatCard";
 import { Link } from "@/i18n/navigation";
 import type { PromiseStatus, PromiseSentiment, CampaignPromise } from "@/lib/types";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 type Props = {
   params: Promise<{ locale: string }>;

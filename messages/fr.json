@@ -49,6 +49,7 @@
     "sr311AvgDays": "jours moyens de résolution",
     "sr311TopCategory": "Catégorie principale",
     "viewSR311": "Voir les détails 311",
+    "ofSpending": "des dépenses",
     "volunteerTitle": "Aidez-nous à creuser",
     "volunteerBody": "La page des contrats suit des milliards en dépenses municipales, mais vérifier les justifications de gré à gré, trouver les articles pertinents et recouper les données des fournisseurs prend du temps. Le suivi des promesses a aussi besoin d'aide — surveiller les décisions du conseil, signaler les avancées sur les engagements et trouver les mises à jour dans les médias locaux. Si vous êtes journaliste, chercheur, analyste de données ou citoyen engagé — votre aide serait précieuse.",
     "volunteerCta": "Nous contacter",
@@ -330,7 +331,8 @@
       "economy": "Économie",
       "culture": "Culture, arts et patrimoine",
       "downtown": "Centre-ville",
-      "international": "Rayonnement international"
+      "international": "Rayonnement international",
+      "local": "Enjeux locaux"
     },
     "boroughCommitmentsTitle": "Engagements par arrondissement",
     "boroughCommitmentsSubtitle": "Engagements locaux pris par les candidats d'Ensemble Montréal dans chaque arrondissement. Anjou et LaSalle ont été représentés par des partis locaux alliés et ne sont pas inclus.",
@@ -426,6 +428,7 @@
     "methodologyText": "Les données proviennent du jeu de données ouvert 311 de la Ville de Montréal (« Demandes de services citoyennes »). Le jeu de données couvre toutes les demandes citoyennes soumises par téléphone (311), courriel et dans les bureaux Accès Montréal. Les coordonnées géographiques sont obfusquées pour la confidentialité. Les demandes d'information (renseignements généraux répondus immédiatement) n'ont pas d'arrondissement assigné ni d'identifiant unique. Le délai de réponse est calculé comme la différence entre la date de création et la date du dernier statut pour les demandes terminées. Les catégories peuvent varier entre les arrondissements en raison de configurations locales."
   },
   "LocaleSwitcher": {
-    "label": "EN"
+    "label": "EN",
+    "ariaLabel": "Passer en anglais"
   }
 }

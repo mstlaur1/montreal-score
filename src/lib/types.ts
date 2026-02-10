@@ -175,7 +175,7 @@ export type PromiseSentiment = "positive" | "negative" | "neutral" | "mixed";
 export type PromiseCategory =
   | "housing" | "homelessness" | "security" | "cleanliness"
   | "mobility" | "governance" | "environment" | "infrastructure"
-  | "east-montreal" | "commercial" | "economic" | "culture"
+  | "east-montreal" | "economy" | "culture"
   | "downtown" | "international" | "local";
 
 export interface RawPromise {

@@ -15,6 +15,7 @@ export function getWriteDb(): Database.Database {
     }
     _db = new Database(DB_PATH, { readonly: false });
     _db.pragma("journal_mode = WAL");
+    _db.pragma("busy_timeout = 5000");
     _db.pragma("foreign_keys = ON");
   }
   return _db;

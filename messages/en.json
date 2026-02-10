@@ -49,6 +49,7 @@
     "sr311AvgDays": "average days to close",
     "sr311TopCategory": "Top category",
     "viewSR311": "View 311 details",
+    "ofSpending": "of spending",
     "volunteerTitle": "Help us dig deeper",
     "volunteerBody": "The contracts page tracks billions in municipal spending, but verifying sole-source justifications, finding related news coverage, and cross-referencing supplier data takes time. The promise tracker also needs help — monitoring council decisions, flagging progress on commitments, and sourcing updates from local media. If you're a journalist, researcher, data analyst, or engaged citizen — we'd love your help.",
     "volunteerCta": "Get in touch",
@@ -330,7 +331,8 @@
       "economy": "Economy",
       "culture": "Culture, Arts & Heritage",
       "downtown": "Downtown",
-      "international": "International"
+      "international": "International",
+      "local": "Local Issues"
     },
     "boroughCommitmentsTitle": "Borough Commitments",
     "boroughCommitmentsSubtitle": "Local commitments made by Ensemble Montréal candidates in each borough. Anjou and LaSalle ran under independent allied parties and are not included.",
@@ -426,6 +428,7 @@
     "methodologyText": "Data comes from the City of Montreal's 311 open dataset (\"Demandes de services citoyennes\"). The dataset covers all citizen requests submitted via phone (311), email, and Bureau Accès Montréal offices. Geographic coordinates are obfuscated for privacy. Information requests (general inquiries answered immediately) lack borough assignment and unique IDs. Response time is calculated as the difference between the creation date and last status date for completed requests. Categories may vary between boroughs due to local configurations."
   },
   "LocaleSwitcher": {
-    "label": "FR"
+    "label": "FR",
+    "ariaLabel": "Switch to French"
   }
 }

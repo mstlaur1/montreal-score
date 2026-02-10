@@ -64,6 +64,7 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   const t = await getTranslations("Nav");
   const tFooter = await getTranslations("Footer");
+  const tMeta = await getTranslations("Metadata");
 
   return (
     <html lang={locale}>
@@ -76,7 +77,7 @@ export default async function LocaleLayout({ children, params }: Props) {
               "@type": "WebSite",
               name: "MontréalScore",
               url: "https://montrealscore.ashwater.ca",
-              description: "Tracking Montreal's municipal performance with open data — permits, contracts, 311 requests, and campaign promises.",
+              description: tMeta("siteDescription"),
               inLanguage: [locale === "fr" ? "fr-CA" : "en-CA"],
               publisher: {
                 "@type": "Organization",
@@ -91,8 +92,11 @@ export default async function LocaleLayout({ children, params }: Props) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <NextIntlClientProvider>
+          <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:px-4 focus:py-2 focus:bg-accent focus:text-white focus:rounded-lg">
+            {locale === "fr" ? "Aller au contenu" : "Skip to content"}
+          </a>
           <header className="border-b border-card-border">
-            <nav className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+            <nav aria-label={locale === "fr" ? "Navigation principale" : "Main navigation"} className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center gap-x-6 gap-y-2">
               <Link href="/" className="text-xl font-bold tracking-tight mr-auto">
                 Montréal<span className="text-accent">Score</span>
               </Link>
@@ -124,7 +128,7 @@ export default async function LocaleLayout({ children, params }: Props) {
               </div>
             </nav>
           </header>
-          <main>{children}</main>
+          <main id="main-content">{children}</main>
           <footer className="border-t border-card-border mt-16">
             <div className="max-w-6xl mx-auto px-4 py-8 text-sm text-muted">
               <p>

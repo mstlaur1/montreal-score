@@ -16,7 +16,6 @@ function getDb(): Database.Database {
       );
     }
     _db = new Database(DB_PATH, { readonly: true });
-    _db.pragma("journal_mode = WAL");
   }
   return _db;
 }
@@ -561,6 +560,10 @@ export function searchContracts(
     if (hasFts()) {
       // Use FTS5 index for fast text search
       const ftsExpr = toFtsQuery(query);
+      if (!ftsExpr) {
+        // Query was all special characters — return no results
+        return { results: [], totalCount: 0 };
+      }
       conditions.push(`rowid IN (SELECT rowid FROM contracts_fts WHERE contracts_fts MATCH ?)`);
       params.push(ftsExpr);
     } else {

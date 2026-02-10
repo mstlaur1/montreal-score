@@ -628,6 +628,6 @@ loadPromises();
 // Start server
 // ---------------------------------------------------------------------------
 
-app.listen(PORT, () => {
-  console.log(`\n  Promise Tracker Admin running at http://localhost:${PORT}\n`);
+app.listen(PORT, "127.0.0.1", () => {
+  console.log(`\n  Promise Tracker Admin running at http://127.0.0.1:${PORT}\n`);
 });

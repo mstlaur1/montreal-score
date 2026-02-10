@@ -95,7 +95,14 @@ export default async function Home({ params }: Props) {
             {t("promisesTracked", { count: promiseSummary.total })}
           </p>
           {/* Progress bar */}
-          <div className="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex">
+          <div
+            className="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex"
+            role="progressbar"
+            aria-valuenow={Math.round(pCompletedPct + pPartialPct)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={t("promisesTracked", { count: promiseSummary.total })}
+          >
             {pCompletedPct > 0 && (
               <div className="bg-green-700 h-full" style={{ width: `${pCompletedPct}%` }} />
             )}
@@ -205,7 +212,7 @@ export default async function Home({ params }: Props) {
                 <span className="text-sm font-normal text-muted ml-1">%</span>
               </p>
               <p className="text-xs text-muted">
-                {locale === "fr" ? "des dépenses" : "of spending"}
+                {t("ofSpending")}
               </p>
             </div>
           </div>

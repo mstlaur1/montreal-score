@@ -358,7 +358,8 @@ export const getContractStats = cache(async (from: string, to: string): Promise<
   const supplierMap = new Map<string, { count: number; totalValue: number }>();
   for (const c of raw) {
     const rawName = c["NOM DU FOURNISSEUR"];
-    const name = rawName ? normalizeSupplierName(rawName) : rawName;
+    if (!rawName) continue;
+    const name = normalizeSupplierName(rawName);
     const amt = parseFloat(c.MONTANT) || 0;
     const existing = supplierMap.get(name) || { count: 0, totalValue: 0 };
     existing.count++;
@@ -374,6 +375,7 @@ export const getContractStats = cache(async (from: string, to: string): Promise<
   const deptMap = new Map<string, { count: number; totalValue: number }>();
   for (const c of raw) {
     const name = c.SERVICE;
+    if (!name) continue;
     const amt = parseFloat(c.MONTANT) || 0;
     const existing = deptMap.get(name) || { count: 0, totalValue: 0 };
     existing.count++;
@@ -891,6 +893,23 @@ export const searchContractsCached = cache(async (
 // Promises
 // ---------------------------------------------------------------------------
 
+function buildPromiseMaps() {
+  const latestUpdates = queryLatestPromiseUpdates();
+  const updateCounts = queryPromiseUpdateCounts();
+
+  const updatesMap = new Map<string, PromiseUpdate>(
+    latestUpdates.map((u) => [u.promise_id, {
+      id: u.id, promise_id: u.promise_id, date: u.date,
+      source_url: u.source_url, source_title: u.source_title,
+      summary_fr: u.summary_fr, summary_en: u.summary_en,
+      sentiment: u.sentiment as PromiseSentiment | null,
+    }])
+  );
+  const countsMap = new Map(updateCounts.map((c) => [c.promise_id, c.count]));
+
+  return { updatesMap, countsMap };
+}
+
 function toPromise(
   r: import("./types").RawPromise,
   latestUpdate: PromiseUpdate | null,
@@ -918,37 +937,13 @@ function toPromise(
 
 export const getPromises = cache(async (category?: string): Promise<CampaignPromise[]> => {
   const raw = queryPromises(category);
-  const latestUpdates = queryLatestPromiseUpdates();
-  const updateCounts = queryPromiseUpdateCounts();
-
-  const updatesMap = new Map<string, PromiseUpdate>(
-    latestUpdates.map((u) => [u.promise_id, {
-      id: u.id, promise_id: u.promise_id, date: u.date,
-      source_url: u.source_url, source_title: u.source_title,
-      summary_fr: u.summary_fr, summary_en: u.summary_en,
-      sentiment: u.sentiment as PromiseSentiment | null,
-    }])
-  );
-  const countsMap = new Map(updateCounts.map((c) => [c.promise_id, c.count]));
-
+  const { updatesMap, countsMap } = buildPromiseMaps();
   return raw.map((r) => toPromise(r, updatesMap.get(r.id) ?? null, countsMap.get(r.id) ?? 0));
 });
 
 export const getFirst100DaysPromises = cache(async (): Promise<CampaignPromise[]> => {
   const raw = queryFirst100DaysPromises();
-  const latestUpdates = queryLatestPromiseUpdates();
-  const updateCounts = queryPromiseUpdateCounts();
-
-  const updatesMap = new Map<string, PromiseUpdate>(
-    latestUpdates.map((u) => [u.promise_id, {
-      id: u.id, promise_id: u.promise_id, date: u.date,
-      source_url: u.source_url, source_title: u.source_title,
-      summary_fr: u.summary_fr, summary_en: u.summary_en,
-      sentiment: u.sentiment as PromiseSentiment | null,
-    }])
-  );
-  const countsMap = new Map(updateCounts.map((c) => [c.promise_id, c.count]));
-
+  const { updatesMap, countsMap } = buildPromiseMaps();
   return raw.map((r) => toPromise(r, updatesMap.get(r.id) ?? null, countsMap.get(r.id) ?? 0));
 });
 
@@ -980,18 +975,7 @@ export const getPromiseSummary = cache(async (): Promise<PromiseSummary> => {
 
 export const getPromisesByBorough = cache(async (): Promise<Map<string, CampaignPromise[]>> => {
   const raw = queryBoroughPromises();
-  const latestUpdates = queryLatestPromiseUpdates();
-  const updateCounts = queryPromiseUpdateCounts();
-
-  const updatesMap = new Map<string, PromiseUpdate>(
-    latestUpdates.map((u) => [u.promise_id, {
-      id: u.id, promise_id: u.promise_id, date: u.date,
-      source_url: u.source_url, source_title: u.source_title,
-      summary_fr: u.summary_fr, summary_en: u.summary_en,
-      sentiment: u.sentiment as PromiseSentiment | null,
-    }])
-  );
-  const countsMap = new Map(updateCounts.map((c) => [c.promise_id, c.count]));
+  const { updatesMap, countsMap } = buildPromiseMaps();
 
   const byBorough = new Map<string, CampaignPromise[]>();
   for (const r of raw) {
@@ -1005,18 +989,7 @@ export const getPromisesByBorough = cache(async (): Promise<Map<string, Campaign
 
 export const getPlatformPromisesByCategory = cache(async (): Promise<Map<string, CampaignPromise[]>> => {
   const raw = queryPlatformPromises();
-  const latestUpdates = queryLatestPromiseUpdates();
-  const updateCounts = queryPromiseUpdateCounts();
-
-  const updatesMap = new Map<string, PromiseUpdate>(
-    latestUpdates.map((u) => [u.promise_id, {
-      id: u.id, promise_id: u.promise_id, date: u.date,
-      source_url: u.source_url, source_title: u.source_title,
-      summary_fr: u.summary_fr, summary_en: u.summary_en,
-      sentiment: u.sentiment as PromiseSentiment | null,
-    }])
-  );
-  const countsMap = new Map(updateCounts.map((c) => [c.promise_id, c.count]));
+  const { updatesMap, countsMap } = buildPromiseMaps();
 
   const byCategory = new Map<string, CampaignPromise[]>();
   for (const r of raw) {
@@ -1030,19 +1003,7 @@ export const getPlatformPromisesByCategory = cache(async (): Promise<Map<string,
 
 export const getNeedsHelpPromises = cache(async (): Promise<CampaignPromise[]> => {
   const raw = queryNeedsHelpPromises();
-  const latestUpdates = queryLatestPromiseUpdates();
-  const updateCounts = queryPromiseUpdateCounts();
-
-  const updatesMap = new Map<string, PromiseUpdate>(
-    latestUpdates.map((u) => [u.promise_id, {
-      id: u.id, promise_id: u.promise_id, date: u.date,
-      source_url: u.source_url, source_title: u.source_title,
-      summary_fr: u.summary_fr, summary_en: u.summary_en,
-      sentiment: u.sentiment as PromiseSentiment | null,
-    }])
-  );
-  const countsMap = new Map(updateCounts.map((c) => [c.promise_id, c.count]));
-
+  const { updatesMap, countsMap } = buildPromiseMaps();
   return raw.map((r) => toPromise(r, updatesMap.get(r.id) ?? null, countsMap.get(r.id) ?? 0));
 });
 

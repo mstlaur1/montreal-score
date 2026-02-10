@@ -39,6 +39,27 @@ export const POST = withAuth(async (req: NextRequest, ctx) => {
     );
   }
 
+  if (body.source_url && !/^https?:\/\//.test(body.source_url)) {
+    return NextResponse.json(
+      { error: "source_url must start with http:// or https://" },
+      { status: 400 }
+    );
+  }
+
+  if (body.summary_fr && body.summary_fr.length > 2000) {
+    return NextResponse.json(
+      { error: "summary_fr must be 2000 characters or fewer" },
+      { status: 400 }
+    );
+  }
+
+  if (body.summary_en && body.summary_en.length > 2000) {
+    return NextResponse.json(
+      { error: "summary_en must be 2000 characters or fewer" },
+      { status: 400 }
+    );
+  }
+
   if (body.sentiment && !VALID_SENTIMENTS.includes(body.sentiment)) {
     return NextResponse.json(
       { error: `Invalid sentiment. Must be one of: ${VALID_SENTIMENTS.join(", ")}` },
