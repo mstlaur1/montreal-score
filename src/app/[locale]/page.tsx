@@ -1,5 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getCitySummary, getPromiseSummary, getContractStats } from "@/lib/data";
+import { getCitySummary, getPromiseSummary, getContractStats, getSRSummary } from "@/lib/data";
 import { getContractDateBounds } from "@/lib/db";
 import { PERMIT_TARGET_DAYS } from "@/lib/scoring";
 import { Link } from "@/i18n/navigation";
@@ -12,6 +12,14 @@ type Props = {
 
 function formatCurrency(value: number, locale: string): string {
   const localeTag = locale === "fr" ? "fr-CA" : "en-CA";
+  if (Math.abs(value) >= 1_000_000) {
+    return new Intl.NumberFormat(localeTag, {
+      style: "currency",
+      currency: "CAD",
+      notation: "compact",
+      maximumFractionDigits: 1,
+    }).format(value);
+  }
   return new Intl.NumberFormat(localeTag, {
     style: "currency",
     currency: "CAD",
@@ -48,6 +56,12 @@ export default async function Home({ params }: Props) {
     : now.getFullYear() + "-" + String(now.getMonth() + 2).padStart(2, "0") + "-01";
   const contractTo = toMonth <= bounds.max ? toNext : bounds.max + "-01";
   const contractStats = await getContractStats(contractFrom, contractTo);
+
+  // 311 — current year, fall back to previous
+  let srSummary = await getSRSummary(currentYear);
+  if (!srSummary || srSummary.totalRequests < 100) {
+    srSummary = await getSRSummary(currentYear - 1);
+  }
 
   // Promise progress bar widths
   const pTotal = promiseSummary.total || 1;
@@ -196,6 +210,48 @@ export default async function Home({ params }: Props) {
             </div>
           </div>
         </section>
+        {/* 311 Service Requests */}
+        {srSummary && (
+          <section className="border border-card-border rounded-xl p-6 bg-card-bg">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">{t("sr311Title")}</h2>
+              <Link href="/311" className="text-sm text-accent hover:underline">
+                {t("viewSR311")} &rarr;
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-sm text-muted">{t("sr311Total")}</p>
+                <p className="text-2xl font-bold">
+                  {srSummary.totalRequests.toLocaleString(locale === "fr" ? "fr-CA" : "en-CA")}
+                </p>
+                <p className="text-xs text-muted">{t("sr311Requests")}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted">{t("sr311Resolution")}</p>
+                <p className="text-2xl font-bold">
+                  {Math.round(srSummary.resolutionRate)}
+                  <span className="text-sm font-normal text-muted ml-1">%</span>
+                </p>
+                <p className="text-xs text-muted">{t("sr311Completed", { count: srSummary.totalCompleted.toLocaleString(locale === "fr" ? "fr-CA" : "en-CA") })}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted">{t("sr311ResponseTime")}</p>
+                <p className="text-2xl font-bold">
+                  {srSummary.avgResponseDays != null ? Math.round(srSummary.avgResponseDays) : "—"}
+                  {srSummary.avgResponseDays != null && (
+                    <span className="text-sm font-normal text-muted ml-1">{t("days")}</span>
+                  )}
+                </p>
+                <p className="text-xs text-muted">{t("sr311AvgDays")}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted">{t("sr311TopCategory")}</p>
+                <p className="text-lg font-semibold truncate">{srSummary.topCategory}</p>
+              </div>
+            </div>
+          </section>
+        )}
       </div>
 
       {/* Volunteer CTA */}

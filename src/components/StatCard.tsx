@@ -15,7 +15,7 @@ export function StatCard({ label, value, unit, detail, trend, trendLabel }: Stat
   return (
     <div className="border border-card-border rounded-xl p-4 bg-card-bg">
       <p className="text-sm text-muted">{label}</p>
-      <p className="text-3xl font-bold mt-1">
+      <p className="text-xl sm:text-2xl md:text-3xl font-bold mt-1 break-words">
         {value}
         {unit && <span className="text-lg font-normal text-muted ml-1">{unit}</span>}
       </p>

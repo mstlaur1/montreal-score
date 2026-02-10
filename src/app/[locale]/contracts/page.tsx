@@ -32,8 +32,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-function formatCurrency(value: number, locale: string): string {
+function formatCurrency(value: number, locale: string, compact = false): string {
   const localeTag = locale === "fr" ? "fr-CA" : "en-CA";
+  if (compact && Math.abs(value) >= 1_000_000) {
+    return new Intl.NumberFormat(localeTag, {
+      style: "currency",
+      currency: "CAD",
+      notation: "compact",
+      maximumFractionDigits: 1,
+    }).format(value);
+  }
   return new Intl.NumberFormat(localeTag, {
     style: "currency",
     currency: "CAD",
@@ -119,6 +127,7 @@ export default async function ContractsPage({ params, searchParams }: Props) {
 
   const localeTag = locale === "fr" ? "fr-CA" : "en-CA";
   const fmt = (v: number) => formatCurrency(v, locale);
+  const fmtCompact = (v: number) => formatCurrency(v, locale, true);
 
   const presets = [
     { label: "Coderre (2013–2017)", from: "2013-11", to: "2017-11" },
@@ -270,15 +279,15 @@ export default async function ContractsPage({ params, searchParams }: Props) {
         />
         <StatCard
           label={t("totalValue")}
-          value={fmt(stats.totalValue)}
+          value={fmtCompact(stats.totalValue)}
         />
         <StatCard
           label={t("avgValue")}
-          value={fmt(stats.avgValue)}
+          value={fmtCompact(stats.avgValue)}
         />
         <StatCard
           label={t("medianValue")}
-          value={fmt(stats.medianValue)}
+          value={fmtCompact(stats.medianValue)}
         />
       </div>
 
@@ -765,10 +774,6 @@ export default async function ContractsPage({ params, searchParams }: Props) {
         <h2 className="text-xl font-bold mb-2">{t("notableFindingsTitle")}</h2>
         <p className="text-muted text-sm mb-6">{t("notableFindingsSubtitle")}</p>
         <div className="space-y-6">
-          <div className="border-l-4 border-amber-500 pl-4">
-            <h3 className="font-semibold mb-1">{t("findingTrustRoyalTitle")}</h3>
-            <p className="text-sm text-muted">{t("findingTrustRoyalBody")}</p>
-          </div>
           <div className="border-l-4 border-amber-500 pl-4">
             <h3 className="font-semibold mb-1">{t("findingSoleSourceGrowthTitle")}</h3>
             <p className="text-sm text-muted">{t("findingSoleSourceGrowthBody")}</p>
