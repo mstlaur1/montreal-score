@@ -603,6 +603,94 @@ export function searchContracts(
   return { results, totalCount: countRow.count };
 }
 
+// --- 311 Service Requests ---
+
+export function querySRMonthlyVolume(): {
+  year_month: string; nature: string; count: number;
+}[] {
+  const db = getDb();
+  return db
+    .prepare(
+      `SELECT year_month, nature, count
+       FROM sr_monthly
+       ORDER BY year_month`
+    )
+    .all() as { year_month: string; nature: string; count: number }[];
+}
+
+export function querySRBoroughStats(year?: number): {
+  year: number; borough: string; total_count: number;
+  completed_count: number; avg_response_days: number | null;
+}[] {
+  const db = getDb();
+  if (year) {
+    return db
+      .prepare(
+        `SELECT year, borough, total_count, completed_count, avg_response_days
+         FROM sr_borough WHERE year = ?
+         ORDER BY total_count DESC`
+      )
+      .all(year) as { year: number; borough: string; total_count: number; completed_count: number; avg_response_days: number | null }[];
+  }
+  return db
+    .prepare(
+      `SELECT year, borough, total_count, completed_count, avg_response_days
+       FROM sr_borough
+       ORDER BY year, total_count DESC`
+    )
+    .all() as { year: number; borough: string; total_count: number; completed_count: number; avg_response_days: number | null }[];
+}
+
+export function querySRCategories(year: number, limit = 20): {
+  category: string; count: number;
+}[] {
+  const db = getDb();
+  return db
+    .prepare(
+      `SELECT category, count
+       FROM sr_category WHERE year = ?
+       ORDER BY count DESC LIMIT ?`
+    )
+    .all(year, limit) as { category: string; count: number }[];
+}
+
+export function querySRChannels(year: number): {
+  channel: string; count: number;
+}[] {
+  const db = getDb();
+  return db
+    .prepare(
+      `SELECT channel, count
+       FROM sr_channel WHERE year = ?
+       ORDER BY count DESC`
+    )
+    .all(year) as { channel: string; count: number }[];
+}
+
+export function querySRStatuses(year: number): {
+  status: string; count: number;
+}[] {
+  const db = getDb();
+  return db
+    .prepare(
+      `SELECT status, count
+       FROM sr_status WHERE year = ?
+       ORDER BY count DESC`
+    )
+    .all(year) as { status: string; count: number }[];
+}
+
+export function querySRYearRange(): { min: number; max: number } | null {
+  const db = getDb();
+  const row = db
+    .prepare(
+      `SELECT MIN(year) AS min, MAX(year) AS max FROM sr_borough`
+    )
+    .get() as { min: number | null; max: number | null } | undefined;
+  if (!row || row.min === null) return null;
+  return { min: row.min, max: row.max! };
+}
+
 export function queryYearlyContractsBySource(startYear = 2015): {
   source: string; year: string; count: number; totalValue: number;
 }[] {

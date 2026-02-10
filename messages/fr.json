@@ -354,6 +354,65 @@
     "ctaEmail": "Écrivez-nous à <email>me@ashwater.ca</email>",
     "ctaNote": "Toutes les soumissions sont vérifiées avant publication. Nous protégeons l'anonymat des sources."
   },
+  "ServiceRequestsPage": {
+    "metadata": {
+      "title": "Requêtes 311 — MontréalScore",
+      "description": "Suivi du volume de requêtes 311, des délais de réponse et des taux de résolution par arrondissement à Montréal."
+    },
+    "title": "Requêtes 311",
+    "subtitle": "Demandes de services, plaintes et demandes d'information soumises à la Ville via le système 311, par courriel et dans les bureaux Accès Montréal. Données depuis 2022, mises à jour quotidiennement.",
+    "year": "Année",
+    "totalRequests": "Total des demandes",
+    "resolutionRate": "Taux de résolution",
+    "avgResponseTime": "Délai moyen",
+    "topCategory": "Catégorie principale",
+    "days": "jours",
+    "noData": "Aucune donnée 311 disponible. Exécutez l'ETL 311 d'abord : npx tsx scripts/etl-311.ts",
+    "boroughTitle": "Demandes par arrondissement",
+    "boroughSubtitle": "Volume et taux de résolution des demandes de services par arrondissement. Taux de résolution = pourcentage de demandes avec le statut « Terminée ». Les unités administratives internes (centre d'appels 311, services corporatifs) sont exclues.",
+    "borough": "Arrondissement",
+    "requests": "Demandes",
+    "completed": "Terminées",
+    "resRate": "Résolution",
+    "responseTime": "Jours moy.",
+    "na": "N/D",
+    "categoryTitle": "Principales catégories de demandes",
+    "categorySubtitle": "Les 20 catégories de demandes de services les plus fréquentes pour l'année sélectionnée. Les catégories sont définies par la Ville et varient légèrement entre les arrondissements.",
+    "category": "Catégorie",
+    "count": "Nombre",
+    "channelTitle": "Canaux de communication",
+    "channelSubtitle": "Comment les citoyens contactent le 311. Le téléphone (ligne 311) traite la majorité des demandes.",
+    "channel": "Canal",
+    "statusTitle": "Distribution des statuts",
+    "statusSubtitle": "Dernier statut des demandes de services pour l'année sélectionnée.",
+    "status": "Statut",
+    "statusTranslation": {
+      "Acceptée": "Acceptée",
+      "Annulée": "Annulée",
+      "Prise en charge": "Prise en charge",
+      "Réactivée": "Réactivée",
+      "Refusée": "Refusée",
+      "Supprimée": "Supprimée",
+      "Terminée": "Terminée",
+      "Transmise pour traitement": "Transmise",
+      "Urgente": "Urgente"
+    },
+    "channelTranslation": {
+      "Téléphone": "Téléphone (311)",
+      "Courriel": "Courriel",
+      "Personne": "En personne",
+      "Mobile": "Application mobile",
+      "Site Internet": "Site web",
+      "Instance": "Interne",
+      "Médias sociaux": "Médias sociaux",
+      "Courrier": "Courrier",
+      "Télécopieur": "Télécopieur"
+    },
+    "trendTitle": "Volume mensuel",
+    "trendSubtitle": "Volume mensuel des demandes, toutes natures confondues (requêtes, plaintes, informations, commentaires).",
+    "methodology": "Méthodologie",
+    "methodologyText": "Les données proviennent du jeu de données ouvert 311 de la Ville de Montréal (« Demandes de services citoyennes »). Le jeu de données couvre toutes les demandes citoyennes soumises par téléphone (311), courriel et dans les bureaux Accès Montréal. Les coordonnées géographiques sont obfusquées pour la confidentialité. Les demandes d'information (renseignements généraux répondus immédiatement) n'ont pas d'arrondissement assigné ni d'identifiant unique. Le délai de réponse est calculé comme la différence entre la date de création et la date du dernier statut pour les demandes terminées. Les catégories peuvent varier entre les arrondissements en raison de configurations locales."
+  },
   "LocaleSwitcher": {
     "label": "EN"
   }

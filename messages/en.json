@@ -354,6 +354,65 @@
     "ctaEmail": "Email us at <email>me@ashwater.ca</email>",
     "ctaNote": "All submissions are reviewed before publication. We protect source anonymity."
   },
+  "ServiceRequestsPage": {
+    "metadata": {
+      "title": "311 Service Requests — MontréalScore",
+      "description": "Tracking 311 service request volume, response times, and resolution rates by borough in Montreal."
+    },
+    "title": "311 Service Requests",
+    "subtitle": "Citizen requests, complaints, and information inquiries submitted to the City via the 311 system, email, and Bureau Accès Montréal offices. Data since 2022, updated daily.",
+    "year": "Year",
+    "totalRequests": "Total requests",
+    "resolutionRate": "Resolution rate",
+    "avgResponseTime": "Avg response time",
+    "topCategory": "Top category",
+    "days": "days",
+    "noData": "No 311 data available. Run the 311 ETL first: npx tsx scripts/etl-311.ts",
+    "boroughTitle": "Requests by borough",
+    "boroughSubtitle": "Service request volume and resolution rates by borough. Resolution rate = percentage of requests with \"Terminée\" (completed) status. Internal administrative units (311 call center, corporate services) are excluded.",
+    "borough": "Borough",
+    "requests": "Requests",
+    "completed": "Completed",
+    "resRate": "Resolution",
+    "responseTime": "Avg days",
+    "na": "N/A",
+    "categoryTitle": "Top request categories",
+    "categorySubtitle": "The 20 most common service request categories for the selected year. Categories are defined by the city and vary somewhat between boroughs.",
+    "category": "Category",
+    "count": "Count",
+    "channelTitle": "Contact channels",
+    "channelSubtitle": "How citizens reach 311. Phone (311 hotline) handles the majority of requests.",
+    "channel": "Channel",
+    "statusTitle": "Request status distribution",
+    "statusSubtitle": "Final status of service requests for the selected year.",
+    "status": "Status",
+    "statusTranslation": {
+      "Acceptée": "Accepted",
+      "Annulée": "Cancelled",
+      "Prise en charge": "In progress",
+      "Réactivée": "Reactivated",
+      "Refusée": "Refused",
+      "Supprimée": "Deleted",
+      "Terminée": "Completed",
+      "Transmise pour traitement": "Transmitted",
+      "Urgente": "Urgent"
+    },
+    "channelTranslation": {
+      "Téléphone": "Phone (311)",
+      "Courriel": "Email",
+      "Personne": "In person",
+      "Mobile": "Mobile app",
+      "Site Internet": "Website",
+      "Instance": "Internal",
+      "Médias sociaux": "Social media",
+      "Courrier": "Mail",
+      "Télécopieur": "Fax"
+    },
+    "trendTitle": "Monthly volume",
+    "trendSubtitle": "Monthly request volume across all natures (requests, complaints, information, comments).",
+    "methodology": "Methodology",
+    "methodologyText": "Data comes from the City of Montreal's 311 open dataset (\"Demandes de services citoyennes\"). The dataset covers all citizen requests submitted via phone (311), email, and Bureau Accès Montréal offices. Geographic coordinates are obfuscated for privacy. Information requests (general inquiries answered immediately) lack borough assignment and unique IDs. Response time is calculated as the difference between the creation date and last status date for completed requests. Categories may vary between boroughs due to local configurations."
+  },
   "LocaleSwitcher": {
     "label": "FR"
   }

@@ -110,12 +110,12 @@ export default async function LocaleLayout({ children, params }: Props) {
                 <Link href="/contracts" className="hover:text-accent transition-colors">
                   {t("contracts")}
                 </Link>
-                {/* Boroughs and 311 pages — disabled for now
-                <Link href="/boroughs" className="hover:text-accent transition-colors">
-                  {t("boroughs")}
-                </Link>
                 <Link href="/311" className="hover:text-accent transition-colors">
                   {t("311")}
+                </Link>
+                {/* Boroughs page — disabled for now
+                <Link href="/boroughs" className="hover:text-accent transition-colors">
+                  {t("boroughs")}
                 </Link>
                 */}
                 <Link href="/about" className="hover:text-accent transition-colors">

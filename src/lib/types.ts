@@ -314,3 +314,52 @@ export interface ContractSearchResult {
   totalPages: number;
   query: string;
 }
+
+// --- 311 Service Requests ---
+
+/** Monthly request volume by nature */
+export interface SRMonthlyVolume {
+  yearMonth: string;  // "2022-01"
+  nature: string;
+  count: number;
+}
+
+/** Borough yearly stats */
+export interface SRBoroughStats {
+  year: number;
+  borough: string;
+  totalCount: number;
+  completedCount: number;
+  resolutionRate: number;  // computed: completedCount / totalCount * 100
+  avgResponseDays: number | null;
+}
+
+/** Category ranking entry */
+export interface SRCategory {
+  category: string;
+  count: number;
+}
+
+/** Channel distribution entry */
+export interface SRChannel {
+  channel: string;
+  count: number;
+}
+
+/** Status distribution entry */
+export interface SRStatus {
+  status: string;
+  count: number;
+}
+
+/** City-wide 311 summary */
+export interface SRSummary {
+  totalRequests: number;
+  totalCompleted: number;
+  resolutionRate: number;
+  avgResponseDays: number | null;
+  topCategory: string;
+  topBorough: string;
+  yearRange: string;
+  lastUpdated: string;
+}

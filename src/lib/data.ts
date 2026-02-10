@@ -6,6 +6,7 @@ import {
   queryDeptSupplierPairs, queryDeptTotals, querySupplierHalfPeriodTotals, searchContracts,
   queryPromises, queryFirst100DaysPromises, queryBoroughPromises, queryPlatformPromises, queryLatestPromiseUpdates,
   queryPromiseStatusCounts, queryPromiseCategoryCounts, queryPromiseUpdateCounts, queryNeedsHelpPromises, queryNeedsHelpCount,
+  querySRMonthlyVolume, querySRBoroughStats, querySRCategories, querySRChannels, querySRStatuses, querySRYearRange,
 } from "./db";
 import { normalizeBoroughName, getBoroughSlug } from "./boroughs";
 import { calculateBoroughScores, rankBoroughs, medianDaysToGrade, PERMIT_TARGET_DAYS } from "./scoring";
@@ -15,6 +16,7 @@ import type {
   SoleSourceStats, YearlyContractTrend, MonthlySpending, DeptSupplierPair, SupplierGrowth, SupplierGrowthResult, ContractSearchResult,
   CampaignPromise, PromiseUpdate, PromiseSummary, PromiseCategorySummary,
   PromiseStatus, PromiseSentiment, PromiseCategory,
+  SRMonthlyVolume, SRBoroughStats, SRCategory, SRChannel, SRStatus, SRSummary,
 } from "./types";
 
 /** Compute median of a sorted number array */
@@ -1057,4 +1059,78 @@ export const getPromiseCategorySummaries = cache(async (): Promise<PromiseCatego
     in_progress: r.in_progress,
     broken: r.broken,
   }));
+});
+
+// ---------------------------------------------------------------------------
+// 311 Service Requests
+// ---------------------------------------------------------------------------
+
+export const getSRMonthlyVolume = cache(async (): Promise<SRMonthlyVolume[]> => {
+  const raw = querySRMonthlyVolume();
+  return raw.map((r) => ({
+    yearMonth: r.year_month,
+    nature: r.nature,
+    count: r.count,
+  }));
+});
+
+export const getSRBoroughStats = cache(async (year: number): Promise<SRBoroughStats[]> => {
+  const raw = querySRBoroughStats(year);
+  return raw
+    .filter((r) => !r.borough.includes("311") && !r.borough.includes("SER."))
+    .map((r) => ({
+      year: r.year,
+      borough: r.borough,
+      totalCount: r.total_count,
+      completedCount: r.completed_count,
+      resolutionRate: r.total_count > 0 ? (r.completed_count / r.total_count) * 100 : 0,
+      avgResponseDays: r.avg_response_days,
+    }));
+});
+
+export const getSRCategories = cache(async (year: number): Promise<SRCategory[]> => {
+  return querySRCategories(year, 20);
+});
+
+export const getSRChannels = cache(async (year: number): Promise<SRChannel[]> => {
+  return querySRChannels(year);
+});
+
+export const getSRStatuses = cache(async (year: number): Promise<SRStatus[]> => {
+  return querySRStatuses(year);
+});
+
+export const getSRSummary = cache(async (year: number): Promise<SRSummary | null> => {
+  const boroughStats = querySRBoroughStats(year);
+  const statuses = querySRStatuses(year);
+  const categories = querySRCategories(year, 1);
+  const yearRange = querySRYearRange();
+
+  if (boroughStats.length === 0) return null;
+
+  const totalRequests = boroughStats.reduce((sum, b) => sum + b.total_count, 0);
+  const totalCompleted = boroughStats.reduce((sum, b) => sum + b.completed_count, 0);
+
+  // Weighted average response days
+  const withTime = boroughStats.filter((b) => b.avg_response_days != null);
+  const avgResponseDays = withTime.length > 0
+    ? withTime.reduce((sum, b) => sum + b.avg_response_days! * b.completed_count, 0) /
+      withTime.reduce((sum, b) => sum + b.completed_count, 0)
+    : null;
+
+  // Borough with most requests
+  const topBoroughRow = boroughStats
+    .filter((r) => !r.borough.includes("311") && !r.borough.includes("SER."))
+    .sort((a, b) => b.total_count - a.total_count)[0];
+
+  return {
+    totalRequests,
+    totalCompleted,
+    resolutionRate: totalRequests > 0 ? (totalCompleted / totalRequests) * 100 : 0,
+    avgResponseDays,
+    topCategory: categories[0]?.category ?? "N/A",
+    topBorough: topBoroughRow?.borough ?? "N/A",
+    yearRange: yearRange ? `${yearRange.min}–${yearRange.max}` : "N/A",
+    lastUpdated: getLastEtlRun("311") ?? new Date().toISOString(),
+  };
 });

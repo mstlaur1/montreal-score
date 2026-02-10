@@ -9,6 +9,8 @@
     "lint": "eslint",
     "etl": "tsx scripts/etl.ts",
     "etl:full": "tsx scripts/etl.ts --full",
+    "etl:311": "tsx scripts/etl-311.ts",
+    "etl:311:full": "tsx scripts/etl-311.ts --full",
     "promises:seed": "tsx scripts/seed-promises.ts",
     "admin": "tsx scripts/admin.ts"
   },
