@@ -446,6 +446,7 @@
     "potholeRequests": "Requests",
     "potholeResRate": "Resolution",
     "potholeAvgDays": "Avg days",
+    "potholeCaveat": "\"Resolution\" reflects the city's administrative closure rate — requests marked \"Terminée\" in the 311 system. This does not confirm the pothole was physically repaired. The 311 system tracks intake and routing, not work completion. Processes vary by borough: some mark requests closed when transferring to internal work-order systems. The Auditor General flagged this data gap in 2018.",
     "potholeNoData": "No pothole data available for this year.",
     "trendTitle": "Monthly volume",
     "trendSubtitle": "Monthly request volume across all natures (requests, complaints, information, comments).",

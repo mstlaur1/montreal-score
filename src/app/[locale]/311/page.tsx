@@ -182,6 +182,9 @@ export default async function ServiceRequestsPage({ params, searchParams }: Prop
               </table>
             </div>
           )}
+          <p className="text-xs text-muted mt-4 border-t border-card-border pt-3">
+            {t("potholeCaveat")}
+          </p>
         </section>
       )}
 

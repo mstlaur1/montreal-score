@@ -446,6 +446,7 @@
     "potholeRequests": "Demandes",
     "potholeResRate": "Résolution",
     "potholeAvgDays": "Jours moy.",
+    "potholeCaveat": "Le « taux de résolution » reflète le taux de fermeture administrative — les demandes marquées « Terminée » dans le système 311. Cela ne confirme pas que le nid-de-poule a été physiquement réparé. Le 311 suit la réception et l'acheminement des demandes, pas l'exécution des travaux. Les processus varient selon l'arrondissement : certains ferment la demande lors du transfert vers un système interne de bons de travail. La vérificatrice générale a signalé cette lacune en 2018.",
     "potholeNoData": "Aucune donnée sur les nids-de-poule pour cette année.",
     "trendTitle": "Volume mensuel",
     "trendSubtitle": "Volume mensuel des demandes, toutes natures confondues (requêtes, plaintes, informations, commentaires).",
