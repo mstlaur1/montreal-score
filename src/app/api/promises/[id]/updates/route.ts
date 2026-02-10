@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { withAuth } from "@/lib/api-auth";
 import { getWriteDb } from "@/lib/db-write";
 
@@ -85,6 +86,11 @@ export const POST = withAuth(async (req: NextRequest, ctx) => {
       "UPDATE promises SET status = ?, updated_at = datetime('now') WHERE id = ?"
     ).run(body.status, id);
   }
+
+  revalidatePath("/fr/promises");
+  revalidatePath("/en/promises");
+  revalidatePath("/fr");
+  revalidatePath("/en");
 
   return NextResponse.json({ ok: true, id });
 });
