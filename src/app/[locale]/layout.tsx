@@ -76,7 +76,7 @@ export default async function LocaleLayout({ children, params }: Props) {
               "@type": "WebSite",
               name: "MontréalScore",
               url: "https://montrealscore.ashwater.ca",
-              description: "Municipal performance tracker for Montreal — permits, contracts, and campaign promises.",
+              description: "Tracking Montreal's municipal performance with open data — permits, contracts, 311 requests, and campaign promises.",
               inLanguage: [locale === "fr" ? "fr-CA" : "en-CA"],
               publisher: {
                 "@type": "Organization",

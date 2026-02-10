@@ -42,6 +42,9 @@ export default async function AboutPage({ params }: Props) {
           <li>
             <strong>{t("whatContracts")}</strong> — {t("whatContractsDetail")}
           </li>
+          <li>
+            <strong>{t("what311")}</strong> — {t("what311Detail")}
+          </li>
         </ul>
 
         <h2 className="text-xl font-bold mt-8 mb-3">{t("whyTitle")}</h2>
@@ -73,16 +76,19 @@ export default async function AboutPage({ params }: Props) {
           <li>
             <strong>{t("dataPromises")}</strong> — {t("dataPromisesDetail")}
           </li>
+          <li>
+            <strong>{t("data311")}</strong> — {t("data311Detail")}
+          </li>
         </ul>
 
         <h2 className="text-xl font-bold mt-8 mb-3">{t("methodologyTitle")}</h2>
         <p>{t("methodologyIntro")}</p>
-        <ul className="list-disc list-inside space-y-1 ml-4">
-          <li>{t("methodologyMedian")}</li>
-          <li>{t("methodologyPct")}</li>
-          <li>{t("methodologyTrend")}</li>
+        <ul className="list-disc list-inside space-y-2 ml-4">
+          <li>{t("methodologyPermits")}</li>
+          <li>{t("methodologyContracts")}</li>
+          <li>{t("methodology311")}</li>
+          <li>{t("methodologyPromises")}</li>
         </ul>
-        <p className="mt-2">{t("methodologyPromises")}</p>
 
         <h2 className="text-xl font-bold mt-8 mb-3">{t("contributeTitle")}</h2>
         <p>{t("contributeBody")}</p>
