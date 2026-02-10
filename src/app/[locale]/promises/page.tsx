@@ -172,7 +172,12 @@ export default async function PromisesPage({ params }: Props) {
 
       {/* First 100 Days */}
       <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-10">
-        <h2 className="text-xl font-bold mb-1">{t("first100.title")}</h2>
+        <h2 className="text-xl font-bold mb-1 flex items-center gap-2">
+          {t("first100.title")}
+          <Link href="/volunteer" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 text-xs font-medium px-2 py-0.5 rounded-full hover:underline">
+            {t("helpUs")}
+          </Link>
+        </h2>
         <p className="text-sm text-muted mb-4">
           {expired
             ? t("first100.expired")
@@ -288,7 +293,12 @@ export default async function PromisesPage({ params }: Props) {
 
       {/* City-wide Platform Commitments */}
       <section className="mb-10">
-        <h2 className="text-2xl font-bold mb-2">{t("platformCommitmentsTitle")}</h2>
+        <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+          {t("platformCommitmentsTitle")}
+          <Link href="/volunteer" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 text-xs font-medium px-2 py-0.5 rounded-full hover:underline">
+            {t("helpUs")}
+          </Link>
+        </h2>
         <p className="text-sm text-muted mb-6">{t("platformCommitmentsSubtitle")}</p>
 
         <div className="space-y-6">
@@ -298,12 +308,7 @@ export default async function PromisesPage({ params }: Props) {
               <details key={categoryName} className="border border-card-border rounded-xl bg-card-bg">
                 <summary className="px-6 py-4 cursor-pointer">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-semibold">{t(`category.${categoryName}`)}</h3>
-                      <Link href="/volunteer" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 text-xs font-medium px-2 py-0.5 rounded-full hover:underline">
-                        {t("helpUs")}
-                      </Link>
-                    </div>
+                    <h3 className="text-lg font-semibold">{t(`category.${categoryName}`)}</h3>
                     <span className="text-sm text-muted">
                       {t("commitments", { count: promises.length })}
                     </span>
@@ -388,7 +393,12 @@ export default async function PromisesPage({ params }: Props) {
 
       {/* Borough Commitments */}
       <section className="mb-10">
-        <h2 className="text-2xl font-bold mb-2">{t("boroughCommitmentsTitle")}</h2>
+        <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+          {t("boroughCommitmentsTitle")}
+          <Link href="/volunteer" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 text-xs font-medium px-2 py-0.5 rounded-full hover:underline">
+            {t("helpUs")}
+          </Link>
+        </h2>
         <p className="text-sm text-muted mb-6">{t("boroughCommitmentsSubtitle")}</p>
 
         <div className="space-y-6">
@@ -399,12 +409,7 @@ export default async function PromisesPage({ params }: Props) {
               <details key={boroughName} className="border border-card-border rounded-xl bg-card-bg">
                 <summary className="px-6 py-4 cursor-pointer">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-semibold">{boroughName}</h3>
-                      <Link href="/volunteer" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 text-xs font-medium px-2 py-0.5 rounded-full hover:underline">
-                        {t("helpUs")}
-                      </Link>
-                    </div>
+                    <h3 className="text-lg font-semibold">{boroughName}</h3>
                     <span className="text-sm text-muted">
                       {t("commitments", { count: promises.length })}
                     </span>
