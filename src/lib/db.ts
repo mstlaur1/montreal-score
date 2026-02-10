@@ -18,6 +18,7 @@ function getDb(): Database.Database {
       );
     }
     _db = new Database(DB_PATH, { readonly: true });
+    _db.pragma("busy_timeout = 5000");
   }
   return _db;
 }
@@ -224,6 +225,18 @@ export function getLastEtlRun(dataset: string): string | null {
        ORDER BY finished_at DESC LIMIT 1`
     )
     .get(dataset) as { finished_at: string } | undefined;
+  return row?.finished_at ?? null;
+}
+
+export function getLatestEtlRun(): string | null {
+  const db = getDb();
+  const row = db
+    .prepare(
+      `SELECT finished_at FROM etl_runs
+       WHERE finished_at IS NOT NULL
+       ORDER BY finished_at DESC LIMIT 1`
+    )
+    .get() as { finished_at: string } | undefined;
   return row?.finished_at ?? null;
 }
 

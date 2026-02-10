@@ -11,9 +11,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: t("metadata.title"),
     description: t("metadata.description"),
+    openGraph: {
+      url: `https://montrealscore.ashwater.ca/${locale}/volunteer`,
+    },
     alternates: {
       canonical: `https://montrealscore.ashwater.ca/${locale}/volunteer`,
-      languages: { fr: "/fr/volunteer", en: "/en/volunteer" },
+      languages: {
+        fr: "https://montrealscore.ashwater.ca/fr/volunteer",
+        en: "https://montrealscore.ashwater.ca/en/volunteer",
+        "x-default": "https://montrealscore.ashwater.ca/fr/volunteer",
+      },
     },
   };
 }

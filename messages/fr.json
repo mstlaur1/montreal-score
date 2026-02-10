@@ -14,7 +14,9 @@
   },
   "Footer": {
     "dataFrom": "Données provenant de",
-    "openSourceBy": "Projet open-source par"
+    "openSourceBy": "Projet open-source par",
+    "disclaimer": "Ce projet est indépendant et n'est pas affilié à la Ville de Montréal.",
+    "lastUpdated": "Dernière mise à jour des données : {date}"
   },
   "ErrorPage": {
     "title": "Une erreur est survenue",
@@ -390,7 +392,7 @@
     "avgResponseTime": "Délai moyen",
     "topCategory": "Catégorie principale",
     "days": "jours",
-    "noData": "Aucune donnée 311 disponible. Exécutez l'ETL 311 d'abord : npx tsx scripts/etl-311.ts",
+    "noData": "Les données 311 ne sont pas encore disponibles. Veuillez réessayer plus tard.",
     "boroughTitle": "Demandes par arrondissement",
     "boroughSubtitle": "Volume et taux de résolution des demandes de services par arrondissement. Taux de résolution = pourcentage de demandes avec le statut « Terminée ». Les unités administratives internes (centre d'appels 311, services corporatifs) sont exclues.",
     "borough": "Arrondissement",

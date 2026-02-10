@@ -14,7 +14,9 @@
   },
   "Footer": {
     "dataFrom": "Data from",
-    "openSourceBy": "Open-source project by"
+    "openSourceBy": "Open-source project by",
+    "disclaimer": "This is an independent project and is not affiliated with the City of Montreal.",
+    "lastUpdated": "Data last updated: {date}"
   },
   "ErrorPage": {
     "title": "Something went wrong",
@@ -390,7 +392,7 @@
     "avgResponseTime": "Avg response time",
     "topCategory": "Top category",
     "days": "days",
-    "noData": "No 311 data available. Run the 311 ETL first: npx tsx scripts/etl-311.ts",
+    "noData": "311 data is not yet available. Please check back later.",
     "boroughTitle": "Requests by borough",
     "boroughSubtitle": "Service request volume and resolution rates by borough. Resolution rate = percentage of requests with \"Terminée\" (completed) status. Internal administrative units (311 call center, corporate services) are excluded.",
     "borough": "Borough",

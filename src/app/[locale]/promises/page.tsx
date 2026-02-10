@@ -18,9 +18,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: t("metadata.title"),
     description: t("metadata.description"),
+    openGraph: {
+      url: `https://montrealscore.ashwater.ca/${locale}/promises`,
+    },
     alternates: {
       canonical: `https://montrealscore.ashwater.ca/${locale}/promises`,
-      languages: { fr: "/fr/promises", en: "/en/promises" },
+      languages: {
+        fr: "https://montrealscore.ashwater.ca/fr/promises",
+        en: "https://montrealscore.ashwater.ca/en/promises",
+        "x-default": "https://montrealscore.ashwater.ca/fr/promises",
+      },
     },
   };
 }
@@ -116,7 +123,7 @@ export default async function PromisesPage({ params }: Props) {
       {/* All Promises Progress Bar */}
       <section className="mb-10">
         <h2 className="text-lg font-semibold mb-2">{t("progressBar.allPromises")}</h2>
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-5 flex overflow-hidden">
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-5 flex overflow-hidden" role="progressbar" aria-valuenow={Math.round(allStats.completed)} aria-valuemin={0} aria-valuemax={100} aria-label={t("progressBar.allPromises")}>
           {allStats.completed > 0 && (
             <div className="bg-green-700 h-5 transition-all" style={{ width: `${allStats.completed}%` }} />
           )}
@@ -185,7 +192,7 @@ export default async function PromisesPage({ params }: Props) {
         </p>
 
         {/* Status progress bar */}
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 flex overflow-hidden mb-1">
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 flex overflow-hidden mb-1" role="progressbar" aria-valuenow={Math.round(first100Stats.completed)} aria-valuemin={0} aria-valuemax={100} aria-label={t("first100.title")}>
           {first100Stats.completed > 0 && (
             <div className="bg-green-700 h-4 transition-all" style={{ width: `${first100Stats.completed}%` }} />
           )}
@@ -313,7 +320,7 @@ export default async function PromisesPage({ params }: Props) {
                       {t("commitments", { count: promises.length })}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 flex overflow-hidden">
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 flex overflow-hidden" role="progressbar" aria-valuenow={Math.round(cs.completed)} aria-valuemin={0} aria-valuemax={100} aria-label={t(`category.${categoryName}`)}>
                     {cs.completed > 0 && (
                       <div className="bg-green-700 h-3 transition-all" style={{ width: `${cs.completed}%` }} />
                     )}
@@ -414,7 +421,7 @@ export default async function PromisesPage({ params }: Props) {
                       {t("commitments", { count: promises.length })}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 flex overflow-hidden">
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 flex overflow-hidden" role="progressbar" aria-valuenow={Math.round(bs.completed)} aria-valuemin={0} aria-valuemax={100} aria-label={boroughName}>
                     {bs.completed > 0 && (
                       <div className="bg-green-700 h-3 transition-all" style={{ width: `${bs.completed}%` }} />
                     )}

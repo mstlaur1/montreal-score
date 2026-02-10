@@ -29,9 +29,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: t("metadata.title"),
     description: t("metadata.description"),
+    openGraph: {
+      url: `https://montrealscore.ashwater.ca/${locale}/permits`,
+    },
     alternates: {
       canonical: `https://montrealscore.ashwater.ca/${locale}/permits`,
-      languages: { fr: "/fr/permits", en: "/en/permits" },
+      languages: {
+        fr: "https://montrealscore.ashwater.ca/fr/permits",
+        en: "https://montrealscore.ashwater.ca/en/permits",
+        "x-default": "https://montrealscore.ashwater.ca/fr/permits",
+      },
     },
   };
 }
@@ -170,7 +177,7 @@ export default async function PermitsPage({ params, searchParams }: Props) {
 
       {/* Methodology */}
       <section className="mt-8 text-sm text-muted">
-        <h3 className="font-semibold text-foreground mb-2">{t("methodology")}</h3>
+        <h2 className="font-semibold text-foreground mb-2">{t("methodology")}</h2>
         <p>
           {t("methodologyText")}
         </p>

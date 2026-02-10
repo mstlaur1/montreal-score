@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+import { getLatestEtlRun } from "@/lib/db";
 import "../globals.css";
 
 const geistSans = Geist({
@@ -139,7 +140,7 @@ export default async function LocaleLayout({ children, params }: Props) {
           </header>
           <main id="main-content">{children}</main>
           <footer className="border-t border-card-border mt-16">
-            <div className="max-w-6xl mx-auto px-4 py-8 text-sm text-muted">
+            <div className="max-w-6xl mx-auto px-4 py-8 text-sm text-muted space-y-2">
               <p>
                 {tFooter("dataFrom")}{" "}
                 <a
@@ -156,6 +157,16 @@ export default async function LocaleLayout({ children, params }: Props) {
                 </a>
                 .
               </p>
+              {(() => {
+                const lastRun = getLatestEtlRun();
+                if (!lastRun) return null;
+                const d = new Date(lastRun);
+                const formatted = d.toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", {
+                  year: "numeric", month: "long", day: "numeric",
+                });
+                return <p>{tFooter("lastUpdated", { date: formatted })}</p>;
+              })()}
+              <p>{tFooter("disclaimer")}</p>
             </div>
           </footer>
         </NextIntlClientProvider>
