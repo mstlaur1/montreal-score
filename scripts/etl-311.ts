@@ -108,6 +108,14 @@ function initSchema(db: Database.Database) {
       PRIMARY KEY (year, status)
     );
 
+    -- Pothole spotlight
+    CREATE TABLE IF NOT EXISTS sr_pothole (
+      year              INTEGER PRIMARY KEY,
+      total_count       INTEGER NOT NULL,
+      completed_count   INTEGER NOT NULL DEFAULT 0,
+      avg_response_days REAL
+    );
+
     CREATE INDEX IF NOT EXISTS idx_sr_monthly_month ON sr_monthly(year_month);
     CREATE INDEX IF NOT EXISTS idx_sr_borough_year ON sr_borough(year);
   `);
@@ -336,6 +344,82 @@ async function loadStatuses(
   console.log(`     ${rows.length} status/year combos`);
 }
 
+async function loadPotholeStats(
+  db: Database.Database,
+  resourceId: string,
+) {
+  console.log(`  📊 Pothole stats (total)...`);
+  const totalSql = `
+    SELECT substr("DDS_DATE_CREATION", 1, 4) AS year,
+           COUNT(*) AS total_count
+    FROM "${resourceId}"
+    WHERE "ACTI_NOM" = 'Nid-de-poule'
+      AND "DDS_DATE_CREATION" IS NOT NULL
+    GROUP BY substr("DDS_DATE_CREATION", 1, 4)
+  `;
+  const totalRows = await ckanSqlQuery(totalSql);
+  await sleep(3000);
+
+  console.log(`  📊 Pothole stats (completed)...`);
+  const completedSql = `
+    SELECT substr("DDS_DATE_CREATION", 1, 4) AS year,
+           COUNT(*) AS completed_count
+    FROM "${resourceId}"
+    WHERE "ACTI_NOM" = 'Nid-de-poule'
+      AND "DERNIER_STATUT" = 'Terminée'
+      AND "DDS_DATE_CREATION" IS NOT NULL
+    GROUP BY substr("DDS_DATE_CREATION", 1, 4)
+  `;
+  const completedRows = await ckanSqlQuery(completedSql);
+  await sleep(3000);
+
+  console.log(`  📊 Pothole response times...`);
+  let timeRows: Record<string, unknown>[] = [];
+  try {
+    const timeSql = `
+      SELECT substr("DDS_DATE_CREATION", 1, 4) AS year,
+             AVG(substr("DATE_DERNIER_STATUT", 1, 10)::date - substr("DDS_DATE_CREATION", 1, 10)::date) AS avg_days
+      FROM "${resourceId}"
+      WHERE "ACTI_NOM" = 'Nid-de-poule'
+        AND "DERNIER_STATUT" = 'Terminée'
+        AND "DATE_DERNIER_STATUT" IS NOT NULL
+        AND "DDS_DATE_CREATION" IS NOT NULL
+      GROUP BY substr("DDS_DATE_CREATION", 1, 4)
+    `;
+    timeRows = await ckanSqlQuery(timeSql);
+  } catch {
+    console.log(`     ⚠️  Pothole response time not available from CKAN`);
+  }
+
+  const completedMap = new Map<string, number>();
+  for (const r of completedRows) {
+    completedMap.set(r.year as string, r.completed_count as number);
+  }
+  const timeMap = new Map<string, number>();
+  for (const r of timeRows) {
+    timeMap.set(r.year as string, r.avg_days as number);
+  }
+
+  const upsert = db.prepare(`
+    INSERT INTO sr_pothole (year, total_count, completed_count, avg_response_days)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(year) DO UPDATE SET
+      total_count = excluded.total_count,
+      completed_count = excluded.completed_count,
+      avg_response_days = excluded.avg_response_days
+  `);
+  const tx = db.transaction(() => {
+    for (const r of totalRows) {
+      const year = parseInt(r.year as string, 10);
+      const completed = completedMap.get(r.year as string) ?? 0;
+      const avgDays = timeMap.get(r.year as string) ?? null;
+      upsert.run(year, r.total_count as number, completed, avgDays);
+    }
+  });
+  tx();
+  console.log(`     ${totalRows.length} pothole year entries`);
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -365,6 +449,9 @@ async function main() {
     await sleep(3000);
 
     await loadStatuses(db, src.id);
+    await sleep(3000);
+
+    await loadPotholeStats(db, src.id);
     await sleep(3000);
   }
 

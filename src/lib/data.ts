@@ -7,6 +7,7 @@ import {
   queryPromises, queryFirst100DaysPromises, queryBoroughPromises, queryPlatformPromises, queryLatestPromiseUpdates,
   queryPromiseStatusCounts, queryPromiseCategoryCounts, queryPromiseUpdateCounts, queryNeedsHelpPromises, queryNeedsHelpCount,
   querySRMonthlyVolume, querySRBoroughStats, querySRCategories, querySRChannels, querySRStatuses, querySRYearRange,
+  querySRPotholeStats, querySRPotholeAllYears,
 } from "./db";
 import { normalizeBoroughName, getBoroughSlug } from "./boroughs";
 import { calculateBoroughScores, rankBoroughs, medianDaysToGrade, PERMIT_TARGET_DAYS } from "./scoring";
@@ -1153,4 +1154,37 @@ export const getSRSummary = cache(async (year: number): Promise<SRSummary | null
     yearRange: yearRange ? `${yearRange.min}–${yearRange.max}` : "N/A",
     lastUpdated: getLastEtlRun("311") ?? new Date().toISOString(),
   };
+});
+
+// --- Pothole spotlight ---
+
+export interface SRPotholeYear {
+  year: number;
+  totalCount: number;
+  completedCount: number;
+  resolutionRate: number;
+  avgResponseDays: number | null;
+}
+
+export const getSRPotholeStats = cache(async (year: number): Promise<SRPotholeYear | null> => {
+  const row = querySRPotholeStats(year);
+  if (!row) return null;
+  return {
+    year: row.year,
+    totalCount: row.total_count,
+    completedCount: row.completed_count,
+    resolutionRate: row.total_count > 0 ? (row.completed_count / row.total_count) * 100 : 0,
+    avgResponseDays: row.avg_response_days,
+  };
+});
+
+export const getSRPotholeAllYears = cache(async (): Promise<SRPotholeYear[]> => {
+  const rows = querySRPotholeAllYears();
+  return rows.map((r) => ({
+    year: r.year,
+    totalCount: r.total_count,
+    completedCount: r.completed_count,
+    resolutionRate: r.total_count > 0 ? (r.completed_count / r.total_count) * 100 : 0,
+    avgResponseDays: r.avg_response_days,
+  }));
 });

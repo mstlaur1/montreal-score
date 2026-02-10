@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import {
   getSRSummary, getSRBoroughStats, getSRCategories,
   getSRChannels, getSRStatuses, getSRMonthlyVolume,
+  getSRPotholeStats, getSRPotholeAllYears,
 } from "@/lib/data";
 import { querySRYearRange } from "@/lib/db";
 import { StatCard } from "@/components/StatCard";
@@ -57,7 +58,7 @@ export default async function ServiceRequestsPage({ params, searchParams }: Prop
   if (isNaN(selectedYear) || selectedYear < minYear) selectedYear = minYear;
   if (selectedYear > maxYear) selectedYear = maxYear;
 
-  const [summary, boroughStats, categories, channels, statuses, monthlyVolume] =
+  const [summary, boroughStats, categories, channels, statuses, monthlyVolume, potholeStats, potholeAllYears] =
     await Promise.all([
       getSRSummary(selectedYear),
       getSRBoroughStats(selectedYear),
@@ -65,6 +66,8 @@ export default async function ServiceRequestsPage({ params, searchParams }: Prop
       getSRChannels(selectedYear),
       getSRStatuses(selectedYear),
       getSRMonthlyVolume(),
+      getSRPotholeStats(selectedYear),
+      getSRPotholeAllYears(),
     ]);
 
   const localeTag = locale === "fr" ? "fr-CA" : "en-CA";
@@ -131,6 +134,55 @@ export default async function ServiceRequestsPage({ params, searchParams }: Prop
             value={summary.topCategory}
           />
         </div>
+      )}
+
+      {/* Pothole spotlight */}
+      {potholeStats && (
+        <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
+          <h2 className="text-xl font-bold mb-1">{t("potholeTitle")}</h2>
+          <p className="text-sm text-muted mb-4">{t("potholeSubtitle")}</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+            <StatCard
+              label={t("potholeTotal")}
+              value={fmt(potholeStats.totalCount)}
+            />
+            <StatCard
+              label={t("potholeResolution")}
+              value={fmtPct(potholeStats.resolutionRate)}
+            />
+            <StatCard
+              label={t("potholeResponseTime")}
+              value={potholeStats.avgResponseDays != null ? Math.round(potholeStats.avgResponseDays) : t("na")}
+              unit={potholeStats.avgResponseDays != null ? t("days") : undefined}
+            />
+          </div>
+          {potholeAllYears.length > 1 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-muted border-b border-card-border">
+                    <th className="pb-2 pr-4">{t("potholeYear")}</th>
+                    <th className="pb-2 pr-4 text-right">{t("potholeRequests")}</th>
+                    <th className="pb-2 pr-4 text-right">{t("potholeResRate")}</th>
+                    <th className="pb-2 text-right">{t("potholeAvgDays")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {potholeAllYears.map((p) => (
+                    <tr key={p.year} className={`border-b border-card-border/50 ${p.year === selectedYear ? "font-medium" : ""}`}>
+                      <td className="py-1.5 pr-4">{p.year}</td>
+                      <td className="py-1.5 pr-4 text-right font-mono">{fmt(p.totalCount)}</td>
+                      <td className="py-1.5 pr-4 text-right font-mono">{fmtPct(p.resolutionRate)}</td>
+                      <td className="py-1.5 text-right font-mono">
+                        {p.avgResponseDays != null ? Math.round(p.avgResponseDays) : t("na")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       )}
 
       {/* Borough comparison table */}

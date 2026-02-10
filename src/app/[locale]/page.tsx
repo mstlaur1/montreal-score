@@ -188,6 +188,7 @@ export default async function Home({ params }: Props) {
               {t("viewContracts")} &rarr;
             </Link>
           </div>
+          <p className="text-xs text-muted mb-3">{t("contractsPeriod")}</p>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <p className="text-sm text-muted">{t("totalContracts", { count: contractStats.totalContracts.toLocaleString() })}</p>
@@ -206,7 +207,7 @@ export default async function Home({ params }: Props) {
               </p>
             </div>
             <div>
-              <p className="text-sm text-muted">Top 10</p>
+              <p className="text-sm text-muted">{t("top10Suppliers")}</p>
               <p className="text-2xl font-bold">
                 {Math.round(contractStats.top10ConcentrationPct)}
                 <span className="text-sm font-normal text-muted ml-1">%</span>

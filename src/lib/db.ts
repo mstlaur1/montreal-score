@@ -731,6 +731,30 @@ export function querySRYearRange(): { min: number; max: number } | null {
   return { min: row.min, max: row.max! };
 }
 
+export function querySRPotholeStats(year: number): {
+  year: number; total_count: number; completed_count: number; avg_response_days: number | null;
+} | undefined {
+  const db = getDb();
+  return db
+    .prepare(
+      `SELECT year, total_count, completed_count, avg_response_days
+       FROM sr_pothole WHERE year = ?`
+    )
+    .get(year) as { year: number; total_count: number; completed_count: number; avg_response_days: number | null } | undefined;
+}
+
+export function querySRPotholeAllYears(): {
+  year: number; total_count: number; completed_count: number; avg_response_days: number | null;
+}[] {
+  const db = getDb();
+  return db
+    .prepare(
+      `SELECT year, total_count, completed_count, avg_response_days
+       FROM sr_pothole ORDER BY year`
+    )
+    .all() as { year: number; total_count: number; completed_count: number; avg_response_days: number | null }[];
+}
+
 export function queryYearlyContractsBySource(startYear = 2015): {
   source: string; year: string; count: number; totalValue: number;
 }[] {

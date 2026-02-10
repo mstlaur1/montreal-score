@@ -208,6 +208,7 @@ export default async function ContractsPage({ params, searchParams }: Props) {
             initialQuery={searchQuery ?? ""}
           />
         </Suspense>
+        <p className="text-xs text-muted mt-2">{t("searchDateHint")}</p>
         {searchResults && (
           <div className="mt-4">
             {searchResults.totalCount > 0 ? (
@@ -238,7 +239,12 @@ export default async function ContractsPage({ params, searchParams }: Props) {
                           <td className="py-2 pr-3 text-xs">{r.service}</td>
                           <td className="py-2 pr-3 text-right font-mono whitespace-nowrap">{fmt(r.montant)}</td>
                           <td className="py-2 pr-3 text-xs">{r.source}</td>
-                          <td className="py-2 text-xs text-muted max-w-xs truncate">{r.description}</td>
+                          <td className="py-2 text-xs text-muted max-w-xs">
+                            <details>
+                              <summary className="truncate cursor-pointer">{r.description}</summary>
+                              <p className="mt-1 whitespace-normal">{r.description}</p>
+                            </details>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
