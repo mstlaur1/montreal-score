@@ -3,7 +3,7 @@ import {
   queryPermitsByYear, queryYearlyTrends, queryPermitsForTrends, queryContractsByRange, getLastEtlRun,
   querySoleSourceByYear, querySoleSourceTopRecipients, queryYearlyContractsBySource,
   queryPromises, queryFirst100DaysPromises, queryBoroughPromises, queryPlatformPromises, queryLatestPromiseUpdates,
-  queryPromiseStatusCounts, queryPromiseCategoryCounts, queryPromiseUpdateCounts,
+  queryPromiseStatusCounts, queryPromiseCategoryCounts, queryPromiseUpdateCounts, queryNeedsHelpPromises, queryNeedsHelpCount,
 } from "./db";
 import { normalizeBoroughName, getBoroughSlug } from "./boroughs";
 import { calculateBoroughScores, rankBoroughs, medianDaysToGrade, PERMIT_TARGET_DAYS } from "./scoring";
@@ -509,6 +509,7 @@ function toPromise(
     auto_trackable: r.auto_trackable === 1,
     data_source: r.data_source,
     first100Days: r.first_100_days === 1,
+    needsHelp: r.needs_help === 1,
     latestUpdate,
     updatesCount,
   };
@@ -625,6 +626,28 @@ export const getPlatformPromisesByCategory = cache(async (): Promise<Map<string,
   }
   return byCategory;
 });
+
+export const getNeedsHelpPromises = cache(async (): Promise<CampaignPromise[]> => {
+  const raw = queryNeedsHelpPromises();
+  const latestUpdates = queryLatestPromiseUpdates();
+  const updateCounts = queryPromiseUpdateCounts();
+
+  const updatesMap = new Map<string, PromiseUpdate>(
+    latestUpdates.map((u) => [u.promise_id, {
+      id: u.id, promise_id: u.promise_id, date: u.date,
+      source_url: u.source_url, source_title: u.source_title,
+      summary_fr: u.summary_fr, summary_en: u.summary_en,
+      sentiment: u.sentiment as PromiseSentiment | null,
+    }])
+  );
+  const countsMap = new Map(updateCounts.map((c) => [c.promise_id, c.count]));
+
+  return raw.map((r) => toPromise(r, updatesMap.get(r.id) ?? null, countsMap.get(r.id) ?? 0));
+});
+
+export function getNeedsHelpCount(): number {
+  return queryNeedsHelpCount();
+}
 
 export const getPromiseCategorySummaries = cache(async (): Promise<PromiseCategorySummary[]> => {
   const raw = queryPromiseCategoryCounts();

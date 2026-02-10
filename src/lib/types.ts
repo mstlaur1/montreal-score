@@ -180,6 +180,7 @@ export interface RawPromise {
   auto_trackable: number;
   data_source: string | null;
   first_100_days: number;
+  needs_help: number;
   created_at: string;
   updated_at: string;
 }
@@ -210,6 +211,7 @@ export interface CampaignPromise {
   auto_trackable: boolean;
   data_source: string | null;
   first100Days: boolean;
+  needsHelp: boolean;
   latestUpdate: PromiseUpdate | null;
   updatesCount: number;
 }

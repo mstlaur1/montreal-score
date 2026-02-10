@@ -22,10 +22,10 @@ function main() {
   const upsert = db.prepare(`
     INSERT INTO promises (id, category, subcategory, borough, text_fr, text_en,
       measurable, target_value, target_timeline, status, auto_trackable,
-      data_source, first_100_days, created_at, updated_at)
+      data_source, first_100_days, needs_help, created_at, updated_at)
     VALUES (@id, @category, @subcategory, @borough, @text_fr, @text_en,
       @measurable, @target_value, @target_timeline, 'not_started', @auto_trackable,
-      @data_source, @first_100_days, datetime('now'), datetime('now'))
+      @data_source, @first_100_days, @needs_help, datetime('now'), datetime('now'))
     ON CONFLICT(id) DO UPDATE SET
       category = excluded.category,
       subcategory = excluded.subcategory,
@@ -38,6 +38,7 @@ function main() {
       auto_trackable = excluded.auto_trackable,
       data_source = excluded.data_source,
       first_100_days = excluded.first_100_days,
+      needs_help = excluded.needs_help,
       updated_at = datetime('now')
   `);
 
@@ -53,6 +54,7 @@ function main() {
         measurable: s.measurable ? 1 : 0,
         auto_trackable: s.auto_trackable ? 1 : 0,
         first_100_days: s.first_100_days ? 1 : 0,
+        needs_help: (s as unknown as Record<string, unknown>).needs_help ? 1 : 0,
       });
     }
   });

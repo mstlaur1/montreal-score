@@ -120,12 +120,15 @@ async function ckanSqlQuery(sql: string): Promise<Record<string, unknown>[]> {
 // ---------------------------------------------------------------------------
 
 function initSchema(db: Database.Database) {
-  // Migration: add new permit columns if missing (for existing DBs)
+  // Migration: add new columns if missing (for existing DBs)
   try {
     db.exec(`ALTER TABLE permits ADD COLUMN permit_type TEXT`);
   } catch { /* column already exists */ }
   try {
     db.exec(`ALTER TABLE permits ADD COLUMN nb_logements INTEGER`);
+  } catch { /* column already exists */ }
+  try {
+    db.exec(`ALTER TABLE promises ADD COLUMN needs_help INTEGER NOT NULL DEFAULT 0`);
   } catch { /* column already exists */ }
 
   db.exec(`
@@ -180,6 +183,7 @@ function initSchema(db: Database.Database) {
       auto_trackable  INTEGER NOT NULL DEFAULT 0,
       data_source     TEXT,
       first_100_days  INTEGER NOT NULL DEFAULT 0,
+      needs_help      INTEGER NOT NULL DEFAULT 0,
       created_at      TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
     );

@@ -259,6 +259,19 @@ export function queryPlatformPromises(): RawPromise[] {
     .all() as RawPromise[];
 }
 
+export function queryNeedsHelpPromises(): RawPromise[] {
+  const db = getDb();
+  return db
+    .prepare("SELECT * FROM promises WHERE needs_help = 1 ORDER BY category, id")
+    .all() as RawPromise[];
+}
+
+export function queryNeedsHelpCount(): number {
+  const db = getDb();
+  const row = db.prepare("SELECT COUNT(*) AS n FROM promises WHERE needs_help = 1").get() as { n: number };
+  return row.n;
+}
+
 export function queryPromiseUpdateCounts(): { promise_id: string; count: number }[] {
   const db = getDb();
   return db

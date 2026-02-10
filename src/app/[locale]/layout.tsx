@@ -121,6 +121,9 @@ export default async function LocaleLayout({ children, params }: Props) {
                 <Link href="/about" className="hover:text-accent transition-colors">
                   {t("about")}
                 </Link>
+                <Link href="/volunteer" className="hover:text-accent transition-colors">
+                  {t("volunteer")}
+                </Link>
                 <LocaleSwitcher />
               </div>
             </nav>

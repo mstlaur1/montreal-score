@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getFirst100DaysPromises, getPromiseSummary, getPromisesByBorough, getPlatformPromisesByCategory } from "@/lib/data";
+import { getFirst100DaysPromises, getPromiseSummary, getPromisesByBorough, getPlatformPromisesByCategory, getNeedsHelpCount } from "@/lib/data";
 import { StatusBadge } from "@/components/StatusBadge";
 import { StatCard } from "@/components/StatCard";
+import { Link } from "@/i18n/navigation";
 import type { PromiseStatus, PromiseSentiment, CampaignPromise } from "@/lib/types";
 
 export const revalidate = 3600;
@@ -79,6 +80,8 @@ export default async function PromisesPage({ params }: Props) {
     getPromisesByBorough(),
     getPlatformPromisesByCategory(),
   ]);
+
+  const needsHelpCount = getNeedsHelpCount();
 
   const { dayElapsed, pct, expired } = get100DayProgress();
   const completedCount = first100.filter((p) => p.status === "completed").length;
@@ -244,6 +247,11 @@ export default async function PromisesPage({ params }: Props) {
                       </span>
                     )}
                     <StatusBadge status={p.status} label={statusLabel(p.status)} />
+                    {p.needsHelp && (
+                      <Link href="/volunteer" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 text-xs font-medium px-2 py-0.5 rounded-full hover:underline">
+                        {t("helpUs")}
+                      </Link>
+                    )}
                   </div>
                 </div>
                 {update && (
@@ -282,6 +290,9 @@ export default async function PromisesPage({ params }: Props) {
           <StatCard label={t("stat.notStarted")} value={summary.not_started} />
           <StatCard label={t("stat.inProgress")} value={summary.in_progress} />
           <StatCard label={t("stat.completed")} value={summary.completed} />
+          {needsHelpCount > 0 && (
+            <StatCard label={t("stat.needsHelp")} value={needsHelpCount} />
+          )}
         </div>
       </section>
 
@@ -345,6 +356,11 @@ export default async function PromisesPage({ params }: Props) {
                                 </span>
                               )}
                               <StatusBadge status={p.status} label={statusLabel(p.status)} />
+                              {p.needsHelp && (
+                                <Link href="/volunteer" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 text-xs font-medium px-2 py-0.5 rounded-full hover:underline">
+                                  {t("helpUs")}
+                                </Link>
+                              )}
                             </div>
                           </div>
                           {update && (
@@ -441,6 +457,11 @@ export default async function PromisesPage({ params }: Props) {
                                   </span>
                                 )}
                                 <StatusBadge status={p.status} label={statusLabel(p.status)} />
+                                {p.needsHelp && (
+                                  <Link href="/volunteer" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 text-xs font-medium px-2 py-0.5 rounded-full hover:underline">
+                                    {t("helpUs")}
+                                  </Link>
+                                )}
                               </div>
                             </div>
                             {update && (
