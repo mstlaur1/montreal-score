@@ -387,6 +387,55 @@ export default async function ContractsPage({ params, searchParams }: Props) {
         </p>
       </section>
 
+      {/* Potential contract splitting */}
+      <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
+        <h2 className="text-xl font-bold mb-2">{t("splitTitle")}</h2>
+        <p className="text-muted text-sm mb-4">{t("splitSubtitle")}</p>
+        {stats.splitCandidates.length > 0 ? (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-card-border text-left">
+                    <th className="py-2 pr-4">{t("splitSupplier")}</th>
+                    <th className="py-2 pr-4 text-right">{t("splitContracts")}</th>
+                    <th className="py-2 pr-4 text-right">{t("splitCombined")}</th>
+                    <th className="py-2 pr-4 text-right">{t("splitAvg")}</th>
+                    <th className="py-2 pr-4">{t("splitDateRange")}</th>
+                    <th className="py-2 text-right">{t("splitDays")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.splitCandidates.map((sc, i) => {
+                    const isHighRisk = sc.contractCount >= 3 && sc.daySpan <= 60;
+                    return (
+                      <tr
+                        key={`${sc.supplier}-${i}`}
+                        className={`border-b border-card-border ${
+                          isHighRisk ? "bg-amber-500/5" : ""
+                        }`}
+                      >
+                        <td className={`py-2 pr-4 ${isHighRisk ? "font-medium" : ""}`}>
+                          {sc.supplier}
+                        </td>
+                        <td className="py-2 pr-4 text-right font-mono">{sc.contractCount}</td>
+                        <td className="py-2 pr-4 text-right font-mono">{fmt(sc.combinedValue)}</td>
+                        <td className="py-2 pr-4 text-right font-mono">{fmt(sc.avgValue)}</td>
+                        <td className="py-2 pr-4">{sc.dateRange}</td>
+                        <td className="py-2 text-right font-mono">{sc.daySpan}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-xs text-muted mt-4">{t("splitMethodology")}</p>
+          </>
+        ) : (
+          <p className="text-sm text-muted italic">{t("splitNone")}</p>
+        )}
+      </section>
+
       {/* Top departments */}
       <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
         <h2 className="text-xl font-bold mb-4">{t("topDepartments")}</h2>

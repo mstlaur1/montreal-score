@@ -1,6 +1,6 @@
 import { cache } from "react";
 import {
-  queryPermitsByYear, queryYearlyTrends, queryPermitsForTrends, queryContractsByRange, getLastEtlRun,
+  queryPermitsByYear, queryYearlyTrends, queryPermitsForTrends, queryContractsByRange, queryContractsInBand, getLastEtlRun,
   querySoleSourceByYear, querySoleSourceTopRecipients, queryYearlyContractsBySource,
   queryPromises, queryFirst100DaysPromises, queryBoroughPromises, queryPlatformPromises, queryLatestPromiseUpdates,
   queryPromiseStatusCounts, queryPromiseCategoryCounts, queryPromiseUpdateCounts, queryNeedsHelpPromises, queryNeedsHelpCount,
@@ -9,7 +9,7 @@ import { normalizeBoroughName, getBoroughSlug } from "./boroughs";
 import { calculateBoroughScores, rankBoroughs, medianDaysToGrade, PERMIT_TARGET_DAYS } from "./scoring";
 import { normalizeSupplierName } from "./supplier-normalization";
 import type {
-  BoroughPermitStats, BoroughScore, BoroughComparison, CitySummary, ContractStats,
+  BoroughPermitStats, BoroughScore, BoroughComparison, CitySummary, ContractStats, SplitCandidate,
   SoleSourceStats, YearlyContractTrend,
   CampaignPromise, PromiseUpdate, PromiseSummary, PromiseCategorySummary,
   PromiseStatus, PromiseSentiment, PromiseCategory,
@@ -264,6 +264,80 @@ export function getYearlyPermitTrends(
 // --- Contracts ---
 
 /**
+ * Detect potential contract splitting: suppliers with multiple contracts
+ * just below the $25K formal process threshold, dated close together.
+ */
+function detectContractSplitting(from: string, to: string): SplitCandidate[] {
+  const bandContracts = queryContractsInBand(from, to, 15000, 25000);
+
+  // Group by normalized supplier
+  const bySupplier = new Map<string, { date: string; amount: number }[]>();
+  for (const c of bandContracts) {
+    if (!c.supplier) continue;
+    const name = normalizeSupplierName(c.supplier);
+    const list = bySupplier.get(name) ?? [];
+    list.push({ date: c.approval_date, amount: c.montant });
+    bySupplier.set(name, list);
+  }
+
+  const candidates: SplitCandidate[] = [];
+
+  for (const [supplier, contracts] of bySupplier) {
+    if (contracts.length < 2) continue;
+
+    // Sort by date
+    contracts.sort((a, b) => a.date.localeCompare(b.date));
+
+    // Find temporal clusters: contracts within 90 days of each other
+    const clusters: typeof contracts[] = [];
+    let current = [contracts[0]];
+
+    for (let i = 1; i < contracts.length; i++) {
+      const prevDate = new Date(current[current.length - 1].date);
+      const currDate = new Date(contracts[i].date);
+      const daysDiff = Math.round((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (daysDiff <= 90) {
+        current.push(contracts[i]);
+      } else {
+        clusters.push(current);
+        current = [contracts[i]];
+      }
+    }
+    clusters.push(current);
+
+    // Flag clusters: 3+ contracts, OR 2 contracts totaling >$25K within 60 days
+    for (const cluster of clusters) {
+      const combinedValue = cluster.reduce((sum, c) => sum + c.amount, 0);
+      const firstDate = new Date(cluster[0].date);
+      const lastDate = new Date(cluster[cluster.length - 1].date);
+      const daySpan = Math.round((lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
+
+      const flagged =
+        cluster.length >= 3 ||
+        (cluster.length >= 2 && combinedValue > 25000 && daySpan <= 60);
+
+      if (flagged) {
+        const firstMonth = cluster[0].date.substring(0, 7);
+        const lastMonth = cluster[cluster.length - 1].date.substring(0, 7);
+        candidates.push({
+          supplier,
+          contractCount: cluster.length,
+          combinedValue,
+          avgValue: combinedValue / cluster.length,
+          dateRange: firstMonth === lastMonth ? firstMonth : `${firstMonth} → ${lastMonth}`,
+          daySpan,
+        });
+      }
+    }
+  }
+
+  // Sort by combined value descending, limit to top 10
+  candidates.sort((a, b) => b.combinedValue - a.combinedValue);
+  return candidates.slice(0, 10);
+}
+
+/**
  * Get contract stats aggregated for a date range.
  * from/to are "YYYY-MM-DD" strings (to is exclusive).
  */
@@ -411,6 +485,9 @@ export const getContractStats = cache(async (from: string, to: string): Promise<
     }
   }
 
+  // --- Split detection: suppliers with clusters of contracts just below $25K ---
+  const splitCandidates = detectContractSplitting(from, to);
+
   return {
     totalContracts: raw.length,
     totalValue,
@@ -421,6 +498,7 @@ export const getContractStats = cache(async (from: string, to: string): Promise<
     top10ConcentrationPct,
     distribution,
     thresholdClusters,
+    splitCandidates,
     from,
     to,
   };

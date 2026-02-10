@@ -138,6 +138,7 @@ export function queryContractsByRange(from: string, to: string): RawContract[] {
          source         AS "SOURCE"
        FROM contracts
        WHERE approval_date >= ? AND approval_date < ?
+         AND approval_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*'
          AND supplier NOT IN (${placeholders})
        ORDER BY approval_date DESC`
     )
@@ -156,7 +157,7 @@ export function getContractDateBounds(): { min: string; max: string } {
          MIN(substr(approval_date, 1, 7)) AS min,
          MAX(substr(approval_date, 1, 7)) AS max
        FROM contracts
-       WHERE approval_date IS NOT NULL`
+       WHERE approval_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*'`
     )
     .get() as { min: string; max: string };
   return row;
@@ -277,6 +278,34 @@ export function queryPromiseUpdateCounts(): { promise_id: string; count: number 
   return db
     .prepare("SELECT promise_id, COUNT(*) AS count FROM promise_updates GROUP BY promise_id")
     .all() as { promise_id: string; count: number }[];
+}
+
+/**
+ * Query contracts in a specific amount band within a date range.
+ * Returns supplier, approval_date, montant for split-detection analysis.
+ * Same intergovernmental + ISO date filters as queryContractsByRange.
+ */
+export function queryContractsInBand(
+  from: string,
+  to: string,
+  bandMin: number,
+  bandMax: number,
+): { supplier: string; approval_date: string; montant: number }[] {
+  const db = getDb();
+  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  return db
+    .prepare(
+      `SELECT supplier, approval_date, CAST(montant AS REAL) AS montant
+       FROM contracts
+       WHERE approval_date >= ? AND approval_date < ?
+         AND approval_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*'
+         AND CAST(montant AS REAL) >= ? AND CAST(montant AS REAL) < ?
+         AND supplier NOT IN (${placeholders})
+       ORDER BY supplier, approval_date`
+    )
+    .all(from, to, bandMin, bandMax, ...INTERGOVERNMENTAL_SUPPLIERS) as {
+      supplier: string; approval_date: string; montant: number;
+    }[];
 }
 
 // --- Contract forensics ---

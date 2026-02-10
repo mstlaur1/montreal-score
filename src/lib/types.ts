@@ -117,8 +117,20 @@ export interface ContractStats {
     count: number; expected: number;
     belowThreshold: number; totalInEra: number;
   }[];
+  /** Suppliers with suspicious clusters of contracts just below $25K */
+  splitCandidates: SplitCandidate[];
   from: string;
   to: string;
+}
+
+/** A supplier with a cluster of contracts just below the $25K threshold */
+export interface SplitCandidate {
+  supplier: string;
+  contractCount: number;
+  combinedValue: number;
+  avgValue: number;
+  dateRange: string;       // "2024-01 → 2024-03"
+  daySpan: number;
 }
 
 /** Sole-source (gré à gré) contract statistics */
