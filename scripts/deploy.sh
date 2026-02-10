@@ -23,6 +23,8 @@ echo "==> Linking standalone assets..."
 ln -sf "$PROJECT_DIR/.next/static" "$PROJECT_DIR/.next/standalone/.next/static"
 ln -sf "$PROJECT_DIR/public" "$PROJECT_DIR/.next/standalone/public"
 ln -sf "$PROJECT_DIR/messages" "$PROJECT_DIR/.next/standalone/messages"
+rm -rf "$PROJECT_DIR/.next/standalone/data"
+ln -sf "$PROJECT_DIR/data" "$PROJECT_DIR/.next/standalone/data"
 
 echo "==> Restarting montreal-score service..."
 sudo systemctl restart montreal-score
