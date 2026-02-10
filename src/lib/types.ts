@@ -260,3 +260,57 @@ export interface PromiseCategorySummary {
   in_progress: number;
   broken: number;
 }
+
+// --- Contract analysis types ---
+
+/** Monthly spending distribution for year-end surge analysis */
+export interface MonthlySpending {
+  month: number;       // 1-12
+  count: number;
+  totalValue: number;
+  isOutlier: boolean;
+}
+
+/** Department-supplier pair with loyalty metrics */
+export interface DeptSupplierPair {
+  department: string;
+  supplier: string;
+  contractCount: number;
+  totalValue: number;
+  pctOfDeptSpend: number;
+  isHighConcentration: boolean;  // >50%
+}
+
+/** Supplier growth trajectory between two half-periods */
+export interface SupplierGrowth {
+  supplier: string;
+  earlyValue: number;
+  lateValue: number;
+  growthPct: number;
+}
+
+/** Wrapper with period metadata for the UI */
+export interface SupplierGrowthResult {
+  suppliers: SupplierGrowth[];
+  earlyLabel: string;  // e.g. "Jan 2015 – Jul 2020"
+  lateLabel: string;   // e.g. "Jul 2020 – Feb 2026"
+}
+
+/** Contract search result */
+export interface SearchResult {
+  supplier: string;
+  service: string;
+  description: string;
+  montant: number;
+  approval_date: string;
+  source: string;
+}
+
+/** Paginated contract search results */
+export interface ContractSearchResult {
+  results: SearchResult[];
+  totalCount: number;
+  page: number;
+  totalPages: number;
+  query: string;
+}

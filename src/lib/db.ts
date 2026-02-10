@@ -361,6 +361,204 @@ export function querySoleSourceTopRecipients(from: string, to: string, limit = 1
 /**
  * Yearly contract totals grouped by approval source (body).
  */
+// --- Contract forensics: new analyses ---
+
+/**
+ * Round-number clustering: contracts at suspicious exact amounts near procurement thresholds.
+ * Queries contracts whose integer amount matches a list of round numbers.
+ */
+export function queryRoundNumberContracts(from: string, to: string, amounts: number[]): {
+  amount: number; count: number;
+}[] {
+  if (amounts.length === 0) return [];
+  const db = getDb();
+  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  const amtPlaceholders = amounts.map(() => "?").join(",");
+  return db
+    .prepare(
+      `SELECT CAST(montant AS INTEGER) AS amount, COUNT(*) AS count
+       FROM contracts
+       WHERE approval_date >= ? AND approval_date < ?
+         AND approval_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*'
+         AND CAST(montant AS INTEGER) IN (${amtPlaceholders})
+         AND supplier NOT IN (${placeholders})
+       GROUP BY CAST(montant AS INTEGER)
+       ORDER BY amount DESC`
+    )
+    .all(from, to, ...amounts, ...INTERGOVERNMENTAL_SUPPLIERS) as { amount: number; count: number }[];
+}
+
+/**
+ * Count contracts in a comparison band above a threshold for asymmetry analysis.
+ */
+export function queryComparisonBandCount(from: string, to: string, bandMin: number, bandMax: number): number {
+  const db = getDb();
+  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  const row = db
+    .prepare(
+      `SELECT COUNT(*) AS count
+       FROM contracts
+       WHERE approval_date >= ? AND approval_date < ?
+         AND approval_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*'
+         AND CAST(montant AS REAL) > ? AND CAST(montant AS REAL) <= ?
+         AND supplier NOT IN (${placeholders})`
+    )
+    .get(from, to, bandMin, bandMax, ...INTERGOVERNMENTAL_SUPPLIERS) as { count: number };
+  return row.count;
+}
+
+/**
+ * Monthly distribution of contracts for year-end spending analysis.
+ */
+export function queryMonthlyDistribution(from: string, to: string): {
+  month: number; count: number; totalValue: number;
+}[] {
+  const db = getDb();
+  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  return db
+    .prepare(
+      `SELECT CAST(substr(approval_date, 6, 2) AS INTEGER) AS month,
+              COUNT(*) AS count,
+              SUM(montant) AS totalValue
+       FROM contracts
+       WHERE approval_date >= ? AND approval_date < ?
+         AND approval_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*'
+         AND supplier NOT IN (${placeholders})
+       GROUP BY CAST(substr(approval_date, 6, 2) AS INTEGER)
+       ORDER BY month`
+    )
+    .all(from, to, ...INTERGOVERNMENTAL_SUPPLIERS) as { month: number; count: number; totalValue: number }[];
+}
+
+/**
+ * Department-supplier pairs by total value.
+ */
+export function queryDeptSupplierPairs(from: string, to: string): {
+  service: string; supplier: string; count: number; totalValue: number;
+}[] {
+  const db = getDb();
+  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  return db
+    .prepare(
+      `SELECT service, supplier, COUNT(*) AS count, SUM(montant) AS totalValue
+       FROM contracts
+       WHERE approval_date >= ? AND approval_date < ?
+         AND approval_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*'
+         AND supplier NOT IN (${placeholders})
+         AND service IS NOT NULL AND supplier IS NOT NULL
+       GROUP BY service, supplier
+       ORDER BY totalValue DESC
+       LIMIT 50`
+    )
+    .all(from, to, ...INTERGOVERNMENTAL_SUPPLIERS) as {
+      service: string; supplier: string; count: number; totalValue: number;
+    }[];
+}
+
+/**
+ * Department totals for computing % of department spend.
+ */
+export function queryDeptTotals(from: string, to: string): {
+  service: string; totalValue: number;
+}[] {
+  const db = getDb();
+  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  return db
+    .prepare(
+      `SELECT service, SUM(montant) AS totalValue
+       FROM contracts
+       WHERE approval_date >= ? AND approval_date < ?
+         AND approval_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*'
+         AND supplier NOT IN (${placeholders})
+         AND service IS NOT NULL
+       GROUP BY service`
+    )
+    .all(from, to, ...INTERGOVERNMENTAL_SUPPLIERS) as { service: string; totalValue: number }[];
+}
+
+/**
+ * Supplier totals split by half-period for growth trajectory analysis.
+ */
+export function querySupplierHalfPeriodTotals(from: string, to: string, midpoint: string): {
+  supplier: string; half: number; totalValue: number;
+}[] {
+  const db = getDb();
+  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  return db
+    .prepare(
+      `SELECT supplier,
+              CASE WHEN approval_date < ? THEN 1 ELSE 2 END AS half,
+              SUM(montant) AS totalValue
+       FROM contracts
+       WHERE approval_date >= ? AND approval_date < ?
+         AND approval_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*'
+         AND supplier NOT IN (${placeholders})
+         AND supplier IS NOT NULL
+       GROUP BY supplier, CASE WHEN approval_date < ? THEN 1 ELSE 2 END`
+    )
+    .all(midpoint, from, to, ...INTERGOVERNMENTAL_SUPPLIERS, midpoint) as {
+      supplier: string; half: number; totalValue: number;
+    }[];
+}
+
+/**
+ * Search contracts by keyword across supplier, service, and description,
+ * and/or by contract value (montant) range.
+ */
+export function searchContracts(
+  from: string, to: string, query: string, limit: number, offset: number,
+  amountFilter?: { min?: number; max?: number }
+): { results: { supplier: string; service: string; description: string; montant: number; approval_date: string; source: string }[]; totalCount: number } {
+  const db = getDb();
+  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+
+  const conditions: string[] = [
+    `approval_date >= ?`,
+    `approval_date < ?`,
+    `approval_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*'`,
+    `supplier NOT IN (${placeholders})`,
+  ];
+  const params: (string | number)[] = [from, to, ...INTERGOVERNMENTAL_SUPPLIERS];
+
+  if (query) {
+    // Escape LIKE wildcards so % and _ are treated as literals
+    const escaped = query.replace(/[%_]/g, (c) => `\\${c}`);
+    const likePattern = `%${escaped}%`;
+    conditions.push(`(supplier LIKE ? ESCAPE '\\' COLLATE NOCASE OR service LIKE ? ESCAPE '\\' COLLATE NOCASE OR description LIKE ? ESCAPE '\\' COLLATE NOCASE)`);
+    params.push(likePattern, likePattern, likePattern);
+  }
+
+  if (amountFilter?.min != null) {
+    conditions.push(`CAST(montant AS REAL) >= ?`);
+    params.push(amountFilter.min);
+  }
+  if (amountFilter?.max != null) {
+    conditions.push(`CAST(montant AS REAL) <= ?`);
+    params.push(amountFilter.max);
+  }
+
+  const whereClause = conditions.join(" AND ");
+  // Sort by value when filtering by amount, by date when filtering by text
+  const orderBy = amountFilter ? "montant DESC, approval_date DESC" : "approval_date DESC";
+
+  const countRow = db
+    .prepare(`SELECT COUNT(*) AS count FROM contracts WHERE ${whereClause}`)
+    .get(...params) as { count: number };
+
+  const results = db
+    .prepare(
+      `SELECT supplier, service, description, CAST(montant AS REAL) AS montant, approval_date, source
+       FROM contracts WHERE ${whereClause}
+       ORDER BY ${orderBy}
+       LIMIT ? OFFSET ?`
+    )
+    .all(...params, limit, offset) as {
+      supplier: string; service: string; description: string; montant: number; approval_date: string; source: string;
+    }[];
+
+  return { results, totalCount: countRow.count };
+}
+
 export function queryYearlyContractsBySource(startYear = 2015): {
   source: string; year: string; count: number; totalValue: number;
 }[] {

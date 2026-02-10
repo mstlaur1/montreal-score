@@ -1,17 +1,22 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getContractStats, getSoleSourceStats, getYearlyContractTrends } from "@/lib/data";
+import {
+  getContractStats, getSoleSourceStats, getYearlyContractTrends,
+  getMonthlyDistribution, getDeptSupplierLoyalty, getSupplierGrowth,
+  getRoundNumberAnalysis, searchContractsCached,
+} from "@/lib/data";
 import { getContractDateBounds } from "@/lib/db";
 import { getNormalizationExamples } from "@/lib/supplier-normalization";
 import { StatCard } from "@/components/StatCard";
 import { ContractHistogram } from "@/components/ContractHistogram";
 import { DateRangeSelector } from "@/components/DateRangeSelector";
+import { ContractSearchInput } from "@/components/ContractSearchInput";
 
 export const revalidate = 3600;
 
 type Props = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ from?: string; to?: string }>;
+  searchParams: Promise<{ from?: string; to?: string; q?: string; page?: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -55,9 +60,14 @@ function nextMonth(year: number, month: number): { year: number; month: number }
   return month === 12 ? { year: year + 1, month: 1 } : { year, month: month + 1 };
 }
 
+function getMonthName(month: number, locale: string): string {
+  const fmt = new Intl.DateTimeFormat(locale === "fr" ? "fr-CA" : "en-CA", { month: "long" });
+  return fmt.format(new Date(2024, month - 1, 1));
+}
+
 export default async function ContractsPage({ params, searchParams }: Props) {
   const { locale } = await params;
-  const { from: fromParam, to: toParam } = await searchParams;
+  const { from: fromParam, to: toParam, q: searchQuery, page: pageParam } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("ContractsPage");
 
@@ -92,11 +102,19 @@ export default async function ContractsPage({ params, searchParams }: Props) {
   const toExcl = nextMonth(to.year, to.month);
   const toDate = toDateStr(toExcl.year, toExcl.month);
 
-  const [stats, soleSource, yearlyTrends] = await Promise.all([
-    getContractStats(fromDate, toDate),
-    getSoleSourceStats(fromDate, toDate),
-    getYearlyContractTrends(),
-  ]);
+  const searchPage = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
+
+  const [stats, soleSource, yearlyTrends, monthlyDist, loyalty, growth, roundNumbers, searchResults] =
+    await Promise.all([
+      getContractStats(fromDate, toDate),
+      getSoleSourceStats(fromDate, toDate),
+      getYearlyContractTrends(),
+      getMonthlyDistribution(fromDate, toDate),
+      getDeptSupplierLoyalty(fromDate, toDate),
+      getSupplierGrowth(fromDate, toDate),
+      getRoundNumberAnalysis(fromDate, toDate),
+      searchQuery ? searchContractsCached(fromDate, toDate, searchQuery, searchPage) : Promise.resolve(null),
+    ]);
   const normExamples = getNormalizationExamples();
 
   const localeTag = locale === "fr" ? "fr-CA" : "en-CA";
@@ -108,8 +126,20 @@ export default async function ContractsPage({ params, searchParams }: Props) {
     { label: "Martinez Ferrada (2025–)", from: "2025-11", to: bounds.max },
   ];
 
+  // Build URL params for pagination links
+  function buildUrl(page: number): string {
+    const params = new URLSearchParams();
+    if (fromParam) params.set("from", fromParam);
+    if (toParam) params.set("to", toParam);
+    if (searchQuery) params.set("q", searchQuery);
+    if (page > 1) params.set("page", String(page));
+    const qs = params.toString();
+    return qs ? `?${qs}` : "";
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+      {/* 1. Title + DateRangeSelector */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
         <h1 className="text-3xl font-bold">{t("title")}</h1>
         <DateRangeSelector
@@ -126,7 +156,87 @@ export default async function ContractsPage({ params, searchParams }: Props) {
       </div>
       <p className="text-muted mb-8">{t("subtitle")}</p>
 
-      {/* Stats row */}
+      {/* 2. Contract Search */}
+      <section className="mb-8">
+        <h2 className="text-xl font-bold mb-3">{t("searchTitle")}</h2>
+        <ContractSearchInput
+          placeholder={t("searchPlaceholder")}
+          initialQuery={searchQuery ?? ""}
+        />
+        {searchResults && (
+          <div className="mt-4">
+            {searchResults.totalCount > 0 ? (
+              <>
+                <p className="text-sm text-muted mb-3">
+                  {t("searchResults", {
+                    count: searchResults.totalCount.toLocaleString(localeTag),
+                    query: searchResults.query,
+                  })}
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-card-border text-left">
+                        <th className="py-2 pr-3">{t("searchDate")}</th>
+                        <th className="py-2 pr-3">{t("supplier")}</th>
+                        <th className="py-2 pr-3">{t("department")}</th>
+                        <th className="py-2 pr-3 text-right">{t("searchAmount")}</th>
+                        <th className="py-2 pr-3">{t("searchSource")}</th>
+                        <th className="py-2">{t("searchDescription")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {searchResults.results.map((r, i) => (
+                        <tr key={`${r.approval_date}-${i}`} className="border-b border-card-border align-top">
+                          <td className="py-2 pr-3 font-mono text-xs whitespace-nowrap">{r.approval_date}</td>
+                          <td className="py-2 pr-3">{r.supplier}</td>
+                          <td className="py-2 pr-3 text-xs">{r.service}</td>
+                          <td className="py-2 pr-3 text-right font-mono whitespace-nowrap">{fmt(r.montant)}</td>
+                          <td className="py-2 pr-3 text-xs">{r.source}</td>
+                          <td className="py-2 text-xs text-muted max-w-xs truncate">{r.description}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {searchResults.totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4">
+                    {searchResults.page > 1 ? (
+                      <a
+                        href={buildUrl(searchResults.page - 1)}
+                        className="text-sm text-accent hover:underline"
+                      >
+                        {t("searchPrev")}
+                      </a>
+                    ) : (
+                      <span />
+                    )}
+                    <span className="text-sm text-muted">
+                      {t("searchPage", { page: searchResults.page, total: searchResults.totalPages })}
+                    </span>
+                    {searchResults.page < searchResults.totalPages ? (
+                      <a
+                        href={buildUrl(searchResults.page + 1)}
+                        className="text-sm text-accent hover:underline"
+                      >
+                        {t("searchNext")}
+                      </a>
+                    ) : (
+                      <span />
+                    )}
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-muted italic">
+                {t("searchNoResults", { query: searchResults.query })}
+              </p>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* 3. Stats row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatCard
           label={t("totalContracts")}
@@ -146,7 +256,7 @@ export default async function ContractsPage({ params, searchParams }: Props) {
         />
       </div>
 
-      {/* Concentration callout */}
+      {/* 4. Concentration callout */}
       <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
         <h2 className="text-xl font-bold mb-2">{t("concentrationTitle")}</h2>
         <p className="text-muted text-sm mb-4">{t("concentrationSubtitle")}</p>
@@ -188,7 +298,80 @@ export default async function ContractsPage({ params, searchParams }: Props) {
         </div>
       </section>
 
-      {/* Sole-source contracts */}
+      {/* 5. Department-Supplier Loyalty */}
+      <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
+        <h2 className="text-xl font-bold mb-2">{t("loyaltyTitle")}</h2>
+        <p className="text-muted text-sm mb-4">{t("loyaltySubtitle")}</p>
+        {loyalty.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-card-border text-left">
+                  <th className="py-2 pr-3">{t("loyaltyDepartment")}</th>
+                  <th className="py-2 pr-3">{t("loyaltySupplier")}</th>
+                  <th className="py-2 pr-3 text-right">{t("loyaltyContracts")}</th>
+                  <th className="py-2 pr-3 text-right">{t("loyaltyValue")}</th>
+                  <th className="py-2 text-right">{t("loyaltyPct")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loyalty.map((pair, i) => (
+                  <tr
+                    key={`${pair.department}-${pair.supplier}-${i}`}
+                    className={`border-b border-card-border ${pair.isHighConcentration ? "bg-amber-500/5" : ""}`}
+                  >
+                    <td className="py-2 pr-3 text-xs">{pair.department}</td>
+                    <td className="py-2 pr-3">{pair.supplier}</td>
+                    <td className="py-2 pr-3 text-right font-mono">{pair.contractCount}</td>
+                    <td className="py-2 pr-3 text-right font-mono">{fmt(pair.totalValue)}</td>
+                    <td className={`py-2 text-right font-mono ${pair.isHighConcentration ? "text-amber-500 font-medium" : ""}`}>
+                      {pair.pctOfDeptSpend.toFixed(1)}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-sm text-muted italic">{t("loyaltyNone")}</p>
+        )}
+      </section>
+
+      {/* 6. Supplier Growth Trajectories */}
+      <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
+        <h2 className="text-xl font-bold mb-2">{t("growthTitle")}</h2>
+        <p className="text-muted text-sm mb-4">{t("growthSubtitle")}</p>
+        {growth.suppliers.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-card-border text-left">
+                  <th className="py-2 pr-4">{t("growthSupplier")}</th>
+                  <th className="py-2 pr-4 text-right">{t("growthEarly", { period: growth.earlyLabel })}</th>
+                  <th className="py-2 pr-4 text-right">{t("growthLate", { period: growth.lateLabel })}</th>
+                  <th className="py-2 text-right">{t("growthPct")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {growth.suppliers.map((g) => (
+                  <tr key={g.supplier} className="border-b border-card-border">
+                    <td className="py-2 pr-4">{g.supplier}</td>
+                    <td className="py-2 pr-4 text-right font-mono">{fmt(g.earlyValue)}</td>
+                    <td className="py-2 pr-4 text-right font-mono">{fmt(g.lateValue)}</td>
+                    <td className={`py-2 text-right font-mono font-medium ${g.growthPct > 100 ? "text-amber-500" : ""}`}>
+                      {g.growthPct > 0 ? "+" : ""}{g.growthPct.toFixed(0)}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-sm text-muted italic">{t("growthNone")}</p>
+        )}
+      </section>
+
+      {/* 7. Sole-source contracts */}
       <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
         <h2 className="text-xl font-bold mb-2">{t("soleSourceTitle")}</h2>
         <p className="text-muted text-sm mb-4">{t("soleSourceSubtitle")}</p>
@@ -257,7 +440,7 @@ export default async function ContractsPage({ params, searchParams }: Props) {
         )}
       </section>
 
-      {/* Yearly spending by approval body */}
+      {/* 8. Yearly spending by approval body */}
       {yearlyTrends.length > 0 && (
         <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
           <h2 className="text-xl font-bold mb-2">{t("yearlyTrendTitle")}</h2>
@@ -293,7 +476,44 @@ export default async function ContractsPage({ params, searchParams }: Props) {
         </section>
       )}
 
-      {/* Contract value distribution histogram */}
+      {/* 9. Monthly Spending Patterns */}
+      <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
+        <h2 className="text-xl font-bold mb-2">{t("monthlyTitle")}</h2>
+        <p className="text-muted text-sm mb-4">{t("monthlySubtitle")}</p>
+        {monthlyDist.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-card-border text-left">
+                  <th className="py-2 pr-4">{t("monthlyMonth")}</th>
+                  <th className="py-2 pr-4 text-right">{t("monthlyContracts")}</th>
+                  <th className="py-2 text-right">{t("monthlyValue")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {monthlyDist.map((m) => (
+                  <tr
+                    key={m.month}
+                    className={`border-b border-card-border ${m.isOutlier ? "bg-amber-500/5" : ""}`}
+                  >
+                    <td className={`py-2 pr-4 ${m.isOutlier ? "font-medium text-amber-500" : ""}`}>
+                      {getMonthName(m.month, locale)}
+                    </td>
+                    <td className="py-2 pr-4 text-right font-mono">
+                      {m.count.toLocaleString(localeTag)}
+                    </td>
+                    <td className="py-2 text-right font-mono">{fmt(m.totalValue)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-sm text-muted italic">{t("monthlyNone")}</p>
+        )}
+      </section>
+
+      {/* 10. Contract value distribution histogram */}
       <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
         <h2 className="text-xl font-bold mb-2">{t("distributionTitle")}</h2>
         <p className="text-muted text-sm mb-4">{t("distributionSubtitle")}</p>
@@ -311,7 +531,7 @@ export default async function ContractsPage({ params, searchParams }: Props) {
         </p>
       </section>
 
-      {/* Threshold clustering analysis */}
+      {/* 11. Threshold clustering analysis */}
       <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
         <h2 className="text-xl font-bold mb-2">{t("thresholdTitle")}</h2>
         <p className="text-muted text-sm mb-4">{t("thresholdSubtitle")}</p>
@@ -387,7 +607,58 @@ export default async function ContractsPage({ params, searchParams }: Props) {
         </p>
       </section>
 
-      {/* Potential contract splitting */}
+      {/* 12. Round-Number Clustering */}
+      <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
+        <h2 className="text-xl font-bold mb-2">{t("roundNumberTitle")}</h2>
+        <p className="text-muted text-sm mb-4">{t("roundNumberSubtitle")}</p>
+        {roundNumbers.length > 0 ? (
+          <div className="space-y-6">
+            {roundNumbers.map((group) => (
+              <div key={group.threshold}>
+                <h3 className="text-sm font-semibold mb-2">
+                  {t("thresholdLabel", { threshold: group.label })}
+                  <span className="text-xs font-normal text-muted ml-2">
+                    ({group.totalBelow} {t("contracts").toLowerCase()})
+                  </span>
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-card-border text-left">
+                        <th className="py-1.5 pr-4">{t("roundNumberAmount")}</th>
+                        <th className="py-1.5 text-right">{t("roundNumberCount")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.clusters.map((c) => {
+                        const isTopAmount = c.amount === group.threshold - 1 || c.count >= 10;
+                        return (
+                          <tr
+                            key={c.amount}
+                            className={`border-b border-card-border ${isTopAmount ? "bg-amber-500/5" : ""}`}
+                          >
+                            <td className={`py-1.5 pr-4 font-mono ${isTopAmount ? "font-medium text-amber-500" : ""}`}>
+                              {fmt(c.amount)}
+                            </td>
+                            <td className="py-1.5 text-right font-mono">{c.count}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-xs text-muted mt-2">
+                  {t("roundNumberComparison", { count: group.comparisonBandCount })}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted italic">{t("roundNumberNone")}</p>
+        )}
+      </section>
+
+      {/* 13. Potential contract splitting */}
       <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
         <h2 className="text-xl font-bold mb-2">{t("splitTitle")}</h2>
         <p className="text-muted text-sm mb-4">{t("splitSubtitle")}</p>
@@ -436,7 +707,7 @@ export default async function ContractsPage({ params, searchParams }: Props) {
         )}
       </section>
 
-      {/* Top departments */}
+      {/* 14. Top departments */}
       <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
         <h2 className="text-xl font-bold mb-4">{t("topDepartments")}</h2>
         <div className="overflow-x-auto">
@@ -463,7 +734,7 @@ export default async function ContractsPage({ params, searchParams }: Props) {
         </div>
       </section>
 
-      {/* Notable findings */}
+      {/* 15. Notable findings */}
       <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
         <h2 className="text-xl font-bold mb-2">{t("notableFindingsTitle")}</h2>
         <p className="text-muted text-sm mb-6">{t("notableFindingsSubtitle")}</p>
@@ -487,7 +758,7 @@ export default async function ContractsPage({ params, searchParams }: Props) {
         </div>
       </section>
 
-      {/* Supplier name normalization */}
+      {/* 16. Supplier name normalization */}
       <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-8">
         <h2 className="text-xl font-bold mb-2">{t("normalizationTitle")}</h2>
         <p className="text-muted text-sm mb-2">{t("normalizationSubtitle")}</p>
@@ -523,7 +794,7 @@ export default async function ContractsPage({ params, searchParams }: Props) {
         </div>
       </section>
 
-      {/* Methodology */}
+      {/* 17. Methodology */}
       <section className="text-sm text-muted">
         <h3 className="font-semibold text-foreground mb-2">{t("methodology")}</h3>
         <p>{t("methodologyText")}</p>

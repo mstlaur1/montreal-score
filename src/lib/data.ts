@@ -2,6 +2,8 @@ import { cache } from "react";
 import {
   queryPermitsByYear, queryYearlyTrends, queryPermitsForTrends, queryContractsByRange, queryContractsInBand, getLastEtlRun,
   querySoleSourceByYear, querySoleSourceTopRecipients, queryYearlyContractsBySource,
+  queryRoundNumberContracts, queryComparisonBandCount, queryMonthlyDistribution as queryMonthlyDistributionDb,
+  queryDeptSupplierPairs, queryDeptTotals, querySupplierHalfPeriodTotals, searchContracts,
   queryPromises, queryFirst100DaysPromises, queryBoroughPromises, queryPlatformPromises, queryLatestPromiseUpdates,
   queryPromiseStatusCounts, queryPromiseCategoryCounts, queryPromiseUpdateCounts, queryNeedsHelpPromises, queryNeedsHelpCount,
 } from "./db";
@@ -10,7 +12,7 @@ import { calculateBoroughScores, rankBoroughs, medianDaysToGrade, PERMIT_TARGET_
 import { normalizeSupplierName } from "./supplier-normalization";
 import type {
   BoroughPermitStats, BoroughScore, BoroughComparison, CitySummary, ContractStats, SplitCandidate,
-  SoleSourceStats, YearlyContractTrend,
+  SoleSourceStats, YearlyContractTrend, MonthlySpending, DeptSupplierPair, SupplierGrowth, SupplierGrowthResult, ContractSearchResult,
   CampaignPromise, PromiseUpdate, PromiseSummary, PromiseCategorySummary,
   PromiseStatus, PromiseSentiment, PromiseCategory,
 } from "./types";
@@ -562,6 +564,297 @@ export const getYearlyContractTrends = cache(async (): Promise<YearlyContractTre
   }
 
   return [...yearMap.values()].sort((a, b) => a.year.localeCompare(b.year));
+});
+
+// --- Round-number clustering ---
+
+/** Threshold config: suspicious round numbers just below each procurement threshold */
+const ROUND_NUMBER_THRESHOLDS: {
+  threshold: number;
+  label: string;
+  roundAmounts: number[];
+  comparisonMin: number;  // band just above threshold
+  comparisonMax: number;
+  /** Only apply to contracts in this date range (era-aware) */
+  from?: string;
+  to?: string;
+}[] = [
+  {
+    threshold: 25000,
+    label: "$25K",
+    roundAmounts: [24999, 24990, 24900, 24800, 24500, 24000, 23000, 20000],
+    comparisonMin: 25000,
+    comparisonMax: 26000,
+  },
+  {
+    threshold: 100000,
+    label: "$100K",
+    roundAmounts: [99999, 99900, 99500, 99000, 98000, 95000],
+    comparisonMin: 100000,
+    comparisonMax: 101000,
+    from: "2017-07-01",
+    to: "2019-08-01",
+  },
+  {
+    threshold: 101100,
+    label: "$101.1K",
+    roundAmounts: [101099, 101000, 100999, 100900, 100500, 100000],
+    comparisonMin: 101100,
+    comparisonMax: 102100,
+    from: "2019-08-01",
+    to: "2022-01-01",
+  },
+  {
+    threshold: 105700,
+    label: "$105.7K",
+    roundAmounts: [105699, 105600, 105500, 105000, 104999, 104000],
+    comparisonMin: 105700,
+    comparisonMax: 106700,
+    from: "2022-01-01",
+    to: "2022-10-07",
+  },
+  {
+    threshold: 121200,
+    label: "$121.2K",
+    roundAmounts: [121199, 121100, 121000, 120999, 120900, 120500, 120000],
+    comparisonMin: 121200,
+    comparisonMax: 122200,
+    from: "2022-10-07",
+    to: "2024-01-01",
+  },
+  {
+    threshold: 133800,
+    label: "$133.8K",
+    roundAmounts: [133799, 133700, 133500, 133000, 132999, 132000, 130000],
+    comparisonMin: 133800,
+    comparisonMax: 134800,
+    from: "2024-01-01",
+    to: "2026-01-01",
+  },
+];
+
+export interface RoundNumberGroup {
+  threshold: number;
+  label: string;
+  clusters: { amount: number; count: number }[];
+  comparisonBandCount: number;
+  totalBelow: number;  // total contracts at these round amounts
+}
+
+export const getRoundNumberAnalysis = cache(async (from: string, to: string): Promise<RoundNumberGroup[]> => {
+  const results: RoundNumberGroup[] = [];
+
+  for (const cfg of ROUND_NUMBER_THRESHOLDS) {
+    // Apply era filtering: skip if selected range doesn't overlap this threshold's era
+    const eraFrom = cfg.from && cfg.from > from ? cfg.from : from;
+    const eraTo = cfg.to && cfg.to < to ? cfg.to : to;
+    if (eraFrom >= eraTo) continue;
+
+    const clusters = queryRoundNumberContracts(eraFrom, eraTo, cfg.roundAmounts);
+    if (clusters.length === 0) continue;
+
+    const comparisonBandCount = queryComparisonBandCount(eraFrom, eraTo, cfg.comparisonMin, cfg.comparisonMax);
+    const totalBelow = clusters.reduce((sum, c) => sum + c.count, 0);
+
+    results.push({
+      threshold: cfg.threshold,
+      label: cfg.label,
+      clusters,
+      comparisonBandCount,
+      totalBelow,
+    });
+  }
+
+  return results;
+});
+
+// --- Monthly distribution (year-end spending surge) ---
+
+export const getMonthlyDistribution = cache(async (from: string, to: string): Promise<MonthlySpending[]> => {
+  const raw = queryMonthlyDistributionDb(from, to);
+  if (raw.length === 0) return [];
+
+  const mean = raw.reduce((sum, r) => sum + r.count, 0) / raw.length;
+  const variance = raw.reduce((sum, r) => sum + (r.count - mean) ** 2, 0) / raw.length;
+  const stddev = Math.sqrt(variance);
+  const outlierThreshold = mean + 0.5 * stddev;
+
+  return raw.map((r) => ({
+    month: r.month,
+    count: r.count,
+    totalValue: r.totalValue,
+    isOutlier: r.count > outlierThreshold,
+  }));
+});
+
+// --- Department-supplier loyalty ---
+
+export const getDeptSupplierLoyalty = cache(async (from: string, to: string): Promise<DeptSupplierPair[]> => {
+  const rawPairs = queryDeptSupplierPairs(from, to);
+  const deptTotals = queryDeptTotals(from, to);
+  const deptTotalMap = new Map(deptTotals.map((d) => [d.service, d.totalValue]));
+
+  // Normalize supplier names and re-aggregate
+  const aggregated = new Map<string, { department: string; supplier: string; count: number; totalValue: number }>();
+  for (const p of rawPairs) {
+    const normalizedSupplier = normalizeSupplierName(p.supplier);
+    const key = `${p.service}|||${normalizedSupplier}`;
+    const existing = aggregated.get(key);
+    if (existing) {
+      existing.count += p.count;
+      existing.totalValue += p.totalValue;
+    } else {
+      aggregated.set(key, {
+        department: p.service,
+        supplier: normalizedSupplier,
+        count: p.count,
+        totalValue: p.totalValue,
+      });
+    }
+  }
+
+  const results: DeptSupplierPair[] = [];
+  for (const entry of aggregated.values()) {
+    const deptTotal = deptTotalMap.get(entry.department) || 0;
+    const pctOfDeptSpend = deptTotal > 0 ? (entry.totalValue / deptTotal) * 100 : 0;
+    results.push({
+      department: entry.department,
+      supplier: entry.supplier,
+      contractCount: entry.count,
+      totalValue: entry.totalValue,
+      pctOfDeptSpend,
+      isHighConcentration: pctOfDeptSpend > 50,
+    });
+  }
+
+  return results
+    .sort((a, b) => b.totalValue - a.totalValue)
+    .slice(0, 15);
+});
+
+// --- Supplier growth trajectories ---
+
+export const getSupplierGrowth = cache(async (from: string, to: string): Promise<SupplierGrowthResult> => {
+  // Compute midpoint
+  const fromDate = new Date(from);
+  const toDate = new Date(to);
+  const midMs = fromDate.getTime() + (toDate.getTime() - fromDate.getTime()) / 2;
+  const midDate = new Date(midMs);
+  const midpoint = `${midDate.getFullYear()}-${String(midDate.getMonth() + 1).padStart(2, "0")}-${String(midDate.getDate()).padStart(2, "0")}`;
+
+  // Format period labels (YYYY-MM)
+  const earlyLabel = `${from.substring(0, 7)} – ${midpoint.substring(0, 7)}`;
+  const lateLabel = `${midpoint.substring(0, 7)} – ${to.substring(0, 7)}`;
+
+  const raw = querySupplierHalfPeriodTotals(from, to, midpoint);
+
+  // Normalize and aggregate by supplier + half
+  const bySupplier = new Map<string, { early: number; late: number }>();
+  for (const r of raw) {
+    const name = normalizeSupplierName(r.supplier);
+    const existing = bySupplier.get(name) || { early: 0, late: 0 };
+    if (r.half === 1) existing.early += r.totalValue;
+    else existing.late += r.totalValue;
+    bySupplier.set(name, existing);
+  }
+
+  const results: SupplierGrowth[] = [];
+  for (const [supplier, data] of bySupplier) {
+    if (data.early < 100000 || data.late < 100000) continue;
+    const growthPct = ((data.late - data.early) / data.early) * 100;
+    results.push({
+      supplier,
+      earlyValue: data.early,
+      lateValue: data.late,
+      growthPct,
+    });
+  }
+
+  return {
+    suppliers: results.sort((a, b) => b.growthPct - a.growthPct).slice(0, 10),
+    earlyLabel,
+    lateLabel,
+  };
+});
+
+// --- Contract search ---
+
+/** Parse a numeric amount string (e.g. "50,000" or "1.5") with optional k/m suffix. */
+function parseAmountNum(numStr: string, suffix?: string): number | null {
+  const cleaned = numStr.replace(/[,\s]/g, "");
+  const num = parseFloat(cleaned);
+  if (isNaN(num)) return null;
+  const s = (suffix || "").toLowerCase();
+  if (s === "k") return num * 1_000;
+  if (s === "m") return num * 1_000_000;
+  return num;
+}
+
+/**
+ * Detect if a search query is an amount pattern and return min/max filter.
+ * Supports: 50000, $50k, 1.5m, >25000, <=100k, 50k-100k, $50,000
+ */
+function parseAmountQuery(query: string): { min?: number; max?: number } | null {
+  const q = query.trim();
+
+  // Range: 50k-100k, $50,000-$100,000
+  const rangeMatch = q.match(/^\$?([\d,.]+)\s*(k|m)?\s*[-–]\s*\$?([\d,.]+)\s*(k|m)?$/i);
+  if (rangeMatch) {
+    const min = parseAmountNum(rangeMatch[1], rangeMatch[2]);
+    const max = parseAmountNum(rangeMatch[3], rangeMatch[4]);
+    if (min !== null && max !== null) return { min, max };
+  }
+
+  // Comparison: >50k, >=50000, <100k, <=1m
+  const compMatch = q.match(/^([<>]=?)\s*\$?([\d,.]+)\s*(k|m)?$/i);
+  if (compMatch) {
+    const val = parseAmountNum(compMatch[2], compMatch[3]);
+    if (val !== null) {
+      switch (compMatch[1]) {
+        case ">": return { min: val + 0.01 };
+        case ">=": return { min: val };
+        case "<": return { max: val - 0.01 };
+        case "<=": return { max: val };
+      }
+    }
+  }
+
+  // Single amount: $50k, 50000, 50,000
+  const singleMatch = q.match(/^\$?([\d,.]+)\s*(k|m)?$/i);
+  if (singleMatch) {
+    const val = parseAmountNum(singleMatch[1], singleMatch[2]);
+    if (val !== null) {
+      // ±5% range for single value matches
+      return { min: val * 0.95, max: val * 1.05 };
+    }
+  }
+
+  return null;
+}
+
+export const searchContractsCached = cache(async (
+  from: string, to: string, query: string, page: number
+): Promise<ContractSearchResult> => {
+  const perPage = 25;
+  const offset = (page - 1) * perPage;
+
+  const amountFilter = parseAmountQuery(query);
+  const textQuery = amountFilter ? "" : query;
+
+  const { results: rawResults, totalCount } = searchContracts(from, to, textQuery, perPage, offset, amountFilter ?? undefined);
+
+  const results = rawResults.map((r) => ({
+    ...r,
+    supplier: r.supplier ? normalizeSupplierName(r.supplier) : r.supplier,
+  }));
+
+  return {
+    results,
+    totalCount,
+    page,
+    totalPages: Math.ceil(totalCount / perPage),
+    query,
+  };
 });
 
 // ---------------------------------------------------------------------------
