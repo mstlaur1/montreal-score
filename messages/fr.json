@@ -16,6 +16,16 @@
     "dataFrom": "Données provenant de",
     "openSourceBy": "Projet open-source par"
   },
+  "ErrorPage": {
+    "title": "Une erreur est survenue",
+    "description": "Les données n'ont pas pu être chargées. Veuillez réessayer.",
+    "retry": "Réessayer"
+  },
+  "NotFoundPage": {
+    "title": "404",
+    "description": "Cette page n'existe pas.",
+    "goHome": "Retour à l'accueil"
+  },
   "HomePage": {
     "heroSubtitle": "MontréalScore fait le lien entre les promesses électorales et les résultats concrets — suivi des délais de permis, des dépenses contractuelles, des requêtes 311 et des engagements politiques à partir des données ouvertes de la Ville. Aucune opinion. Aucune affiliation partisane. Seulement les chiffres.",
     "promisesTitle": "Promesses électorales",

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { execFile } from "node:child_process";
 import path from "node:path";
+import { timingSafeEqual } from "node:crypto";
 
 const TOKEN = process.env.ADMIN_API_TOKEN;
 // process.cwd() in standalone points to .next/standalone/, not the project root
@@ -11,6 +12,10 @@ if (!PROJECT_DIR) {
 }
 const TSX = PROJECT_DIR ? path.join(PROJECT_DIR, "node_modules", ".bin", "tsx") : "";
 const NODE = process.execPath;
+
+// Simple rate limiting: 1 ETL request per 60 seconds
+let lastEtlRequest = 0;
+const ETL_COOLDOWN_MS = 60_000;
 
 const DATASETS = {
   permits: {
@@ -43,13 +48,20 @@ export async function POST(req: NextRequest) {
   }
 
   const auth = req.headers.get("authorization");
-  if (!auth || auth !== `Bearer ${TOKEN}`) {
+  const expected = `Bearer ${TOKEN}`;
+  if (!auth || Buffer.byteLength(auth) !== Buffer.byteLength(expected) || !timingSafeEqual(Buffer.from(auth), Buffer.from(expected))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   if (!PROJECT_DIR) {
     return NextResponse.json({ error: "PROJECT_DIR not configured" }, { status: 500 });
   }
+
+  const now = Date.now();
+  if (now - lastEtlRequest < ETL_COOLDOWN_MS) {
+    return NextResponse.json({ error: "Rate limited. Try again later." }, { status: 429 });
+  }
+  lastEtlRequest = now;
 
   let body: { dataset?: string; mode?: string };
   try {

@@ -14,7 +14,7 @@ echo "==> Running ETL (incremental)..."
 npm run etl
 
 echo "==> Building FTS5 search index..."
-node scripts/build-fts.js
+node scripts/migrations/build-fts.js
 
 echo "==> Building production bundle..."
 npm run build

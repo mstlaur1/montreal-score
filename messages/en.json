@@ -16,6 +16,16 @@
     "dataFrom": "Data from",
     "openSourceBy": "Open-source project by"
   },
+  "ErrorPage": {
+    "title": "Something went wrong",
+    "description": "The data could not be loaded. Please try again.",
+    "retry": "Try again"
+  },
+  "NotFoundPage": {
+    "title": "404",
+    "description": "This page does not exist.",
+    "goHome": "Go home"
+  },
   "HomePage": {
     "heroSubtitle": "MontréalScore connects campaign promises to real outcomes — tracking permit delays, contract spending, 311 response times, and political commitments using the City's own open data. No opinions. No party affiliation. Just the numbers.",
     "promisesTitle": "Campaign Promises",

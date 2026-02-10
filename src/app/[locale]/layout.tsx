@@ -84,7 +84,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                 name: "Ashwater",
                 url: "https://ashwater.ca",
               },
-            }),
+            }).replace(/</g, "\\u003c"),
           }}
         />
       </head>

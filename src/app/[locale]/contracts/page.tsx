@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import {
   getContractStats, getSoleSourceStats, getYearlyContractTrends,
@@ -110,7 +111,7 @@ export default async function ContractsPage({ params, searchParams }: Props) {
   const toExcl = nextMonth(to.year, to.month);
   const toDate = toDateStr(toExcl.year, toExcl.month);
 
-  const searchPage = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
+  const searchPage = Math.min(1000, Math.max(1, parseInt(pageParam ?? "1", 10) || 1));
 
   const [stats, soleSource, yearlyTrends, monthlyDist, loyalty, growth, roundNumbers, searchResults] =
     await Promise.all([
@@ -194,10 +195,12 @@ export default async function ContractsPage({ params, searchParams }: Props) {
       {/* 2. Contract Search */}
       <section className="mb-8">
         <h2 className="text-xl font-bold mb-3">{t("searchTitle")}</h2>
-        <ContractSearchInput
-          placeholder={t("searchPlaceholder")}
-          initialQuery={searchQuery ?? ""}
-        />
+        <Suspense fallback={<div className="h-10 bg-card-bg border border-card-border rounded-lg animate-pulse" />}>
+          <ContractSearchInput
+            placeholder={t("searchPlaceholder")}
+            initialQuery={searchQuery ?? ""}
+          />
+        </Suspense>
         {searchResults && (
           <div className="mt-4">
             {searchResults.totalCount > 0 ? (

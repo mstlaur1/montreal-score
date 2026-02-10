@@ -7,6 +7,8 @@ const DB_PATH = path.join(process.cwd(), "data", "montreal.db");
 
 let _db: Database.Database | null = null;
 let _hasFts: boolean | null = null;
+let _hasFtsCheckedAt = 0;
+const FTS_CHECK_INTERVAL_MS = 5 * 60 * 1000; // Re-check every 5 minutes
 
 function getDb(): Database.Database {
   if (!_db) {
@@ -20,12 +22,14 @@ function getDb(): Database.Database {
   return _db;
 }
 
-/** Check once whether the FTS5 index exists. */
+/** Check whether the FTS5 index exists, re-checking periodically. */
 function hasFts(): boolean {
-  if (_hasFts === null) {
+  const now = Date.now();
+  if (_hasFts === null || now - _hasFtsCheckedAt > FTS_CHECK_INTERVAL_MS) {
     const db = getDb();
     const row = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='contracts_fts'").get();
     _hasFts = !!row;
+    _hasFtsCheckedAt = now;
   }
   return _hasFts;
 }
@@ -35,14 +39,15 @@ function hasFts(): boolean {
  * Each word becomes a prefix token: "pomerleau inc" → "pomerleau* inc*"
  * Special FTS5 characters are stripped to prevent syntax errors.
  */
-function toFtsQuery(query: string): string {
-  return query
+function toFtsQuery(query: string): string | null {
+  const expr = query
     .replace(/[":(){}*^~\-+|]/g, " ")  // strip FTS5 special chars
     .trim()
     .split(/\s+/)
     .filter(Boolean)
     .map((w) => `"${w}"*`)
     .join(" ");
+  return expr || null;
 }
 
 /**
