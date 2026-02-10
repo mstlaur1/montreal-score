@@ -36,8 +36,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: t("siteTitle"),
     description: t("siteDescription"),
     openGraph: {
-      title: t("siteTitle"),
-      description: t("siteDescription"),
       url: `https://montrealscore.ashwater.ca/${locale}`,
       siteName: "MontréalScore",
       locale: locale === "fr" ? "fr_CA" : "en_CA",
@@ -45,8 +43,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     twitter: {
       card: "summary",
-      title: t("siteTitle"),
-      description: t("siteDescription"),
     },
     alternates: {
       canonical: `https://montrealscore.ashwater.ca/${locale}`,
@@ -96,11 +92,11 @@ export default async function LocaleLayout({ children, params }: Props) {
       >
         <NextIntlClientProvider>
           <header className="border-b border-card-border">
-            <nav className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-              <Link href="/" className="text-xl font-bold tracking-tight">
+            <nav className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+              <Link href="/" className="text-xl font-bold tracking-tight mr-auto">
                 Montréal<span className="text-accent">Score</span>
               </Link>
-              <div className="flex items-center gap-6 text-sm">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm md:gap-x-6">
                 <Link href="/promises" className="hover:text-accent transition-colors">
                   {t("promises")}
                 </Link>

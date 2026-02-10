@@ -4,7 +4,7 @@ const BASE_URL = "https://montrealscore.ashwater.ca";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const locales = ["fr", "en"];
-  const pages = ["", "/permits", "/contracts", "/promises", "/about", "/volunteer"];
+  const pages = ["", "/permits", "/contracts", "/promises", "/311", "/about", "/volunteer"];
 
   const entries: MetadataRoute.Sitemap = [];
 
