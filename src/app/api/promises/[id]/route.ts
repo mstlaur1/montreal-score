@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { withAuth } from "@/lib/api-auth";
 import { getWriteDb } from "@/lib/db-write";
 
@@ -41,11 +40,6 @@ export const PATCH = withAuth(async (req: NextRequest, ctx) => {
       { status: 404 }
     );
   }
-
-  revalidatePath("/fr/promises");
-  revalidatePath("/en/promises");
-  revalidatePath("/fr");
-  revalidatePath("/en");
 
   return NextResponse.json({ ok: true, id, status: body.status });
 });

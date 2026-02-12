@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getFirst100DaysPromises, getPromiseSummary, getPromisesByBorough, getPlatformPromisesByCategory } from "@/lib/data";
+import { getFirst100DaysPromises, getPromiseSummary, getPromisesByBorough, getPlatformPromisesByCategory, getPromises } from "@/lib/data";
 import { StatusBadge } from "@/components/StatusBadge";
 import { StatCard } from "@/components/StatCard";
+import { PromiseFilterBar } from "@/components/PromiseFilterBar";
 import { Link } from "@/i18n/navigation";
 import type { PromiseStatus, PromiseSentiment, CampaignPromise } from "@/lib/types";
 
@@ -81,11 +82,12 @@ export default async function PromisesPage({ params }: Props) {
   setRequestLocale(locale);
   const t = await getTranslations("PromisesPage");
 
-  const [first100, summary, boroughMap, platformMap] = await Promise.all([
+  const [first100, summary, boroughMap, platformMap, allPromisesFlat] = await Promise.all([
     getFirst100DaysPromises(),
     getPromiseSummary(),
     getPromisesByBorough(),
     getPlatformPromisesByCategory(),
+    getPromises(),
   ]);
 
   const { dayElapsed, pct, expired } = get100DayProgress();
@@ -176,6 +178,46 @@ export default async function PromisesPage({ params }: Props) {
           </span>
         </div>
       </section>
+
+      {/* Search & Filter */}
+      <PromiseFilterBar
+        promises={allPromisesFlat}
+        locale={locale}
+        labels={{
+          searchPlaceholder: t("searchPlaceholder"),
+          allStatuses: t("allStatuses"),
+          allCategories: t("allCategories"),
+          matchCount: t("matchCount"),
+          matchCountOne: t("matchCountOne"),
+          noMatches: t("noMatches"),
+          latestUpdate: t("latestUpdate"),
+          source: t("source"),
+          target: t("target"),
+          statusLabels: {
+            not_started: t("status.not_started"),
+            in_progress: t("status.in_progress"),
+            completed: t("status.completed"),
+            broken: t("status.broken"),
+            partially_met: t("status.partially_met"),
+          },
+          categoryLabels: {
+            housing: t("category.housing"),
+            homelessness: t("category.homelessness"),
+            security: t("category.security"),
+            cleanliness: t("category.cleanliness"),
+            mobility: t("category.mobility"),
+            governance: t("category.governance"),
+            environment: t("category.environment"),
+            infrastructure: t("category.infrastructure"),
+            "east-montreal": t("category.east-montreal"),
+            economy: t("category.economy"),
+            culture: t("category.culture"),
+            downtown: t("category.downtown"),
+            international: t("category.international"),
+            local: t("category.local"),
+          },
+        }}
+      >
 
       {/* First 100 Days */}
       <section className="border border-card-border rounded-xl p-6 bg-card-bg mb-10">
@@ -500,6 +542,8 @@ export default async function PromisesPage({ params }: Props) {
           })}
         </div>
       </section>
+
+      </PromiseFilterBar>
 
       {/* Methodology */}
       <section className="text-sm text-muted space-y-2">

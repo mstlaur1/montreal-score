@@ -333,6 +333,12 @@
       "negative": "Negative",
       "unknown": "No data"
     },
+    "searchPlaceholder": "Search promises...",
+    "allStatuses": "All statuses",
+    "allCategories": "All categories",
+    "matchCountOne": "promise found",
+    "matchCount": "promises found",
+    "noMatches": "No promises match your search.",
     "platformCommitmentsTitle": "Platform Commitments",
     "platformCommitmentsSubtitle": "Commitments from Ensemble Montréal's 2025 campaign platform, organized by theme. These promises cover the entire city.",
     "category": {
@@ -393,6 +399,7 @@
     "subtitle": "Citizen requests, complaints, and information inquiries submitted to the City via the 311 system, email, and Bureau Accès Montréal offices. Data since 2022, updated daily.",
     "year": "Year",
     "totalRequests": "Total requests",
+    "withBoroughAssigned": "{count} with borough assigned",
     "resolutionRate": "Resolution rate",
     "avgResponseTime": "Avg response time",
     "topCategory": "Top category",

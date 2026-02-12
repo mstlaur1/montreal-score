@@ -355,6 +355,7 @@ export interface SRStatus {
 /** City-wide 311 summary */
 export interface SRSummary {
   totalRequests: number;
+  totalRequestsAll: number;
   totalCompleted: number;
   resolutionRate: number;
   avgResponseDays: number | null;

@@ -117,7 +117,8 @@ export default async function ServiceRequestsPage({ params, searchParams }: Prop
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <StatCard
             label={t("totalRequests")}
-            value={fmt(summary.totalRequests)}
+            value={fmt(summary.totalRequestsAll)}
+            detail={t("withBoroughAssigned", { count: fmt(summary.totalRequests) })}
           />
           <StatCard
             label={t("resolutionRate")}

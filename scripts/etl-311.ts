@@ -13,7 +13,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = path.join(__dirname, "..", "data", "montreal.db");
+const DB_PATH = path.join(__dirname, "..", "data", process.env.DB_FILE || "montreal.db");
 const API_BASE = "https://donnees.montreal.ca/api/3/action";
 
 const isFullMode = process.argv.includes("--full");

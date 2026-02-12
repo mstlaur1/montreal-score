@@ -231,7 +231,7 @@ export default async function Home({ params }: Props) {
               <div>
                 <p className="text-sm text-muted">{t("sr311Total")}</p>
                 <p className="text-2xl font-bold">
-                  {srSummary.totalRequests.toLocaleString(locale === "fr" ? "fr-CA" : "en-CA")}
+                  {srSummary.totalRequestsAll.toLocaleString(locale === "fr" ? "fr-CA" : "en-CA")}
                 </p>
                 <p className="text-xs text-muted">{t("sr311Requests")}</p>
               </div>

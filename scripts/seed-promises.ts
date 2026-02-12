@@ -12,7 +12,7 @@ import { PROMISE_SEEDS } from "../data/promises-seed.js";
 import { PLATFORM_PROMISE_SEEDS } from "../data/platform-promises-seed.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = path.join(__dirname, "..", "data", "montreal.db");
+const DB_PATH = path.join(__dirname, "..", "data", process.env.DB_FILE || "montreal.db");
 
 function main() {
   const db = new Database(DB_PATH);

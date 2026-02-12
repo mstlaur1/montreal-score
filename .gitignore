@@ -50,6 +50,10 @@ data/*.shp
 data/montreal.db
 data/montreal.db-wal
 data/montreal.db-shm
+data/montreal-dev.db
+data/montreal-dev.db-wal
+data/montreal-dev.db-shm
+data/admin-schedules.json
 
 # IDE
 .idea/

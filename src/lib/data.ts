@@ -11,7 +11,7 @@ import {
   queryPromises, queryFirst100DaysPromises, queryBoroughPromises, queryPlatformPromises, queryLatestPromiseUpdates,
   queryPromiseStatusCounts, queryPromiseCategoryCounts, queryPromiseUpdateCounts, queryNeedsHelpPromises, queryNeedsHelpCount,
   querySRMonthlyVolume, querySRBoroughStats, querySRCategories, querySRChannels, querySRStatuses, querySRYearRange,
-  querySRPotholeStats, querySRPotholeAllYears,
+  querySRPotholeStats, querySRPotholeAllYears, querySRTotalByYear,
 } from "./db";
 import { normalizeBoroughName, getBoroughSlug } from "./boroughs";
 import { calculateBoroughScores, rankBoroughs, medianDaysToGrade, PERMIT_TARGET_DAYS } from "./scoring";
@@ -1323,6 +1323,7 @@ export const getSRSummary = cache(async (year: number): Promise<SRSummary | null
   if (boroughStats.length === 0) return null;
 
   const totalRequests = boroughStats.reduce((sum, b) => sum + b.total_count, 0);
+  const totalRequestsAll = querySRTotalByYear(year);
   const totalCompleted = boroughStats.reduce((sum, b) => sum + b.completed_count, 0);
 
   // Weighted average response days
@@ -1339,6 +1340,7 @@ export const getSRSummary = cache(async (year: number): Promise<SRSummary | null
 
   return {
     totalRequests,
+    totalRequestsAll,
     totalCompleted,
     resolutionRate: totalRequests > 0 ? (totalCompleted / totalRequests) * 100 : 0,
     avgResponseDays,

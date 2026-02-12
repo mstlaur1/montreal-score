@@ -774,6 +774,17 @@ export function querySRMonthlyVolume(): {
     .all() as { year_month: string; nature: string; count: number }[];
 }
 
+export function querySRTotalByYear(year: number): number {
+  const db = getDb();
+  const row = db
+    .prepare(
+      `SELECT SUM(count) AS total FROM sr_monthly
+       WHERE year_month >= ? AND year_month < ?`
+    )
+    .get(`${year}-01`, `${year + 1}-01`) as { total: number | null };
+  return row?.total ?? 0;
+}
+
 export function querySRBoroughStats(year?: number): {
   year: number; borough: string; total_count: number;
   completed_count: number; avg_response_days: number | null;

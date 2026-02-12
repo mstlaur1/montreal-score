@@ -333,6 +333,12 @@
       "negative": "Négatif",
       "unknown": "Aucune donnée"
     },
+    "searchPlaceholder": "Rechercher des promesses...",
+    "allStatuses": "Tous les statuts",
+    "allCategories": "Toutes les catégories",
+    "matchCountOne": "promesse trouvée",
+    "matchCount": "promesses trouvées",
+    "noMatches": "Aucune promesse ne correspond à votre recherche.",
     "platformCommitmentsTitle": "Engagements de la plateforme",
     "platformCommitmentsSubtitle": "Engagements de la plateforme électorale d'Ensemble Montréal 2025, organisés par thème. Ces promesses couvrent l'ensemble de la ville.",
     "category": {
@@ -393,6 +399,7 @@
     "subtitle": "Demandes de services, plaintes et demandes d'information soumises à la Ville via le système 311, par courriel et dans les bureaux Accès Montréal. Données depuis 2022, mises à jour quotidiennement.",
     "year": "Année",
     "totalRequests": "Total des demandes",
+    "withBoroughAssigned": "{count} avec arrondissement assigné",
     "resolutionRate": "Taux de résolution",
     "avgResponseTime": "Délai moyen",
     "topCategory": "Catégorie principale",
