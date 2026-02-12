@@ -465,5 +465,12 @@
   "LocaleSwitcher": {
     "label": "FR",
     "ariaLabel": "Switch to French"
+  },
+  "Jurisdiction": {
+    "name": "Montreal",
+    "areaLabel": "Borough",
+    "areaLabelPlural": "Boroughs",
+    "dataSourceName": "donnees.montreal.ca",
+    "dataSourceUrl": "https://donnees.montreal.ca"
   }
 }

@@ -465,5 +465,12 @@
   "LocaleSwitcher": {
     "label": "EN",
     "ariaLabel": "Passer en anglais"
+  },
+  "Jurisdiction": {
+    "name": "Montréal",
+    "areaLabel": "Arrondissement",
+    "areaLabelPlural": "Arrondissements",
+    "dataSourceName": "donnees.montreal.ca",
+    "dataSourceUrl": "https://donnees.montreal.ca"
   }
 }

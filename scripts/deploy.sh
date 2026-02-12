@@ -17,6 +17,7 @@ echo "==> Running DB migrations..."
 node scripts/migrations/add-processing-days.js
 node scripts/migrations/build-fts.js
 node scripts/migrations/cache-permit-trends.js
+node scripts/migrations/create-areas.js
 
 echo "==> Building production bundle..."
 npm run build

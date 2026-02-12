@@ -55,8 +55,8 @@ export function gradeBgClass(grade: Grade): string {
  * Used for chart bar coloring where the visual (bar height) = median days.
  * At/below target = A, degrades linearly up to 2x target = F.
  */
-export function medianDaysToGrade(medianDays: number): Grade {
-  const ratio = medianDays / PERMIT_TARGET_DAYS;
+export function medianDaysToGrade(medianDays: number, targetDays = PERMIT_TARGET_DAYS): Grade {
+  const ratio = medianDays / targetDays;
   const score = Math.max(0, Math.min(100, (1 - (ratio - 1)) * 100));
   return scoreToGrade(score);
 }
@@ -71,7 +71,7 @@ export function medianDaysToGrade(medianDays: number): Grade {
  * - % of permits issued within target (40% weight)
  * - Year-over-year trend (20% weight)
  */
-export function scorePermits(stats: BoroughPermitStats): number {
+export function scorePermits(stats: BoroughPermitStats, targetDays = PERMIT_TARGET_DAYS): number {
   const hasHousing = stats.housing_issued > 0;
   const medDays = hasHousing ? stats.housing_median_days : stats.median_processing_days;
   const pctWithin = hasHousing ? stats.housing_pct_within_90_days : stats.pct_within_90_days;
@@ -79,7 +79,7 @@ export function scorePermits(stats: BoroughPermitStats): number {
 
   // Median time score: 100 if at/below target, degrades linearly
   // At 2x target = 0 points
-  const medianRatio = medDays / PERMIT_TARGET_DAYS;
+  const medianRatio = medDays / targetDays;
   const medianScore = Math.max(0, Math.min(100, (1 - (medianRatio - 1)) * 100));
 
   // Percentage within target: direct mapping to 0-100

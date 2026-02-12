@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { StatCard } from "@/components/StatCard";
 import { PromiseFilterBar } from "@/components/PromiseFilterBar";
 import { Link } from "@/i18n/navigation";
+import { getJurisdiction } from "@/lib/jurisdiction";
 import type { PromiseStatus, PromiseSentiment, CampaignPromise } from "@/lib/types";
 
 export const revalidate = 3600;
@@ -16,26 +17,29 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "PromisesPage" });
+  const jx = getJurisdiction();
+  const baseUrl = `https://${jx.domain}`;
   return {
     title: t("metadata.title"),
     description: t("metadata.description"),
     openGraph: {
-      url: `https://montrealscore.ashwater.ca/${locale}/promises`,
+      url: `${baseUrl}/${locale}/promises`,
     },
     alternates: {
-      canonical: `https://montrealscore.ashwater.ca/${locale}/promises`,
+      canonical: `${baseUrl}/${locale}/promises`,
       languages: {
-        fr: "https://montrealscore.ashwater.ca/fr/promises",
-        en: "https://montrealscore.ashwater.ca/en/promises",
-        "x-default": "https://montrealscore.ashwater.ca/fr/promises",
+        fr: `${baseUrl}/fr/promises`,
+        en: `${baseUrl}/en/promises`,
+        "x-default": `${baseUrl}/fr/promises`,
       },
     },
   };
 }
 
-// Inauguration: Nov 10, 2025. 100-day deadline: Feb 18, 2026.
-const INAUGURATION = new Date("2025-11-10");
-const DEADLINE_100 = new Date("2026-02-18");
+// Inauguration dates from jurisdiction config
+const jxConfig = getJurisdiction();
+const INAUGURATION = new Date(jxConfig.inauguration.date);
+const DEADLINE_100 = new Date(jxConfig.inauguration.deadline100Days);
 
 function get100DayProgress() {
   const now = new Date();

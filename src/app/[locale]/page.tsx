@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getCitySummary, getPromiseSummary, getContractStats, getSRSummary } from "@/lib/data";
 import { getContractDateBounds } from "@/lib/db";
 import { PERMIT_TARGET_DAYS } from "@/lib/scoring";
+import { getJurisdiction } from "@/lib/jurisdiction";
 import { Link } from "@/i18n/navigation";
 
 export const revalidate = 3600;

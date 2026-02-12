@@ -6,6 +6,7 @@ import {
   getSRPotholeStats, getSRPotholeAllYears,
 } from "@/lib/data";
 import { querySRYearRange } from "@/lib/db";
+import { getJurisdiction } from "@/lib/jurisdiction";
 import { StatCard } from "@/components/StatCard";
 import { YearSelector } from "@/components/YearSelector";
 
@@ -19,18 +20,20 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "ServiceRequestsPage" });
+  const jx = getJurisdiction();
+  const baseUrl = `https://${jx.domain}`;
   return {
     title: t("metadata.title"),
     description: t("metadata.description"),
     openGraph: {
-      url: `https://montrealscore.ashwater.ca/${locale}/311`,
+      url: `${baseUrl}/${locale}/311`,
     },
     alternates: {
-      canonical: `https://montrealscore.ashwater.ca/${locale}/311`,
+      canonical: `${baseUrl}/${locale}/311`,
       languages: {
-        fr: "https://montrealscore.ashwater.ca/fr/311",
-        en: "https://montrealscore.ashwater.ca/en/311",
-        "x-default": "https://montrealscore.ashwater.ca/fr/311",
+        fr: `${baseUrl}/fr/311`,
+        en: `${baseUrl}/en/311`,
+        "x-default": `${baseUrl}/fr/311`,
       },
     },
   };

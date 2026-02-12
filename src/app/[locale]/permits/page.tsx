@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getBoroughComparisonDataRange, getCitySummaryRange, getAllYearlyPermitTrends } from "@/lib/data";
 import { getPermitDateBounds } from "@/lib/db";
 import { PERMIT_TARGET_DAYS, PREVIOUS_TARGET_DAYS } from "@/lib/scoring";
+import { getJurisdiction, buildPresets } from "@/lib/jurisdiction";
 import { PermitBarChart } from "@/components/PermitBarChart";
 import { PermitTrendSection } from "@/components/PermitTrendSection";
 import { StatCard } from "@/components/StatCard";
@@ -38,18 +39,20 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "PermitsPage" });
+  const jx = getJurisdiction();
+  const baseUrl = `https://${jx.domain}`;
   return {
     title: t("metadata.title"),
     description: t("metadata.description"),
     openGraph: {
-      url: `https://montrealscore.ashwater.ca/${locale}/permits`,
+      url: `${baseUrl}/${locale}/permits`,
     },
     alternates: {
-      canonical: `https://montrealscore.ashwater.ca/${locale}/permits`,
+      canonical: `${baseUrl}/${locale}/permits`,
       languages: {
-        fr: "https://montrealscore.ashwater.ca/fr/permits",
-        en: "https://montrealscore.ashwater.ca/en/permits",
-        "x-default": "https://montrealscore.ashwater.ca/fr/permits",
+        fr: `${baseUrl}/fr/permits`,
+        en: `${baseUrl}/en/permits`,
+        "x-default": `${baseUrl}/fr/permits`,
       },
     },
   };
@@ -90,12 +93,9 @@ export default async function PermitsPage({ params, searchParams }: Props) {
   const toExcl = nextMonth(to.year, to.month);
   const toDate = toDateStr(toExcl.year, toExcl.month);
 
-  // Administration presets (month-precise inauguration dates)
-  const presets = [
-    { label: "Coderre (2014–2017)", from: "2014-01", to: "2017-10" },
-    { label: "Plante (2017–2025)", from: "2017-11", to: "2025-10" },
-    { label: "Martinez Ferrada (2025–)", from: "2025-11", to: bounds.max },
-  ];
+  // Administration presets from jurisdiction config
+  const jx = getJurisdiction();
+  const presets = buildPresets(jx.adminPeriods.permits, bounds.max);
 
   // Fetch borough data + all trend variants (single DB query + single pass)
   const [comparison, summary, trendsByFilter] =

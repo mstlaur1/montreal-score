@@ -8,6 +8,7 @@ import {
 } from "@/lib/data";
 import { getContractDateBounds } from "@/lib/db";
 import { getNormalizationExamples } from "@/lib/supplier-normalization";
+import { getJurisdiction, buildPresets } from "@/lib/jurisdiction";
 import { StatCard } from "@/components/StatCard";
 import { ContractHistogram } from "@/components/ContractHistogram";
 import { DateRangeSelector } from "@/components/DateRangeSelector";
@@ -23,18 +24,20 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "ContractsPage" });
+  const jx = getJurisdiction();
+  const baseUrl = `https://${jx.domain}`;
   return {
     title: t("metadata.title"),
     description: t("metadata.description"),
     openGraph: {
-      url: `https://montrealscore.ashwater.ca/${locale}/contracts`,
+      url: `${baseUrl}/${locale}/contracts`,
     },
     alternates: {
-      canonical: `https://montrealscore.ashwater.ca/${locale}/contracts`,
+      canonical: `${baseUrl}/${locale}/contracts`,
       languages: {
-        fr: "https://montrealscore.ashwater.ca/fr/contracts",
-        en: "https://montrealscore.ashwater.ca/en/contracts",
-        "x-default": "https://montrealscore.ashwater.ca/fr/contracts",
+        fr: `${baseUrl}/fr/contracts`,
+        en: `${baseUrl}/en/contracts`,
+        "x-default": `${baseUrl}/fr/contracts`,
       },
     },
   };
@@ -137,11 +140,8 @@ export default async function ContractsPage({ params, searchParams }: Props) {
   const fmt = (v: number) => formatCurrency(v, locale);
   const fmtCompact = (v: number) => formatCurrency(v, locale, true);
 
-  const presets = [
-    { label: "Coderre (2013–2017)", from: "2013-11", to: "2017-11" },
-    { label: "Plante (2017–2025)", from: "2017-11", to: "2025-11" },
-    { label: "Martinez Ferrada (2025–)", from: "2025-11", to: bounds.max },
-  ];
+  const jx = getJurisdiction();
+  const presets = buildPresets(jx.adminPeriods.contracts, bounds.max);
 
   // Build URL params for pagination/sort links
   function buildUrl(page: number, sort?: string): string {

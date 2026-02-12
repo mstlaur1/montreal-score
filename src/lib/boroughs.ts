@@ -1,3 +1,5 @@
+import { queryAreas, queryAreaBySlug, resolveAreaAlias } from "./db";
+
 /** Montreal's 19 boroughs with their official names and slugs */
 export const BOROUGHS = [
   { name: "Ahuntsic-Cartierville", slug: "ahuntsic-cartierville" },
@@ -24,36 +26,48 @@ export const BOROUGHS = [
 export type BoroughName = (typeof BOROUGHS)[number]["name"];
 export type BoroughSlug = (typeof BOROUGHS)[number]["slug"];
 
+/** Hardcoded alias map — fallback when DB is unavailable */
+const HARDCODED_ALIASES: Record<string, string> = {
+  "Côte-des-Neiges—Notre-Dame-de-Grâce": "Côte-des-Neiges-Notre-Dame-de-Grâce",
+  "CDN-NDG": "Côte-des-Neiges-Notre-Dame-de-Grâce",
+  "Mercier—Hochelaga-Maisonneuve": "Mercier-Hochelaga-Maisonneuve",
+  "Le Plateau-Mont-Royal": "Le Plateau-Mont-Royal",
+  "Plateau-Mont-Royal": "Le Plateau-Mont-Royal",
+  "Plateau Mont-Royal": "Le Plateau-Mont-Royal",
+  "Le Sud-Ouest": "Le Sud-Ouest",
+  "Sud-Ouest": "Le Sud-Ouest",
+  "L'Île-Bizard—Sainte-Geneviève": "L'Île-Bizard-Sainte-Geneviève",
+  "Île-Bizard—Sainte-Geneviève": "L'Île-Bizard-Sainte-Geneviève",
+  "Rivière-des-Prairies—Pointe-aux-Trembles": "Rivière-des-Prairies-Pointe-aux-Trembles",
+  "RDP-PAT": "Rivière-des-Prairies-Pointe-aux-Trembles",
+  "Villeray—Saint-Michel—Parc-Extension": "Villeray-Saint-Michel-Parc-Extension",
+  "Villeray-Saint-Michel-Parc-Extension": "Villeray-Saint-Michel-Parc-Extension",
+  "Montréal-Nord": "Montréal-Nord",
+  "Montreal-Nord": "Montréal-Nord",
+  "Saint-Leonard": "Saint-Léonard",
+};
+
 /** Map borough names from the dataset (which may vary) to canonical names */
 export function normalizeBoroughName(raw: string): string {
   const normalized = raw.trim();
 
-  // Handle common variations in the dataset
-  const aliases: Record<string, string> = {
-    "Côte-des-Neiges—Notre-Dame-de-Grâce": "Côte-des-Neiges-Notre-Dame-de-Grâce",
-    "CDN-NDG": "Côte-des-Neiges-Notre-Dame-de-Grâce",
-    "Mercier—Hochelaga-Maisonneuve": "Mercier-Hochelaga-Maisonneuve",
-    "Le Plateau-Mont-Royal": "Le Plateau-Mont-Royal",
-    "Plateau-Mont-Royal": "Le Plateau-Mont-Royal",
-    "Plateau Mont-Royal": "Le Plateau-Mont-Royal",
-    "Le Sud-Ouest": "Le Sud-Ouest",
-    "Sud-Ouest": "Le Sud-Ouest",
-    "L'Île-Bizard—Sainte-Geneviève": "L'Île-Bizard-Sainte-Geneviève",
-    "Île-Bizard—Sainte-Geneviève": "L'Île-Bizard-Sainte-Geneviève",
-    "Rivière-des-Prairies—Pointe-aux-Trembles": "Rivière-des-Prairies-Pointe-aux-Trembles",
-    "RDP-PAT": "Rivière-des-Prairies-Pointe-aux-Trembles",
-    "Villeray—Saint-Michel—Parc-Extension": "Villeray-Saint-Michel-Parc-Extension",
-    "Villeray-Saint-Michel-Parc-Extension": "Villeray-Saint-Michel-Parc-Extension",
-    "Montréal-Nord": "Montréal-Nord",
-    "Montreal-Nord": "Montréal-Nord",
-    "Saint-Leonard": "Saint-Léonard",
-  };
-
   // Replace em-dash with hyphen for matching
   const withHyphens = normalized.replace(/\u2014/g, "-").replace(/\u2013/g, "-");
 
-  return aliases[withHyphens] || aliases[normalized] || normalized;
+  // Try DB alias lookup first
+  try {
+    const dbResult = resolveAreaAlias(withHyphens) ?? resolveAreaAlias(normalized);
+    if (dbResult) return dbResult;
+  } catch {
+    // DB not available (build time, etc.) — fall through to hardcoded
+  }
+
+  // Fallback to hardcoded aliases
+  return HARDCODED_ALIASES[withHyphens] || HARDCODED_ALIASES[normalized] || normalized;
 }
+
+/** Generic alias: wraps normalizeBoroughName for forward compatibility */
+export const normalizeAreaName = normalizeBoroughName;
 
 export function getBoroughSlug(name: string): string {
   const canonical = normalizeBoroughName(name);
@@ -70,4 +84,43 @@ export function getBoroughSlug(name: string): string {
 
 export function getBoroughBySlug(slug: string) {
   return BOROUGHS.find((b) => b.slug === slug);
+}
+
+/**
+ * Get areas from the DB by type.
+ * Returns array of {slug, name_fr, name_en, type, parent_id}.
+ * Falls back to BOROUGHS const if DB unavailable.
+ */
+export function getAreasFromDb(type?: string) {
+  try {
+    return queryAreas(type);
+  } catch {
+    // DB not available — return BOROUGHS as fallback
+    if (!type || type === "borough") {
+      return BOROUGHS.map((b) => ({
+        slug: b.slug,
+        name_fr: b.name,
+        name_en: b.name,
+        type: "borough" as const,
+        parent_id: null as number | null,
+      }));
+    }
+    return [];
+  }
+}
+
+/**
+ * Get a single area by slug from the DB.
+ * Falls back to BOROUGHS const if DB unavailable.
+ */
+export function getAreaBySlug(slug: string) {
+  try {
+    return queryAreaBySlug(slug);
+  } catch {
+    const b = BOROUGHS.find((b) => b.slug === slug);
+    if (b) {
+      return { slug: b.slug, name_fr: b.name, name_en: b.name, type: "borough", parent_id: null as number | null };
+    }
+    return undefined;
+  }
 }

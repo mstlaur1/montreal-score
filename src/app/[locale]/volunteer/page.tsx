@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getJurisdiction } from "@/lib/jurisdiction";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -8,18 +9,20 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "VolunteerPage" });
+  const jx = getJurisdiction();
+  const baseUrl = `https://${jx.domain}`;
   return {
     title: t("metadata.title"),
     description: t("metadata.description"),
     openGraph: {
-      url: `https://montrealscore.ashwater.ca/${locale}/volunteer`,
+      url: `${baseUrl}/${locale}/volunteer`,
     },
     alternates: {
-      canonical: `https://montrealscore.ashwater.ca/${locale}/volunteer`,
+      canonical: `${baseUrl}/${locale}/volunteer`,
       languages: {
-        fr: "https://montrealscore.ashwater.ca/fr/volunteer",
-        en: "https://montrealscore.ashwater.ca/en/volunteer",
-        "x-default": "https://montrealscore.ashwater.ca/fr/volunteer",
+        fr: `${baseUrl}/fr/volunteer`,
+        en: `${baseUrl}/en/volunteer`,
+        "x-default": `${baseUrl}/fr/volunteer`,
       },
     },
   };

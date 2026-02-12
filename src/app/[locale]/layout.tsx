@@ -7,6 +7,7 @@ import { routing } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { getLatestEtlRun } from "@/lib/db";
+import { getJurisdiction } from "@/lib/jurisdiction";
 import "../globals.css";
 
 const geistSans = Geist({
@@ -31,35 +32,36 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Metadata" });
-  const altLocale = locale === "fr" ? "en" : "fr";
+  const jx = getJurisdiction();
+  const baseUrl = `https://${jx.domain}`;
   return {
-    metadataBase: new URL("https://montrealscore.ashwater.ca"),
+    metadataBase: new URL(baseUrl),
     title: t("siteTitle"),
     description: t("siteDescription"),
     openGraph: {
-      url: `https://montrealscore.ashwater.ca/${locale}`,
-      siteName: "MontréalScore",
+      url: `${baseUrl}/${locale}`,
+      siteName: jx.brandName,
       locale: locale === "fr" ? "fr_CA" : "en_CA",
       type: "website",
       images: [
         {
-          url: "https://montrealscore.ashwater.ca/og-image.png",
+          url: `${baseUrl}/og-image.png`,
           width: 1200,
           height: 630,
-          alt: "MontréalScore",
+          alt: jx.brandName,
         },
       ],
     },
     twitter: {
       card: "summary_large_image",
-      images: ["https://montrealscore.ashwater.ca/og-image.png"],
+      images: [`${baseUrl}/og-image.png`],
     },
     alternates: {
-      canonical: `https://montrealscore.ashwater.ca/${locale}`,
+      canonical: `${baseUrl}/${locale}`,
       languages: {
-        fr: `https://montrealscore.ashwater.ca/fr`,
-        en: `https://montrealscore.ashwater.ca/en`,
-        "x-default": `https://montrealscore.ashwater.ca/fr`,
+        fr: `${baseUrl}/fr`,
+        en: `${baseUrl}/en`,
+        "x-default": `${baseUrl}/fr`,
       },
     },
   };
@@ -75,6 +77,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   const t = await getTranslations("Nav");
   const tFooter = await getTranslations("Footer");
   const tMeta = await getTranslations("Metadata");
+  const jx = getJurisdiction();
 
   return (
     <html lang={locale}>
@@ -85,8 +88,8 @@ export default async function LocaleLayout({ children, params }: Props) {
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebSite",
-              name: "MontréalScore",
-              url: "https://montrealscore.ashwater.ca",
+              name: jx.brandName,
+              url: `https://${jx.domain}`,
               description: tMeta("siteDescription"),
               inLanguage: [locale === "fr" ? "fr-CA" : "en-CA"],
               publisher: {
@@ -144,12 +147,12 @@ export default async function LocaleLayout({ children, params }: Props) {
               <p>
                 {tFooter("dataFrom")}{" "}
                 <a
-                  href="https://donnees.montreal.ca"
+                  href={jx.dataSource.url}
                   className="underline hover:text-accent"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  donnees.montreal.ca
+                  {jx.dataSource.name}
                 </a>
                 . {tFooter("openSourceBy")}{" "}
                 <a href="https://ashwater.ca" className="underline hover:text-accent">

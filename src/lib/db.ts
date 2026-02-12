@@ -2,26 +2,30 @@ import Database from "better-sqlite3";
 import path from "node:path";
 import fs from "node:fs";
 import type { RawPermit, RawContract, RawPromise, RawPromiseUpdate } from "./types";
+import { getJurisdiction } from "./jurisdiction";
 
-const DB_FILE = process.env.DB_FILE || "montreal.db";
-const DB_PATH = path.join(process.cwd(), "data", DB_FILE);
-
-let _db: Database.Database | null = null;
+const _dbCache = new Map<string, Database.Database>();
 let _hasFts: boolean | null = null;
 let _hasFtsCheckedAt = 0;
 const FTS_CHECK_INTERVAL_MS = 5 * 60 * 1000; // Re-check every 5 minutes
 
-function getDb(): Database.Database {
-  if (!_db) {
-    if (!fs.existsSync(DB_PATH)) {
-      throw new Error(
-        `Database not found at ${DB_PATH}. Run 'npm run etl:full' first.`
-      );
-    }
-    _db = new Database(DB_PATH, { readonly: true });
-    _db.pragma("busy_timeout = 5000");
+function getDb(jurisdiction = "montreal"): Database.Database {
+  const cached = _dbCache.get(jurisdiction);
+  if (cached) return cached;
+
+  const jx = getJurisdiction(jurisdiction);
+  const dbFile = process.env.DB_FILE || jx.dbFile;
+  const dbPath = path.join(process.cwd(), "data", dbFile);
+
+  if (!fs.existsSync(dbPath)) {
+    throw new Error(
+      `Database not found at ${dbPath}. Run 'npm run etl:full' first.`
+    );
   }
-  return _db;
+  const db = new Database(dbPath, { readonly: true });
+  db.pragma("busy_timeout = 5000");
+  _dbCache.set(jurisdiction, db);
+  return db;
 }
 
 /** Check whether the FTS5 index exists, re-checking periodically. */
@@ -263,26 +267,15 @@ export function queryAllPermitsForTrends(
 }
 
 /**
- * Intergovernmental / institutional suppliers that are budget transfers,
- * not procurement contracts. Excluded from analysis by default.
+ * Get the intergovernmental suppliers exclusion list from jurisdiction config.
+ * Cached per jurisdiction for performance.
  */
-const INTERGOVERNMENTAL_SUPPLIERS = [
-  "AUTORITE REGIONALE DE TRANSPORT METROPOLITAIN",
-  "SOCIETE DE TRANSPORT DE MONTREAL (STM)",
-  "TRUST ROYAL DU CANADA",
-  "SOCIETE DU PARC JEAN-DRAPEAU",
-  "COMMUNAUTE METROPOLITAINE DE MONTREAL",
-  "COMMISSION DE LA CAISSE COMMUNE",
-  "RESEAU DE TRANSPORT METROPOLITAIN",
-  "CONSEIL DES ARTS DE MONTREAL",
-  "(ABRPPVM) ASSOCIATION BIENFAISANCE ET RETRAITE DES POLICIERS",
-  "CAISSE COMMUNE RETRAITE VILLE DE MONTREAL",
-  "SYNDICAT DES FONCTIONNAIRES MUNICIPAUX DE MONTREAL",
-  "SYNDICAT DES COLS BLEUS REGROUPES DE MONTREAL S.C.F.P. 301 / F.T.Q.",
-  "ECOLE NATIONALE DE POLICE DU QUEBEC",
-  "ASSOCIATION DES POMPIERS DE MONTREAL",
-  "SOCIETE DE L'ASSURANCE AUTOMOBILE DU QUEBEC (S.A.A.Q.)",
-];
+function getIntergovernmentalSuppliers(jurisdiction = "montreal"): string[] {
+  return getJurisdiction(jurisdiction).intergovernmentalSuppliers;
+}
+
+/** @deprecated Use getIntergovernmentalSuppliers() — kept for backward compat */
+const INTERGOVERNMENTAL_SUPPLIERS = getJurisdiction("montreal").intergovernmentalSuppliers;
 
 /**
  * Query contracts within a date range.
@@ -900,4 +893,62 @@ export function queryYearlyContractsBySource(startYear = 2015): {
     .all(`${startYear}-01-01`, ...INTERGOVERNMENTAL_SUPPLIERS) as {
       source: string; year: string; count: number; totalValue: number;
     }[];
+}
+
+// --- Area queries ---
+
+/** Check if the areas table exists */
+function hasAreasTable(): boolean {
+  const db = getDb();
+  const row = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='areas'").get();
+  return !!row;
+}
+
+/**
+ * Query areas by type (e.g. "borough", "city", "province").
+ * Returns all areas if no type specified.
+ */
+export function queryAreas(type?: string): {
+  slug: string; name_fr: string; name_en: string; type: string; parent_id: number | null;
+}[] {
+  if (!hasAreasTable()) return [];
+  const db = getDb();
+  if (type) {
+    return db
+      .prepare("SELECT slug, name_fr, name_en, type, parent_id FROM areas WHERE type = ? ORDER BY name_fr")
+      .all(type) as { slug: string; name_fr: string; name_en: string; type: string; parent_id: number | null }[];
+  }
+  return db
+    .prepare("SELECT slug, name_fr, name_en, type, parent_id FROM areas ORDER BY type, name_fr")
+    .all() as { slug: string; name_fr: string; name_en: string; type: string; parent_id: number | null }[];
+}
+
+/**
+ * Query a single area by slug.
+ */
+export function queryAreaBySlug(slug: string): {
+  slug: string; name_fr: string; name_en: string; type: string; parent_id: number | null;
+} | undefined {
+  if (!hasAreasTable()) return undefined;
+  const db = getDb();
+  return db
+    .prepare("SELECT slug, name_fr, name_en, type, parent_id FROM areas WHERE slug = ?")
+    .get(slug) as { slug: string; name_fr: string; name_en: string; type: string; parent_id: number | null } | undefined;
+}
+
+/**
+ * Resolve a raw area name via the area_aliases table.
+ * Returns the canonical French name (name_fr) if found, null otherwise.
+ */
+export function resolveAreaAlias(raw: string): string | null {
+  if (!hasAreasTable()) return null;
+  const db = getDb();
+  const row = db
+    .prepare(
+      `SELECT a.name_fr FROM area_aliases aa
+       JOIN areas a ON aa.area_id = a.id
+       WHERE aa.alias = ?`
+    )
+    .get(raw) as { name_fr: string } | undefined;
+  return row?.name_fr ?? null;
 }

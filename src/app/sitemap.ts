@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 import { getLastEtlRun } from "@/lib/db";
+import { getJurisdiction } from "@/lib/jurisdiction";
 
-const BASE_URL = "https://montrealscore.ashwater.ca";
+const BASE_URL = `https://${getJurisdiction().domain}`;
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const locales = ["fr", "en"];

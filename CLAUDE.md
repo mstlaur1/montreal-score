@@ -13,6 +13,7 @@
 - Test all changes on `npm run dev` (port 3000) first.
 - User must approve before deploying to production.
 - **Always deploy using `scripts/deploy.sh`** — never manually restart the production server. The script handles: git pull, ETL, migrations, build, symlinks, systemd restart, and Cloudflare cache purge.
+- **Never assume pages work just because HTTP 200 or `tsc --noEmit` passes.** Next.js streams RSC payloads — `curl` cannot verify rendered content. If you cannot visually confirm page content, **ask the user to check** before proceeding.
 
 ---
 
