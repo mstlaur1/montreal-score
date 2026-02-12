@@ -31,16 +31,53 @@
 
 ### Data Flow
 ```
-Montreal CKAN API → ETL scripts → SQLite DB
-                                      ↓
-                               db.ts (queries, parameterized)
-                                      ↓
-                               data.ts (transforms, React cache())
-                                      ↓
-                               Server Components (SSR/ISR)
-                                      ↓
-                               Client Components (interactivity)
+Open Data API → ETL scripts → SQLite DB
+                                   ↓
+                            db.ts (queries, parameterized)
+                                   ↓
+                            data.ts (transforms, React cache())
+                                   ↓
+                            Server Components (SSR/ISR)
+                                   ↓
+                            Client Components (interactivity)
 ```
+
+### Jurisdiction System (Multi-Government Support)
+
+The app is genericized for multi-jurisdiction support. Montreal-specific constants are centralized in a config system rather than hardcoded throughout the codebase.
+
+**Key principle:** Adding a new jurisdiction (Quebec provincial, Canadian federal) should require writing a config + ETL script, not restructuring the app.
+
+#### `src/lib/jurisdiction.ts`
+Central config per jurisdiction. Currently only Montreal. Contains:
+- Brand name, domain, DB filename
+- Admin periods (Coderre, Plante, Martinez Ferrada date ranges)
+- Scoring params (`permitTargetDays`, `previousTargetDays`)
+- Inauguration dates (for promise countdown)
+- Intergovernmental supplier exclusion list
+- Procurement threshold eras (Quebec law)
+- Data source info, feature flags
+
+Usage in page components:
+```ts
+const jx = getJurisdiction(); // defaults to "montreal"
+const presets = buildPresets(jx.adminPeriods.permits, bounds.max);
+```
+
+#### `areas` Table (Hierarchical Geography)
+```
+Canada → Quebec → Montreal → 19 boroughs
+```
+- `areas` — immutable identity (slug, type, name_fr, name_en, parent_id)
+- `area_attributes` — mutable data (population, area_km2) with effective dates
+- `area_aliases` — dataset name normalization (e.g. "CDN-NDG" → Côte-des-Neiges-Notre-Dame-de-Grâce)
+
+#### Adding a New Jurisdiction (Phase 2)
+1. Add config to `JURISDICTIONS` map in `jurisdiction.ts`
+2. Write ETL script for the new data source
+3. Create migration to seed areas hierarchy
+4. Add i18n strings to `Jurisdiction` namespace
+5. URL routing (`[jurisdiction]` segment) and multi-domain are Phase 2 concerns
 
 ### Directory Structure
 ```
@@ -49,12 +86,13 @@ src/
 │   └── api/                # API routes (ETL trigger, promise CRUD)
 ├── components/             # Reusable components (server + client)
 ├── lib/
-│   ├── db.ts               # Read-only SQLite queries (parameterized statements)
+│   ├── jurisdiction.ts     # Jurisdiction config (brand, scoring, thresholds, etc.)
+│   ├── db.ts               # Read-only SQLite queries (multi-DB, parameterized)
 │   ├── db-write.ts         # Write-only DB handle (API routes only)
 │   ├── data.ts             # Data transforms + React cache() wrappers
 │   ├── types.ts            # All TypeScript interfaces and union types
-│   ├── scoring.ts          # Borough grade calculation (A-F)
-│   ├── boroughs.ts         # Borough name normalization + slug mapping
+│   ├── scoring.ts          # Borough grade calculation (A-F, parameterized target)
+│   ├── boroughs.ts         # Area name normalization (DB-backed + hardcoded fallback)
 │   ├── supplier-normalization.ts  # Supplier name canonicalization
 │   └── api-auth.ts         # Bearer token auth + rate limiting
 └── i18n/                   # next-intl routing, request config, navigation
@@ -74,6 +112,12 @@ messages/
 
 ## Patterns & Conventions
 
+### Jurisdiction Config Pattern
+- **All jurisdiction-specific values** (domain, admin periods, scoring params, inauguration dates, intergovernmental suppliers, threshold eras) live in `jurisdiction.ts`.
+- **Page components** call `getJurisdiction()` at the top and use `jx.domain`, `jx.adminPeriods`, etc.
+- **Metadata URLs** are built from `jx.domain`, never hardcoded.
+- **buildPresets()** converts admin periods (with nullable `to`) into DateRangeSelector presets.
+
 ### Component Pattern
 - **Server components by default.** Only add `"use client"` when the component needs hooks, event handlers, or browser APIs.
 - **Server components** fetch data and pass it as props to client components.
@@ -81,10 +125,11 @@ messages/
 - **Naming:** PascalCase files and exports (`PermitBarChart.tsx`, `StatusBadge.tsx`).
 
 ### Data Layer Pattern
-- **db.ts** — Raw SQL queries. All use parameterized prepared statements. Never interpolate user input. Functions prefixed with `query*` (e.g., `queryPermitsByYear`, `queryContractsByRange`).
-- **data.ts** — Business logic transforms. All wrapped with `React.cache()` for per-request deduplication. Functions prefixed with `get*` (e.g., `getBoroughPermitStats`, `getContractStats`).
+- **db.ts** — Raw SQL queries. Multi-DB support (cached by jurisdiction slug). All use parameterized prepared statements. Never interpolate user input. Functions prefixed with `query*`.
+- **data.ts** — Business logic transforms. All wrapped with `React.cache()` for per-request deduplication. Functions prefixed with `get*`.
 - **db-write.ts** — Separate write-only handle, used only in API routes behind auth.
 - **Database is readonly in app code.** Writes happen only through authenticated API routes.
+- **Area queries** — `queryAreas(type?)`, `queryAreaBySlug(slug)`, `resolveAreaAlias(raw)` in db.ts; wrapper functions with hardcoded fallbacks in boroughs.ts.
 
 ### Type Conventions
 - **Raw types** (from DB): prefixed with `Raw` (e.g., `RawPermit`, `RawContract`, `RawPromise`)
@@ -99,6 +144,7 @@ messages/
 - **When passing translations to client components:** resolve them in the server parent and pass as string props in a `labels` object. This avoids needing `useTranslations` in the client.
 - **Plurals:** Use ICU MessageFormat in messages JSON (e.g., `"{count, plural, one {# item} other {# items}}"`).
 - **Navigation:** Use `Link` from `@/i18n/navigation`, not `next/link`.
+- **Jurisdiction namespace:** `t("Jurisdiction.name")`, `t("Jurisdiction.areaLabel")`, etc. for jurisdiction-specific labels.
 
 ### Styling Pattern
 - **Tailwind v4** with `@theme inline` in `globals.css` mapping CSS custom properties.
@@ -120,8 +166,8 @@ messages/
 - Rate limit: 3s+ delay between queries (Cloudflare enforced).
 - Exponential backoff on 429/5xx errors.
 - 5 contract datasets (fonctionnaires, conseil_municipal, conseil_agglomeration, comite_executif, conseils_arrondissement) — each has different column names.
-- Intergovernmental suppliers (ARTM, STM, etc.) excluded from analysis.
-- Post-ETL migrations: `add-processing-days.js`, `build-fts.js`, `cache-permit-trends.js`.
+- Intergovernmental suppliers (from `jurisdiction.ts` config) excluded from analysis.
+- Post-ETL migrations: `add-processing-days.js`, `build-fts.js`, `cache-permit-trends.js`, `create-areas.js`.
 
 ### Revalidation Strategy
 - SSG pages use `export const revalidate = 3600` (1-hour ISR).
@@ -163,6 +209,9 @@ scripts/deploy.sh        # Full production deploy
 | `sr_status` | 311 request statuses |
 | `sr_pothole` | 311 pothole-specific stats |
 | `contracts_fts` | FTS5 full-text index on contracts |
+| `areas` | Hierarchical geography (country → province → city → borough) |
+| `area_attributes` | Mutable area data (population, area_km2) with effective dates |
+| `area_aliases` | Dataset name normalization for areas |
 
 ---
 
@@ -172,10 +221,14 @@ scripts/deploy.sh        # Full production deploy
 |------|-------------|
 | `server.js` | Node.js cluster wrapper (8 workers, port 3891) |
 | `next.config.ts` | Standalone output, CSP headers, next-intl plugin |
-| `src/lib/db.ts` | All read-only database queries |
+| `src/lib/jurisdiction.ts` | Jurisdiction config (brand, domain, scoring, thresholds) |
+| `src/lib/db.ts` | All read-only database queries (multi-DB) |
 | `src/lib/data.ts` | Data transforms with `React.cache()` |
+| `src/lib/boroughs.ts` | Area name normalization (DB-backed + fallback) |
+| `src/lib/scoring.ts` | Borough grading (parameterized target days) |
 | `src/lib/types.ts` | All TypeScript interfaces |
 | `src/lib/api-auth.ts` | Bearer token + rate limiting |
 | `src/app/globals.css` | Tailwind v4 theme (CSS custom properties, dark mode) |
 | `scripts/deploy.sh` | Production deploy pipeline |
 | `scripts/etl.ts` | Main ETL (permits + contracts) |
+| `scripts/migrations/create-areas.js` | Areas hierarchy + seed data migration |
