@@ -1,8 +1,10 @@
 import Database from "better-sqlite3";
 import path from "node:path";
 import fs from "node:fs";
+import { getJurisdiction } from "./jurisdiction";
 
-const DB_PATH = path.join(process.cwd(), "data", "montreal.db");
+const dbFile = process.env.DB_FILE || getJurisdiction().dbFile;
+const DB_PATH = path.join(process.cwd(), "data", dbFile);
 
 let _db: Database.Database | null = null;
 

@@ -97,14 +97,9 @@ export default async function PromisesPage({ params }: Props) {
   const { dayElapsed, pct, expired } = get100DayProgress();
   const completedCount = first100.filter((p) => p.status === "completed").length;
 
-  // All promises: flatten borough map + first100 + platform for full count
-  const allPromises = [...first100];
-  for (const promises of boroughMap.values()) allPromises.push(...promises);
-  for (const promises of platformMap.values()) allPromises.push(...promises);
-
   // Sort platform categories by promise count (descending)
   const sortedCategories = [...platformMap.entries()].sort(([, a], [, b]) => b.length - a.length);
-  const allStats = statusBreakdown(allPromises);
+  const allStats = statusBreakdown(allPromisesFlat);
   const first100Stats = statusBreakdown(first100);
 
   const statusLabel = (s: PromiseStatus) => t(`status.${s}`);

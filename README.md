@@ -146,6 +146,7 @@ montreal-score/
 │   │   ├── volunteer/    # Call to action
 │   │   └── api/          # API routes (ETL, promise CRUD)
 │   ├── components/       # React components (server + client)
+│   ├── middleware.ts         # next-intl middleware (locale detection, redirect)
 │   ├── lib/
 │   │   ├── jurisdiction.ts   # Jurisdiction config (brand, scoring, thresholds)
 │   │   ├── db.ts             # Multi-DB read-only queries

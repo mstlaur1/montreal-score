@@ -268,14 +268,10 @@ export function queryAllPermitsForTrends(
 
 /**
  * Get the intergovernmental suppliers exclusion list from jurisdiction config.
- * Cached per jurisdiction for performance.
  */
 function getIntergovernmentalSuppliers(jurisdiction = "montreal"): string[] {
   return getJurisdiction(jurisdiction).intergovernmentalSuppliers;
 }
-
-/** @deprecated Use getIntergovernmentalSuppliers() — kept for backward compat */
-const INTERGOVERNMENTAL_SUPPLIERS = getJurisdiction("montreal").intergovernmentalSuppliers;
 
 /**
  * Query contracts within a date range.
@@ -284,7 +280,7 @@ const INTERGOVERNMENTAL_SUPPLIERS = getJurisdiction("montreal").intergovernmenta
  */
 export function queryContractsByRange(from: string, to: string): RawContract[] {
   const db = getDb();
-  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  const placeholders = getIntergovernmentalSuppliers().map(() => "?").join(",");
   return db
     .prepare(
       `SELECT
@@ -301,7 +297,7 @@ export function queryContractsByRange(from: string, to: string): RawContract[] {
          AND supplier NOT IN (${placeholders})
        ORDER BY approval_date DESC`
     )
-    .all(from, to, ...INTERGOVERNMENTAL_SUPPLIERS) as RawContract[];
+    .all(from, to, ...getIntergovernmentalSuppliers()) as RawContract[];
 }
 
 /**
@@ -318,8 +314,8 @@ export function getContractDateBounds(): { min: string; max: string } {
        FROM contracts
        WHERE approval_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*'`
     )
-    .get() as { min: string; max: string };
-  return row;
+    .get() as { min: string | null; max: string | null };
+  return { min: row?.min ?? "2011-01", max: row?.max ?? "2026-01" };
 }
 
 /**
@@ -463,7 +459,7 @@ export function queryContractsInBand(
   bandMax: number,
 ): { supplier: string; approval_date: string; montant: number }[] {
   const db = getDb();
-  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  const placeholders = getIntergovernmentalSuppliers().map(() => "?").join(",");
   return db
     .prepare(
       `SELECT supplier, approval_date, CAST(montant AS REAL) AS montant
@@ -474,7 +470,7 @@ export function queryContractsInBand(
          AND supplier NOT IN (${placeholders})
        ORDER BY supplier, approval_date`
     )
-    .all(from, to, bandMin, bandMax, ...INTERGOVERNMENTAL_SUPPLIERS) as {
+    .all(from, to, bandMin, bandMax, ...getIntergovernmentalSuppliers()) as {
       supplier: string; approval_date: string; montant: number;
     }[];
 }
@@ -489,7 +485,7 @@ export function querySoleSourceByYear(from: string, to: string): {
   year: string; count: number; totalValue: number;
 }[] {
   const db = getDb();
-  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  const placeholders = getIntergovernmentalSuppliers().map(() => "?").join(",");
   return db
     .prepare(
       `SELECT substr(approval_date, 1, 4) AS year,
@@ -501,7 +497,7 @@ export function querySoleSourceByYear(from: string, to: string): {
          AND supplier NOT IN (${placeholders})
        GROUP BY year ORDER BY year`
     )
-    .all(from, to, ...INTERGOVERNMENTAL_SUPPLIERS) as {
+    .all(from, to, ...getIntergovernmentalSuppliers()) as {
       year: string; count: number; totalValue: number;
     }[];
 }
@@ -513,7 +509,7 @@ export function querySoleSourceTopRecipients(from: string, to: string, limit = 1
   supplier: string; count: number; totalValue: number;
 }[] {
   const db = getDb();
-  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  const placeholders = getIntergovernmentalSuppliers().map(() => "?").join(",");
   return db
     .prepare(
       `SELECT supplier, COUNT(*) AS count, SUM(montant) AS totalValue
@@ -524,7 +520,7 @@ export function querySoleSourceTopRecipients(from: string, to: string, limit = 1
          AND supplier IS NOT NULL
        GROUP BY supplier ORDER BY totalValue DESC LIMIT ?`
     )
-    .all(from, to, ...INTERGOVERNMENTAL_SUPPLIERS, limit) as {
+    .all(from, to, ...getIntergovernmentalSuppliers(), limit) as {
       supplier: string; count: number; totalValue: number;
     }[];
 }
@@ -543,7 +539,7 @@ export function queryRoundNumberContracts(from: string, to: string, amounts: num
 }[] {
   if (amounts.length === 0) return [];
   const db = getDb();
-  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  const placeholders = getIntergovernmentalSuppliers().map(() => "?").join(",");
   const amtPlaceholders = amounts.map(() => "?").join(",");
   return db
     .prepare(
@@ -556,7 +552,7 @@ export function queryRoundNumberContracts(from: string, to: string, amounts: num
        GROUP BY CAST(montant AS INTEGER)
        ORDER BY amount DESC`
     )
-    .all(from, to, ...amounts, ...INTERGOVERNMENTAL_SUPPLIERS) as { amount: number; count: number }[];
+    .all(from, to, ...amounts, ...getIntergovernmentalSuppliers()) as { amount: number; count: number }[];
 }
 
 /**
@@ -564,7 +560,7 @@ export function queryRoundNumberContracts(from: string, to: string, amounts: num
  */
 export function queryComparisonBandCount(from: string, to: string, bandMin: number, bandMax: number): number {
   const db = getDb();
-  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  const placeholders = getIntergovernmentalSuppliers().map(() => "?").join(",");
   const row = db
     .prepare(
       `SELECT COUNT(*) AS count
@@ -574,7 +570,7 @@ export function queryComparisonBandCount(from: string, to: string, bandMin: numb
          AND CAST(montant AS REAL) > ? AND CAST(montant AS REAL) <= ?
          AND supplier NOT IN (${placeholders})`
     )
-    .get(from, to, bandMin, bandMax, ...INTERGOVERNMENTAL_SUPPLIERS) as { count: number };
+    .get(from, to, bandMin, bandMax, ...getIntergovernmentalSuppliers()) as { count: number };
   return row.count;
 }
 
@@ -585,7 +581,7 @@ export function queryMonthlyDistribution(from: string, to: string): {
   month: number; count: number; totalValue: number;
 }[] {
   const db = getDb();
-  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  const placeholders = getIntergovernmentalSuppliers().map(() => "?").join(",");
   return db
     .prepare(
       `SELECT CAST(substr(approval_date, 6, 2) AS INTEGER) AS month,
@@ -598,7 +594,7 @@ export function queryMonthlyDistribution(from: string, to: string): {
        GROUP BY CAST(substr(approval_date, 6, 2) AS INTEGER)
        ORDER BY month`
     )
-    .all(from, to, ...INTERGOVERNMENTAL_SUPPLIERS) as { month: number; count: number; totalValue: number }[];
+    .all(from, to, ...getIntergovernmentalSuppliers()) as { month: number; count: number; totalValue: number }[];
 }
 
 /**
@@ -608,7 +604,7 @@ export function queryDeptSupplierPairs(from: string, to: string): {
   service: string; supplier: string; count: number; totalValue: number;
 }[] {
   const db = getDb();
-  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  const placeholders = getIntergovernmentalSuppliers().map(() => "?").join(",");
   return db
     .prepare(
       `SELECT service, supplier, COUNT(*) AS count, SUM(montant) AS totalValue
@@ -621,7 +617,7 @@ export function queryDeptSupplierPairs(from: string, to: string): {
        ORDER BY totalValue DESC
        LIMIT 50`
     )
-    .all(from, to, ...INTERGOVERNMENTAL_SUPPLIERS) as {
+    .all(from, to, ...getIntergovernmentalSuppliers()) as {
       service: string; supplier: string; count: number; totalValue: number;
     }[];
 }
@@ -633,7 +629,7 @@ export function queryDeptTotals(from: string, to: string): {
   service: string; totalValue: number;
 }[] {
   const db = getDb();
-  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  const placeholders = getIntergovernmentalSuppliers().map(() => "?").join(",");
   return db
     .prepare(
       `SELECT service, SUM(montant) AS totalValue
@@ -644,7 +640,7 @@ export function queryDeptTotals(from: string, to: string): {
          AND service IS NOT NULL
        GROUP BY service`
     )
-    .all(from, to, ...INTERGOVERNMENTAL_SUPPLIERS) as { service: string; totalValue: number }[];
+    .all(from, to, ...getIntergovernmentalSuppliers()) as { service: string; totalValue: number }[];
 }
 
 /**
@@ -654,7 +650,7 @@ export function querySupplierHalfPeriodTotals(from: string, to: string, midpoint
   supplier: string; half: number; totalValue: number;
 }[] {
   const db = getDb();
-  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  const placeholders = getIntergovernmentalSuppliers().map(() => "?").join(",");
   return db
     .prepare(
       `SELECT supplier,
@@ -667,7 +663,7 @@ export function querySupplierHalfPeriodTotals(from: string, to: string, midpoint
          AND supplier IS NOT NULL
        GROUP BY supplier, CASE WHEN approval_date < ? THEN 1 ELSE 2 END`
     )
-    .all(midpoint, from, to, ...INTERGOVERNMENTAL_SUPPLIERS, midpoint) as {
+    .all(midpoint, from, to, ...getIntergovernmentalSuppliers(), midpoint) as {
       supplier: string; half: number; totalValue: number;
     }[];
 }
@@ -692,7 +688,7 @@ export function searchContracts(
   amountFilter?: { min?: number; max?: number }, sort?: string
 ): { results: { supplier: string; service: string; description: string; montant: number; approval_date: string; source: string }[]; totalCount: number } {
   const db = getDb();
-  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  const placeholders = getIntergovernmentalSuppliers().map(() => "?").join(",");
 
   const conditions: string[] = [
     `approval_date >= ?`,
@@ -700,7 +696,7 @@ export function searchContracts(
     `approval_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*'`,
     `supplier NOT IN (${placeholders})`,
   ];
-  const params: (string | number)[] = [from, to, ...INTERGOVERNMENTAL_SUPPLIERS];
+  const params: (string | number)[] = [from, to, ...getIntergovernmentalSuppliers()];
 
   if (query) {
     if (hasFts()) {
@@ -879,7 +875,7 @@ export function queryYearlyContractsBySource(startYear = 2015): {
   source: string; year: string; count: number; totalValue: number;
 }[] {
   const db = getDb();
-  const placeholders = INTERGOVERNMENTAL_SUPPLIERS.map(() => "?").join(",");
+  const placeholders = getIntergovernmentalSuppliers().map(() => "?").join(",");
   return db
     .prepare(
       `SELECT source, substr(approval_date, 1, 4) AS year,
@@ -890,7 +886,7 @@ export function queryYearlyContractsBySource(startYear = 2015): {
          AND supplier NOT IN (${placeholders})
        GROUP BY source, year ORDER BY source, year`
     )
-    .all(`${startYear}-01-01`, ...INTERGOVERNMENTAL_SUPPLIERS) as {
+    .all(`${startYear}-01-01`, ...getIntergovernmentalSuppliers()) as {
       source: string; year: string; count: number; totalValue: number;
     }[];
 }

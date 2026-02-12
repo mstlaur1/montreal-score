@@ -82,6 +82,7 @@ Canada → Quebec → Montreal → 19 boroughs
 ### Directory Structure
 ```
 src/
+├── middleware.ts            # next-intl middleware (locale detection, / → /fr redirect)
 ├── app/[locale]/           # Pages: permits, contracts, 311, promises, about, volunteer
 │   └── api/                # API routes (ETL trigger, promise CRUD)
 ├── components/             # Reusable components (server + client)
@@ -127,7 +128,7 @@ messages/
 ### Data Layer Pattern
 - **db.ts** — Raw SQL queries. Multi-DB support (cached by jurisdiction slug). All use parameterized prepared statements. Never interpolate user input. Functions prefixed with `query*`.
 - **data.ts** — Business logic transforms. All wrapped with `React.cache()` for per-request deduplication. Functions prefixed with `get*`.
-- **db-write.ts** — Separate write-only handle, used only in API routes behind auth.
+- **db-write.ts** — Separate write-only handle, used only in API routes behind auth. Respects `DB_FILE` env var and jurisdiction config (same as `db.ts`).
 - **Database is readonly in app code.** Writes happen only through authenticated API routes.
 - **Area queries** — `queryAreas(type?)`, `queryAreaBySlug(slug)`, `resolveAreaAlias(raw)` in db.ts; wrapper functions with hardcoded fallbacks in boroughs.ts.
 
@@ -228,6 +229,7 @@ scripts/deploy.sh        # Full production deploy
 | `src/lib/scoring.ts` | Borough grading (parameterized target days) |
 | `src/lib/types.ts` | All TypeScript interfaces |
 | `src/lib/api-auth.ts` | Bearer token + rate limiting |
+| `src/middleware.ts` | next-intl middleware (locale redirect, negotiation) |
 | `src/app/globals.css` | Tailwind v4 theme (CSS custom properties, dark mode) |
 | `scripts/deploy.sh` | Production deploy pipeline |
 | `scripts/etl.ts` | Main ETL (permits + contracts) |
