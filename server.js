@@ -19,8 +19,25 @@ if (cluster.isPrimary) {
     cluster.fork();
   }
 
+  // Track rapid restarts to prevent infinite crash loops
+  const recentExits = [];
+  const MAX_RAPID_RESTARTS = 5;
+  const RAPID_RESTART_WINDOW_MS = 30_000;
+
   cluster.on("exit", (worker, code, signal) => {
-    console.log(`[cluster] Worker ${worker.process.pid} exited (code=${code}, signal=${signal}). Restarting...`);
+    const now = Date.now();
+    recentExits.push(now);
+    // Keep only exits within the window
+    while (recentExits.length > 0 && now - recentExits[0] > RAPID_RESTART_WINDOW_MS) {
+      recentExits.shift();
+    }
+
+    if (recentExits.length >= MAX_RAPID_RESTARTS) {
+      console.error(`[cluster] Worker ${worker.process.pid} exited (code=${code}, signal=${signal}). ${MAX_RAPID_RESTARTS} crashes in ${RAPID_RESTART_WINDOW_MS / 1000}s — stopping restarts.`);
+      process.exit(1);
+    }
+
+    console.log(`[cluster] Worker ${worker.process.pid} exited (code=${code}, signal=${signal}). Restarting in 1s...`);
     setTimeout(() => cluster.fork(), 1000);
   });
 } else {

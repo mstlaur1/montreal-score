@@ -32,6 +32,7 @@ export default async function AboutPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("AboutPage");
+  const jx = getJurisdiction();
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -66,7 +67,7 @@ export default async function AboutPage({ params }: Props) {
           {t.rich("dataSourcesIntro", {
             link: (chunks) => (
               <a
-                href="https://donnees.montreal.ca"
+                href={jx.dataSource.url}
                 className="text-accent underline"
                 target="_blank"
                 rel="noopener noreferrer"

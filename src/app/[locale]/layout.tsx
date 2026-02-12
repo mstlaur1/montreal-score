@@ -111,7 +111,7 @@ export default async function LocaleLayout({ children, params }: Props) {
           <header className="border-b border-card-border">
             <nav aria-label={locale === "fr" ? "Navigation principale" : "Main navigation"} className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center gap-x-6 gap-y-2">
               <Link href="/" className="text-xl font-bold tracking-tight mr-auto">
-                Montréal<span className="text-accent">Score</span>
+                {jx.brandPrefix}<span className="text-accent">{jx.brandAccent}</span>
               </Link>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm md:gap-x-6">
                 <Link href="/promises" className="hover:text-accent transition-colors">

@@ -1,6 +1,7 @@
 import { cache } from "react";
 import path from "node:path";
 import fs from "node:fs";
+import { getJurisdiction } from "./jurisdiction";
 import {
   queryPermitsByYear, queryPermitAggsByRange, queryPermitMediansByRange,
   queryYearlyTrends, queryPermitsForTrends, queryAllPermitsForTrends,
@@ -685,20 +686,8 @@ export const getContractStats = cache(async (from: string, to: string): Promise<
     return { count: inBand, expected: aboveBand };
   }
 
-  // Historical public tender thresholds by effective date
-  // Each entry: [effective_from, effective_to_exclusive, threshold, label, period_label, band_size]
-  const THRESHOLD_ERAS: {
-    from: string; to: string; threshold: number;
-    label: string; period: string; bandSize: number;
-  }[] = [
-    { from: "2011-01-01", to: "2017-07-01", threshold: 25000, label: "$25K", period: "2011–2017", bandSize: 5000 },
-    { from: "2017-07-01", to: "2019-08-01", threshold: 100000, label: "$100K", period: "2017–2019", bandSize: 10000 },
-    { from: "2019-08-01", to: "2022-01-01", threshold: 101100, label: "$101.1K", period: "2019–2021", bandSize: 10000 },
-    { from: "2022-01-01", to: "2022-10-07", threshold: 105700, label: "$105.7K", period: "Jan–Oct 2022", bandSize: 10000 },
-    { from: "2022-10-07", to: "2024-01-01", threshold: 121200, label: "$121.2K", period: "2022–2023", bandSize: 12000 },
-    { from: "2024-01-01", to: "2026-01-01", threshold: 133800, label: "$133.8K", period: "2024–2025", bandSize: 13800 },
-    { from: "2026-01-01", to: "2028-01-01", threshold: 139000, label: "$139K", period: "2026–2027", bandSize: 14000 },
-  ];
+  // Historical public tender thresholds — sourced from jurisdiction config
+  const THRESHOLD_ERAS = getJurisdiction().thresholdEras;
 
   // $25K threshold applies to all contracts regardless of era
   const thresholdClusters: {

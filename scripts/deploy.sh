@@ -33,13 +33,19 @@ echo "==> Restarting montreal-score service..."
 sudo systemctl restart montreal-score
 
 echo "==> Waiting for server to be ready..."
+SERVER_UP=0
 for i in $(seq 1 15); do
   if curl -sf http://localhost:3891 > /dev/null 2>&1; then
     echo "    Server is up."
+    SERVER_UP=1
     break
   fi
   sleep 1
 done
+if [ "$SERVER_UP" -eq 0 ]; then
+  echo "    ERROR: Server failed to start after 15 seconds."
+  exit 1
+fi
 
 echo "==> Purging Cloudflare cache..."
 CF_TOKEN=$(cat "$CF_TOKEN_FILE" | tr -d '\n')

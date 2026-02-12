@@ -7,9 +7,20 @@ const TOKEN = process.env.ADMIN_API_TOKEN;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 30;
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+let rateLimitCleanupCounter = 0;
+const CLEANUP_INTERVAL = 100; // Sweep expired entries every N checks
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
+
+  // Periodic cleanup of expired entries to prevent memory leak
+  if (++rateLimitCleanupCounter >= CLEANUP_INTERVAL) {
+    rateLimitCleanupCounter = 0;
+    for (const [key, entry] of rateLimitMap) {
+      if (now > entry.resetAt) rateLimitMap.delete(key);
+    }
+  }
+
   const entry = rateLimitMap.get(ip);
   if (!entry || now > entry.resetAt) {
     rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });

@@ -24,6 +24,9 @@ export interface ThresholdEra {
 export interface JurisdictionConfig {
   slug: string;
   brandName: string;
+  /** Brand split for styled rendering: prefix + accented suffix */
+  brandPrefix: string;
+  brandAccent: string;
   domain: string;
   dbFile: string;
 
@@ -73,6 +76,8 @@ export interface JurisdictionConfig {
 const MONTREAL_CONFIG: JurisdictionConfig = {
   slug: "montreal",
   brandName: "MontréalScore",
+  brandPrefix: "Montréal",
+  brandAccent: "Score",
   domain: "montrealscore.ashwater.ca",
   dbFile: "montreal.db",
   areaType: "borough",

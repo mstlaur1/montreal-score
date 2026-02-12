@@ -33,6 +33,7 @@ export default async function Home({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("HomePage");
+  const jx = getJurisdiction();
 
   const currentYear = new Date().getFullYear();
 
@@ -76,7 +77,7 @@ export default async function Home({ params }: Props) {
       {/* Hero */}
       <section className="text-center py-12">
         <h1 className="text-4xl font-bold tracking-tight">
-          Montréal<span className="text-accent">Score</span>
+          {jx.brandPrefix}<span className="text-accent">{jx.brandAccent}</span>
         </h1>
         <p className="text-lg text-muted mt-3 max-w-2xl mx-auto">
           {t("heroSubtitle")}

@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { execFile } from "node:child_process";
 import path from "node:path";
-import { timingSafeEqual } from "node:crypto";
+import { withAuth } from "@/lib/api-auth";
 
-const TOKEN = process.env.ADMIN_API_TOKEN;
 // process.cwd() in standalone points to .next/standalone/, not the project root
 const PROJECT_DIR = process.env.PROJECT_DIR;
 if (!PROJECT_DIR) {
@@ -13,7 +12,7 @@ if (!PROJECT_DIR) {
 const TSX = PROJECT_DIR ? path.join(PROJECT_DIR, "node_modules", ".bin", "tsx") : "";
 const NODE = process.execPath;
 
-// Simple rate limiting: 1 ETL request per 60 seconds
+// ETL-specific cooldown: 1 request per 60 seconds (stricter than withAuth's general rate limit)
 let lastEtlRequest = 0;
 const ETL_COOLDOWN_MS = 60_000;
 
@@ -42,17 +41,7 @@ function runScript(bin: string, script: string, args: string[], timeoutMs = 300_
   });
 }
 
-export async function POST(req: NextRequest) {
-  if (!TOKEN) {
-    return NextResponse.json({ error: "ADMIN_API_TOKEN not configured" }, { status: 500 });
-  }
-
-  const auth = req.headers.get("authorization");
-  const expected = `Bearer ${TOKEN}`;
-  if (!auth || Buffer.byteLength(auth) !== Buffer.byteLength(expected) || !timingSafeEqual(Buffer.from(auth), Buffer.from(expected))) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAuth(async (req: NextRequest) => {
   if (!PROJECT_DIR) {
     return NextResponse.json({ error: "PROJECT_DIR not configured" }, { status: 500 });
   }
@@ -108,4 +97,4 @@ export async function POST(req: NextRequest) {
 
   const allOk = Object.values(results).every((r) => r.ok);
   return NextResponse.json({ ok: allOk, mode, results }, { status: allOk ? 200 : 207 });
-}
+});

@@ -138,11 +138,11 @@ app.patch("/api/updates/:id", (req, res) => {
     .prepare(
       `UPDATE promise_updates
        SET date = coalesce(?, date),
-           source_url = ?,
-           source_title = ?,
-           summary_fr = ?,
-           summary_en = ?,
-           sentiment = ?
+           source_url = coalesce(?, source_url),
+           source_title = coalesce(?, source_title),
+           summary_fr = coalesce(?, summary_fr),
+           summary_en = coalesce(?, summary_en),
+           sentiment = coalesce(?, sentiment)
        WHERE id = ?`
     )
     .run(
