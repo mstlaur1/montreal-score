@@ -6,7 +6,7 @@ A free, open-source government accountability tracker for Montreal. Borough-by-b
 
 ## What is this?
 
-MontréalScore aggregates Montreal's publicly available government data — construction permits, city contracts, 311 service requests, and campaign promises — and transforms it into clear, comparable performance metrics for each of Montreal's 19 boroughs.
+MontréalScore aggregates Montreal's publicly available government data — construction permits, city contracts, 311 service requests, and campaign promises — and transforms it into clear, comparable performance metrics.
 
 The city publishes the data. We make it legible.
 
@@ -22,65 +22,128 @@ This isn't just about permits. It's about whether your city government spends yo
 
 ## Features
 
-- **Permit Tracker** — Housing permit processing times by borough vs. the 90-day target, historical trends since 2015
-- **Contract Explorer** — Procurement analysis with threshold clustering, contract splitting detection, sole-source tracking
-- **311 Dashboard** — Service request volumes, resolution rates, and response times by borough
-- **Promise Tracker** — First 100 days and full platform promises with source-linked status updates
-- **Bilingual** — Full French and English support
+- **Permit Tracker** — Housing permit processing times by borough vs. the 90-day target, historical trends since 2015, date range filtering
+- **Contract Explorer** — Full-text search across 312K+ contracts, procurement forensics (threshold clustering, contract splitting detection, sole-source tracking, supplier growth analysis)
+- **311 Dashboard** — Service request volumes, resolution rates, and response times by borough, pothole spotlight
+- **Promise Tracker** — 420 campaign promises tracked with source-linked updates, searchable/filterable, first 100 days countdown
+- **Bilingual** — Full French and English (French default)
+- **Dark Mode** — Automatic based on system preference
 
 ## Data Sources
 
 All data comes from [donnees.montreal.ca](https://donnees.montreal.ca), Montreal's official open data portal:
 
-| Dataset | Update Frequency |
-|---|---|
-| Construction Permits | Weekly |
-| City Contracts | Regular |
-| 311 Service Requests | Quarterly |
-| Campaign Promises | Manual (source-linked) |
+| Dataset | Records | Update Frequency |
+|---------|---------|------------------|
+| Construction Permits | 457K+ | Weekly |
+| City Contracts (5 datasets) | 312K+ | Regular |
+| 311 Service Requests | 350K+/year | Quarterly |
+| Campaign Promises | 420 | Manual (source-linked) |
+
+Contract data is loaded from 5 separate datasets by approval body (fonctionnaires, conseil municipal, conseil d'agglomeration, comite executif, conseils d'arrondissement). Intergovernmental transfers (ARTM, STM, etc.) are filtered out.
 
 ## Tech Stack
 
-- **Framework:** Next.js 16 (App Router) + React 19 + TypeScript 5
-- **Styling:** Tailwind CSS v4
-- **Database:** SQLite (better-sqlite3, readonly in app, WAL mode)
+- **Framework:** Next.js 16 (App Router, standalone output) + React 19 + TypeScript 5
+- **Database:** SQLite via better-sqlite3 (readonly in app, WAL mode)
+- **Styling:** Tailwind CSS v4 with CSS custom properties (auto dark mode)
 - **Charts:** Recharts v2
 - **i18n:** next-intl v4 (French default, English)
-- **ETL:** TypeScript scripts fetching from Montreal's CKAN API
-- **Hosting:** Cloudflare Tunnel → Debian home server
+- **Search:** FTS5 full-text index on contracts
+- **ETL:** TypeScript scripts fetching from Montreal's CKAN SQL API
+- **Hosting:** Node.js cluster (8 workers) behind Cloudflare Tunnel on Debian
 
 ## Getting Started
 
+### Prerequisites
+- Node.js 20+
+- npm
+
+### Setup
+
 ```bash
-# Install dependencies
+# Clone and install
+git clone https://github.com/mstlaur1/montreal-score.git
+cd montreal-score
 npm install
 
-# Fetch data from Montreal open data portal
-npm run etl:full        # permits + contracts (all years)
-npm run etl:311:full    # 311 service requests
-npm run promises:seed   # campaign promises
+# Configure environment
+cp .env.example .env.local
+# Edit .env.local with your ADMIN_API_TOKEN and PROJECT_DIR
 
-# Run the development server
+# Fetch data from Montreal open data portal
+npm run etl:full          # Permits + contracts (all years, ~15 min)
+npm run etl:311:full      # 311 service requests
+npm run promises:seed     # Campaign promises
+
+# Run post-ETL migrations
+node scripts/migrations/add-processing-days.js
+node scripts/migrations/build-fts.js
+node scripts/migrations/cache-permit-trends.js
+
+# Start development server
 npm run dev
 ```
+
+Open [http://localhost:3000/fr](http://localhost:3000/fr) to see the site.
+
+### Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `ADMIN_API_TOKEN` | Yes | Bearer token for API routes (ETL, promise management) |
+| `PROJECT_DIR` | Yes | Absolute path to project root (for ETL API route) |
+| `DB_FILE` | No | Database filename (default: `montreal.db`) |
+
+### Available Scripts
+
+```bash
+npm run dev              # Dev server with Turbopack (port 3000)
+npm run build            # Production build
+npm run etl              # Incremental ETL (current + previous year)
+npm run etl:full         # Full ETL (all years)
+npm run etl:311          # 311 incremental
+npm run etl:311:full     # 311 full
+npm run promises:seed    # Bulk import campaign promises
+npm run admin            # Admin UI for promise management (port 3099)
+```
+
+### Production Deployment
+
+```bash
+scripts/deploy.sh
+```
+
+The deploy script handles the full pipeline: git pull, incremental ETL, migrations, build, standalone symlinks, systemd service restart, and Cloudflare cache purge.
 
 ## Project Structure
 
 ```
 montreal-score/
 ├── src/
-│   ├── app/              # Next.js App Router pages
-│   ├── components/       # React components
-│   ├── lib/              # Data layer, scoring, types
-│   └── i18n/             # Routing, translations (fr/en)
-├── scripts/              # TypeScript ETL & seed scripts
+│   ├── app/[locale]/     # Next.js pages (locale-prefixed routing)
+│   │   ├── permits/      # Permit analytics dashboard
+│   │   ├── contracts/    # Contract forensics dashboard
+│   │   ├── 311/          # Service request analytics
+│   │   ├── promises/     # Campaign promise tracker
+│   │   ├── about/        # Project info
+│   │   ├── volunteer/    # Call to action
+│   │   └── api/          # API routes (ETL, promise CRUD)
+│   ├── components/       # React components (server + client)
+│   ├── lib/              # Data layer, scoring, types, auth
+│   └── i18n/             # next-intl config (fr/en routing)
+├── scripts/              # ETL, migrations, admin, deploy
 ├── data/                 # SQLite database + seed data
-└── messages/             # Translation JSON files
+├── messages/             # Translation JSON files (fr, en)
+├── server.js             # Node.js cluster wrapper for production
+└── CLAUDE.md             # Development conventions and patterns
 ```
 
 ## Contributing
 
 This is an open-source civic project. Contributions are welcome — especially from Montrealers who care about holding their city government accountable.
+
+See [CLAUDE.md](CLAUDE.md) for development conventions and patterns.
 
 ## License
 
