@@ -82,7 +82,7 @@ Canada → Quebec → Montreal → 19 boroughs
 ### Directory Structure
 ```
 src/
-├── middleware.ts            # next-intl middleware (locale detection, / → /fr redirect)
+├── proxy.ts                # next-intl proxy (locale detection, / → /fr redirect)
 ├── app/[locale]/           # Pages: permits, contracts, 311, promises, about, volunteer
 │   └── api/                # API routes (ETL trigger, promise CRUD)
 ├── components/             # Reusable components (server + client)
@@ -229,7 +229,7 @@ scripts/deploy.sh        # Full production deploy
 | `src/lib/scoring.ts` | Borough grading (parameterized target days) |
 | `src/lib/types.ts` | All TypeScript interfaces |
 | `src/lib/api-auth.ts` | Bearer token + rate limiting |
-| `src/middleware.ts` | next-intl middleware (locale redirect, negotiation) |
+| `src/proxy.ts` | next-intl proxy (locale redirect, negotiation) |
 | `src/app/globals.css` | Tailwind v4 theme (CSS custom properties, dark mode) |
 | `scripts/deploy.sh` | Production deploy pipeline |
 | `scripts/etl.ts` | Main ETL (permits + contracts) |
